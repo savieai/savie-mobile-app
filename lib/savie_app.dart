@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'application/application.dart';
@@ -8,7 +9,7 @@ class SavieApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
+    return CupertinoApp.router(
       routerConfig: getIt.get<AppRouter>().config(),
     );
   }
