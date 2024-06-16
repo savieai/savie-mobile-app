@@ -34,13 +34,15 @@ class RecordingCubit extends Cubit<RecordingState> {
     if (!hasPemrission) {
       await Permission.microphone.request();
     } else {
-      final Directory tempDir = await getApplicationCacheDirectory();
-
-      await _recorder.start(
-        const RecordConfig(),
-        path: '${tempDir.path}/${const Uuid().v4()}.m4a',
+      emit(
+        RecordingState.recording(
+          startTime: DateTime.now(),
+          peek: 0,
+          seconds: _seconds,
+        ),
       );
 
+      final Directory tempDir = await getApplicationCacheDirectory();
       int counter = 0;
 
       _amplitudeSubscription = _recorder
@@ -57,28 +59,23 @@ class RecordingCubit extends Cubit<RecordingState> {
         }
       });
 
-      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
         if (state is _Recording) {
           _seconds++;
           emit((state as _Recording).copyWith(seconds: _seconds));
         }
+        _timer = timer;
       });
 
-      emit(
-        RecordingState.recording(
-          startTime: DateTime.now(),
-          peek: 0,
-          seconds: _seconds,
-        ),
+      await _recorder.start(
+        const RecordConfig(),
+        path: '${tempDir.path}/${const Uuid().v4()}.m4a',
       );
     }
   }
 
   Future<AudioMessage?> finishRecording() async {
-    _amplitudeSubscription?.cancel();
-    _amplitudeSubscription = null;
-    _timer?.cancel();
-    _timer = null;
+    _cancelEverything();
 
     final String? path = await _recorder.stop();
     AudioMessage? audioMessage;
@@ -102,13 +99,22 @@ class RecordingCubit extends Cubit<RecordingState> {
   }
 
   Future<void> cancelRecording() async {
-    _amplitudeSubscription?.cancel();
-    _amplitudeSubscription = null;
+    _cancelEverything();
 
     await _recorder.cancel();
+
+    _peeks.clear();
+    _seconds = 0;
 
     emit(RecordingState.idle(
       lastRecordingResult: RecordingResult.cancel,
     ));
+  }
+
+  void _cancelEverything() {
+    _amplitudeSubscription?.cancel();
+    _amplitudeSubscription = null;
+    _timer?.cancel();
+    _timer = null;
   }
 }
