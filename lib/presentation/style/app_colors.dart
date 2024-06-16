@@ -2,4 +2,18 @@ import 'package:flutter/material.dart';
 
 sealed class AppColors {
   static const Color textSecondary = Color(0xFF9E9393);
+  static const Color textPrimary = Color(0xFF252322);
+
+  static const Color iconAccent = Color(0xFFFB5012);
+  static const Color iconNegative = Color(0xFFFF0000);
+  static const Color iconSecodary = Color(0xFFAA9F9F);
+  static const Color backgroundPrimary = Color(0xFFFFFCFA);
+  static const Color backgroundSecondary = Color(0xFFF2EBE8);
+  static const Color backgroundChatInput = Color(0xFFF5F2F0);
+  static const Color backgroundChatVoice = Color(0xFF2574EB);
+
+  static const Color backgroundChatBubble = Color(0xFFFFFFFF);
+
+  static const Color strokePrimaryAlpha = Color(0x0F000000);
+  static const Color strokeSecondaryAlpha = Color(0x0A000000);
 }

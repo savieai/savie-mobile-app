@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'application/application.dart';
@@ -9,8 +8,11 @@ class SavieApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CupertinoApp.router(
+    return MaterialApp.router(
       routerConfig: getIt.get<AppRouter>().config(),
+      theme: ThemeData(
+        scaffoldBackgroundColor: AppColors.backgroundPrimary,
+      ),
     );
   }
 }
