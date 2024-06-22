@@ -241,8 +241,8 @@ class _AudioMessageViewState extends State<AudioMessageView> {
                         _totalDuration.inMilliseconds,
                     alignment: Alignment.centerLeft,
                     child: ColorFiltered(
-                      colorFilter: ColorFilter.mode(
-                        Colors.blue.withOpacity(0.5),
+                      colorFilter: const ColorFilter.mode(
+                        AppColors.backgroundChatVoice,
                         BlendMode.srcATop,
                       ),
                       child: waveForms,
