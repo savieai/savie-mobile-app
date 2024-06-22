@@ -39,6 +39,7 @@ class RecordingCubit extends Cubit<RecordingState> {
           startTime: DateTime.now(),
           peek: 0,
           seconds: _seconds,
+          isFixed: false,
         ),
       );
 
@@ -109,6 +110,12 @@ class RecordingCubit extends Cubit<RecordingState> {
     emit(RecordingState.idle(
       lastRecordingResult: RecordingResult.cancel,
     ));
+  }
+
+  void fixRecording() {
+    if (state is _Recording) {
+      emit((state as _Recording).copyWith(isFixed: true));
+    }
   }
 
   void _cancelEverything() {

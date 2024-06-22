@@ -3,6 +3,7 @@ import 'application/application.dart';
 import 'savie_app.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   configureDependencies();
   runApp(const SavieApp());
 }

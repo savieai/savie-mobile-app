@@ -16,19 +16,22 @@ class RecordingState with _$RecordingState {
     required DateTime startTime,
     required double peek,
     required int seconds,
+    required bool isFixed,
   }) = _Recording;
 }
 
 extension RecordingStateExtension on RecordingState {
-  double get peek => when(
+  double get peek => map(
         idle: (_) => 0,
-        recording: (_, double peek, __) => peek,
+        recording: (_) => _.peek,
       );
 
-  int get seconds => when(
+  int get seconds => map(
         idle: (_) => 0,
-        recording: (_, __, int seconds) => seconds,
+        recording: (_) => _.seconds,
       );
 
   bool get isRecording => mapOrNull(recording: (_) => true) ?? false;
+
+  bool get isFixed => mapOrNull(recording: (_) => _.isFixed) ?? false;
 }

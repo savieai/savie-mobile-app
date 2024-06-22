@@ -16,4 +16,6 @@ sealed class AppColors {
 
   static const Color strokePrimaryAlpha = Color(0x0F000000);
   static const Color strokeSecondaryAlpha = Color(0x0A000000);
+
+  static const Color voiceTint = Color(0xFFD3DAE5);
 }

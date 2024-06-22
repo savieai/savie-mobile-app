@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:wave_blob/wave_blob.dart';
 
 import '../../../../domain/domain.dart';
@@ -187,8 +189,11 @@ class _AudioInputView extends StatefulWidget {
 
 class _AudioInputViewState extends State<_AudioInputView>
     with TickerProviderStateMixin {
-  late final AnimationController _swipeAnimationController;
-  late final Animation<double> _swipeAnimation;
+  late final AnimationController _horizontalSwipeAnimationController;
+  late final Animation<double> _horizontalSwipeAnimation;
+
+  late final AnimationController _verticalSwipeAnimationController;
+  late final Animation<double> _verticalSwipeAnimation;
 
   late final AnimationController _completeAnimationController;
   late final Animation<double> _completeAnimation;
@@ -206,14 +211,24 @@ class _AudioInputViewState extends State<_AudioInputView>
   void initState() {
     super.initState();
 
-    _swipeAnimationController = AnimationController(
+    _horizontalSwipeAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
 
-    _swipeAnimation = CurvedAnimation(
-      parent: _swipeAnimationController,
-      curve: Curves.easeOutCubic,
+    _horizontalSwipeAnimation = CurvedAnimation(
+      parent: _horizontalSwipeAnimationController,
+      curve: Curves.easeIn,
+    );
+
+    _verticalSwipeAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+
+    _verticalSwipeAnimation = CurvedAnimation(
+      parent: _verticalSwipeAnimationController,
+      curve: Curves.easeIn,
     );
 
     _completeAnimationController = AnimationController(
@@ -266,7 +281,8 @@ class _AudioInputViewState extends State<_AudioInputView>
 
   @override
   void dispose() {
-    _swipeAnimationController.dispose();
+    _horizontalSwipeAnimationController.dispose();
+    _verticalSwipeAnimationController.dispose();
     _completeAnimationController.dispose();
     _scaleAnimationController.dispose();
     _buttonOpacityAnimationController.dispose();
@@ -309,6 +325,7 @@ class _AudioInputViewState extends State<_AudioInputView>
             state.mapOrNull(recording: (_) => true) ?? false;
 
         return Stack(
+          clipBehavior: Clip.none,
           alignment: Alignment.center,
           children: <Widget>[
             Visibility(
@@ -344,13 +361,49 @@ class _AudioInputViewState extends State<_AudioInputView>
                       child: const _ElapsedTime(),
                     ),
                   if (isRecording)
-                    Container(
-                      alignment: const Alignment(0.35, 0),
-                      child: _SwipeToCancel(
-                        swipeAnimation: _swipeAnimation,
-                      ),
-                    ),
+                    if (!state.isFixed)
+                      Container(
+                        alignment: const Alignment(0.35, 0),
+                        child: _SwipeToCancel(
+                          swipeAnimation: _horizontalSwipeAnimation,
+                        ),
+                      )
+                    else
+                      const Center(child: _CanecelButton()),
                 ],
+              ),
+            ),
+            AnimatedBuilder(
+              animation: _verticalSwipeAnimation,
+              builder: (BuildContext context, Widget? child) {
+                final double bottomOffset = (state.isRecording ? 84 : 0);
+
+                return AnimatedPositioned(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutBack,
+                  bottom: bottomOffset,
+                  right: 0,
+                  left: 0,
+                  top: -bottomOffset,
+                  child: Transform.translate(
+                    offset: Offset(0, -_verticalSwipeAnimation.value * 15),
+                    child: child,
+                  ),
+                );
+              },
+              child: AnimatedOpacity(
+                opacity: state.isRecording && !state.isFixed ? 1 : 0,
+                curve: Curves.linearToEaseOut,
+                duration: const Duration(milliseconds: 300),
+                child: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 11),
+                  child: const OverflowBox(
+                    maxHeight: 66,
+                    alignment: Alignment.centerRight,
+                    child: _RecordingFixLabel(),
+                  ),
+                ),
               ),
             ),
             Align(
@@ -361,18 +414,23 @@ class _AudioInputViewState extends State<_AudioInputView>
                   _completeAnimation,
                   _scaleAnimation,
                   _buttonOpacityAnimation,
+                  _verticalSwipeAnimation,
                 ]),
                 builder: (BuildContext context, Widget? child) {
-                  final double dx =
-                      (-_swipeAnimation.value + _completeAnimation.value) * 80;
+                  final double dx = (-_horizontalSwipeAnimation.value +
+                          _completeAnimation.value) *
+                      80;
 
-                  final double scale = (1 - _swipeAnimation.value) * 0.4 +
-                      _scaleAnimation.value * 0.6;
+                  final double dy = (-_verticalSwipeAnimation.value) * 40;
+
+                  final double scale =
+                      (1 - _horizontalSwipeAnimation.value) * 0.4 +
+                          _scaleAnimation.value * 0.6;
 
                   return Opacity(
                     opacity: _buttonOpacityAnimation.value,
                     child: Transform.translate(
-                      offset: Offset(dx, 0),
+                      offset: Offset(dx, dy),
                       child: Transform.scale(
                         scale: scale,
                         child: child,
@@ -389,10 +447,13 @@ class _AudioInputViewState extends State<_AudioInputView>
                     maxHeight: 200,
                     child: _ActiveRecordingButton(
                       scaleAnimationController: _scaleAnimationController,
-                      swipeAnimationController: _swipeAnimationController,
+                      horizontalSwipeAnimationController:
+                          _horizontalSwipeAnimationController,
                       completeAnimationController: _completeAnimationController,
                       opacityAnimationController:
                           _buttonOpacityAnimationController,
+                      verticalSwipeAnimationController:
+                          _verticalSwipeAnimationController,
                     ),
                   ),
                 ),
@@ -407,117 +468,136 @@ class _AudioInputViewState extends State<_AudioInputView>
 
 class _ActiveRecordingButton extends StatelessWidget {
   const _ActiveRecordingButton({
-    required this.swipeAnimationController,
+    required this.horizontalSwipeAnimationController,
     required this.completeAnimationController,
     required this.scaleAnimationController,
     required this.opacityAnimationController,
+    required this.verticalSwipeAnimationController,
   });
 
-  final AnimationController swipeAnimationController;
+  final AnimationController horizontalSwipeAnimationController;
   final AnimationController completeAnimationController;
   final AnimationController scaleAnimationController;
   final AnimationController opacityAnimationController;
+  final AnimationController verticalSwipeAnimationController;
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<RecordingCubit, RecordingState>(
-      listener: (BuildContext context, RecordingState state) {
-        final bool isRecording =
-            state.mapOrNull(recording: (_) => true) ?? false;
-
-        state.when(
-          idle: (RecordingResult result) {
-            if (result == RecordingResult.cancel) {
-              opacityAnimationController.reverse();
-              completeAnimationController.forward().then((_) {
-                completeAnimationController.value = 0;
-                swipeAnimationController.value = 0;
-                scaleAnimationController.value = 1;
-              });
-              scaleAnimationController.reverse();
-            } else if (result == RecordingResult.finish ||
-                result == RecordingResult.none) {
-              opacityAnimationController.reverse();
-              scaleAnimationController.forward();
-              swipeAnimationController.reverse();
-            }
-          },
-          recording: (_, __, ___) => opacityAnimationController.forward(),
-        );
-
-        if (isRecording) {
-          opacityAnimationController.forward();
-        } else {}
-      },
+    return BlocListener<RecordingCubit, RecordingState>(
+      listener: _recordingFixListener,
       listenWhen: (RecordingState previous, RecordingState current) =>
-          previous.runtimeType != current.runtimeType,
-      builder: (BuildContext context, RecordingState state) {
-        final bool isRecording =
-            state.mapOrNull(recording: (_) => true) ?? false;
+          previous.isFixed != current.isFixed,
+      child: BlocConsumer<RecordingCubit, RecordingState>(
+        listener: _mainListener,
+        listenWhen: (RecordingState previous, RecordingState current) =>
+            previous.isRecording != current.isRecording,
+        builder: (BuildContext context, RecordingState state) {
+          final bool isRecording =
+              state.mapOrNull(recording: (_) => true) ?? false;
 
-        return Stack(
-          alignment: Alignment.center,
-          children: <Widget>[
-            Stack(
-              alignment: Alignment.center,
-              children: List<Widget>.generate(3, (int index) {
-                final double size = 90 + 10 * index.toDouble();
-
-                return SizedBox.square(
-                  dimension: size,
-                  child: WaveBlob(
-                    scale: 1 + state.peek * (0.6 + index / 20),
-                    autoScale: false,
-                    speed: 1,
-                    amplitude: 6000,
-                    blobCount: 1,
-                    centerCircle: false,
-                    colors: <Color>[
-                      AppColors.backgroundChatVoice.withOpacity(0.1),
-                      AppColors.backgroundChatVoice.withOpacity(0.1),
-                    ],
-                    child: SizedBox.square(dimension: size),
-                  ),
-                );
-              }),
-            ),
-            GestureDetector(
-              behavior: isRecording
-                  ? HitTestBehavior.translucent
-                  : HitTestBehavior.opaque,
-              onLongPressStart: (_) {
-                context.read<RecordingCubit>().startRecording();
-              },
-              onTap: () {},
-              onLongPressEnd: completeAnimationController.isAnimating
-                  ? null
-                  : (_) => _onLongPressEnd(context),
-              onLongPressMoveUpdate: completeAnimationController.isAnimating
-                  ? null
-                  : (LongPressMoveUpdateDetails details) =>
-                      _onLongPressMoveUpdate(context, details),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 700),
-                curve: Curves.elasticOut,
-                height: 60 * (1 + state.peek * 0.3),
-                width: 60 * (1 + state.peek * 0.3),
-                decoration: const BoxDecoration(
-                  color: AppColors.backgroundChatVoice,
-                  shape: BoxShape.circle,
-                ),
+          return Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              Stack(
                 alignment: Alignment.center,
-                child: Assets.icons.arrowUp24.svg(
-                  colorFilter: const ColorFilter.mode(
-                    Colors.white,
-                    BlendMode.srcIn,
+                children: List<Widget>.generate(3, (int index) {
+                  final double size = 90 + 10 * index.toDouble();
+
+                  return SizedBox.square(
+                    dimension: size,
+                    child: WaveBlob(
+                      scale: 1 + state.peek * (0.6 + index / 20),
+                      autoScale: false,
+                      speed: 1,
+                      amplitude: 6000,
+                      blobCount: 1,
+                      centerCircle: false,
+                      colors: <Color>[
+                        AppColors.backgroundChatVoice.withOpacity(0.1),
+                        AppColors.backgroundChatVoice.withOpacity(0.1),
+                      ],
+                      child: SizedBox.square(dimension: size),
+                    ),
+                  );
+                }),
+              ),
+              XGestureDetector(
+                onLongPress: (_) {
+                  if (context.read<RecordingCubit>().state.isFixed) {
+                    return;
+                  }
+
+                  context.read<RecordingCubit>().startRecording();
+                },
+                longPressTimeConsider: 100,
+                behavior: isRecording
+                    ? HitTestBehavior.translucent
+                    : HitTestBehavior.opaque,
+                onLongPressEnd: completeAnimationController.isAnimating
+                    ? null
+                    : () => _onLongPressEnd(context),
+                onLongPressMove: completeAnimationController.isAnimating
+                    ? null
+                    : (MoveEvent details) =>
+                        _onLongPressMoveUpdate(context, details),
+                onTap: state.isFixed ? (_) => _onFinish(context) : null,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 700),
+                  curve: Curves.elasticOut,
+                  height: 60 * (1 + state.peek * 0.3),
+                  width: 60 * (1 + state.peek * 0.3),
+                  decoration: const BoxDecoration(
+                    color: AppColors.backgroundChatVoice,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Assets.icons.arrowUp24.svg(
+                    colorFilter: const ColorFilter.mode(
+                      Colors.white,
+                      BlendMode.srcIn,
+                    ),
                   ),
                 ),
-              ),
-            )
-          ],
-        );
+              )
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _mainListener(BuildContext context, RecordingState state) {
+    state.when(
+      idle: (RecordingResult result) {
+        if (result == RecordingResult.cancel) {
+          opacityAnimationController.reverse();
+          verticalSwipeAnimationController.reverse();
+          completeAnimationController.forward().then((_) {
+            completeAnimationController.value = 0;
+            horizontalSwipeAnimationController.value = 0;
+            scaleAnimationController.value = 1;
+          });
+          scaleAnimationController.reverse();
+        } else if (result == RecordingResult.finish ||
+            result == RecordingResult.none) {
+          opacityAnimationController.reverse();
+          scaleAnimationController.forward();
+          horizontalSwipeAnimationController.reverse();
+        }
+      },
+      recording: (_, __, ___, ____) {
+        HapticFeedback.lightImpact();
+        opacityAnimationController.forward();
       },
     );
+  }
+
+  void _recordingFixListener(BuildContext context, RecordingState state) {
+    final bool isFixed = state.isFixed;
+
+    if (isFixed) {
+      verticalSwipeAnimationController.reverse();
+    }
   }
 
   Future<void> _onCancel(BuildContext context) async {
@@ -537,26 +617,39 @@ class _ActiveRecordingButton extends StatelessWidget {
       return;
     }
 
-    if (swipeAnimationController.value > 0.5) {
+    if (horizontalSwipeAnimationController.value > 0.5) {
       return _onCancel(context);
-    } else {
+    } else if (!context.read<RecordingCubit>().state.isFixed) {
       return _onFinish(context);
+    } else {
+      scaleAnimationController.forward();
+      horizontalSwipeAnimationController.reverse();
     }
   }
 
   Future<void> _onLongPressMoveUpdate(
     BuildContext context,
-    LongPressMoveUpdateDetails details,
+    MoveEvent details,
   ) async {
-    if (!context.read<RecordingCubit>().state.isRecording) {
+    if (!context.read<RecordingCubit>().state.isRecording ||
+        context.read<RecordingCubit>().state.isFixed) {
       return;
     }
 
-    final double newValue =
-        (-details.offsetFromOrigin.dx / 2).clamp(0, 80) / 80;
-    swipeAnimationController.value = newValue;
+    final double newHorizonatalValue =
+        (-details.localPos.dx / 2).clamp(0, 80) / 80;
+    horizontalSwipeAnimationController.value = newHorizonatalValue;
 
-    if (newValue == 1) {
+    final double newVerticalValue =
+        (-details.localPos.dy / 2).clamp(0, 60) / 60;
+    verticalSwipeAnimationController.value = newVerticalValue;
+
+    if (newVerticalValue == 1) {
+      HapticFeedback.lightImpact();
+      context.read<RecordingCubit>().fixRecording();
+    }
+
+    if (newHorizonatalValue == 1) {
       return _onCancel(context);
     }
   }
@@ -607,6 +700,26 @@ class _ElapsedTimeState extends State<_ElapsedTime> {
     final String twoDigitSeconds =
         twoDigits(duration.inSeconds.remainder(60).abs());
     return '$negativeSign${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds';
+  }
+}
+
+class _CanecelButton extends StatelessWidget {
+  const _CanecelButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoButton(
+      onPressed: () {
+        context.read<RecordingCubit>().cancelRecording();
+      },
+      child: Text(
+        'Cancel',
+        style: AppTextStyles.paragraph.copyWith(
+          color: AppColors.iconNegative,
+          height: 1,
+        ),
+      ),
+    );
   }
 }
 
@@ -689,6 +802,38 @@ class _SwipeToCancelState extends State<_SwipeToCancel>
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _RecordingFixLabel extends StatelessWidget {
+  const _RecordingFixLabel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 8),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundChatBubble,
+        border: Border.all(
+          color: AppColors.strokeSecondaryAlpha,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            blurRadius: 12,
+            offset: Offset(0, 4),
+            color: AppColors.strokeSecondaryAlpha,
+          ),
+        ],
+      ),
+      child: Column(
+        children: <Widget>[
+          Assets.icons.unlocked24.svg(),
+          const SizedBox(height: 4),
+          Assets.icons.chevronUp16.svg(),
+        ],
       ),
     );
   }

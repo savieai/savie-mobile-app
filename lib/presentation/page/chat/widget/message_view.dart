@@ -1,15 +1,13 @@
-import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
-import 'package:audioplayers/audioplayers.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../domain/domain.dart';
+import '../../../cubit/player_cubit/player_cubit.dart';
 import '../../../presentation.dart';
-
-final AudioPlayer _player = AudioPlayer();
 
 class MessageView extends StatelessWidget {
   const MessageView({
@@ -158,28 +156,9 @@ class _AudioMessageViewState extends State<AudioMessageView> {
   late final Duration _totalDuration = Duration(
     seconds: widget.audioMessage.seconds,
   );
+  Duration _currentDuration = Duration.zero;
+  bool _isPlaying = false;
   List<double>? _peeks;
-  PlayerState _playerState = PlayerState.stopped;
-  late final StreamSubscription<PlayerState> _playerStateSubscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _initPlayer();
-  }
-
-  Future<void> _initPlayer() async {
-    _playerStateSubscription =
-        _player.onPlayerStateChanged.listen((PlayerState state) {
-      _playerState = state;
-    });
-  }
-
-  @override
-  void dispose() {
-    _playerStateSubscription.cancel();
-    super.dispose();
-  }
 
   @override
   void didChangeDependencies() {
@@ -198,81 +177,96 @@ class _AudioMessageViewState extends State<AudioMessageView> {
 
   @override
   Widget build(BuildContext context) {
-    return _MessageContainer(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          GestureDetector(
-            onTap: () async {
-              if (widget.audioMessage.path !=
-                  (_player.source as DeviceFileSource?)?.path) {
-                await _player.stop();
-                _player.play(DeviceFileSource(widget.audioMessage.path));
-              }
-
-              switch (_playerState) {
-                case PlayerState.stopped:
-                  _player.play(DeviceFileSource(widget.audioMessage.path));
-                case PlayerState.completed:
-                case PlayerState.paused:
-                  _player.resume();
-                case PlayerState.playing:
-                  _player.pause();
-                case PlayerState.disposed:
-                  break;
-              }
-            },
+    final Widget waveForms = SizedBox(
+      height: 20,
+      child: ListView.separated(
+        itemCount: _peeks!.length,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        scrollDirection: Axis.horizontal,
+        itemBuilder: (BuildContext context, int index) {
+          return FractionallySizedBox(
+            heightFactor: max(_peeks![index], 0.1),
             child: Container(
-              height: 40,
-              width: 40,
-              decoration: const BoxDecoration(
-                color: AppColors.backgroundChatVoice,
-                shape: BoxShape.circle,
+              width: 2,
+              decoration: BoxDecoration(
+                color: AppColors.voiceTint,
+                borderRadius: BorderRadius.circular(1),
               ),
-              alignment: Alignment.center,
-              child: Assets.icons.play20.svg(),
             ),
-          ),
-          const SizedBox(width: 11),
-          SizedBox(
-            height: 20,
-            child: ListView.separated(
-              itemCount: _peeks!.length,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              scrollDirection: Axis.horizontal,
-              itemBuilder: (BuildContext context, int index) {
-                return FractionallySizedBox(
-                  heightFactor: max(_peeks![index], 0.1),
-                  child: Container(
-                    width: 2,
-                    decoration: BoxDecoration(
-                      color: AppColors.backgroundChatVoice,
-                      borderRadius: BorderRadius.circular(1),
+          );
+        },
+        separatorBuilder: (BuildContext context, int index) {
+          return const SizedBox(width: 2);
+        },
+      ),
+    );
+
+    return BlocListener<PlayerCubit, PlayerState>(
+      listener: (BuildContext context, PlayerState state) {
+        if (state.audio?.audioPath == widget.audioMessage.path) {
+          setState(() {
+            _currentDuration = state.audio!.duration;
+            _isPlaying = state.audio!.isPlaying;
+          });
+        }
+      },
+      child: _MessageContainer(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            GestureDetector(
+              onTap: () =>
+                  context.read<PlayerCubit>().toggleAudio(widget.audioMessage),
+              child: Container(
+                height: 40,
+                width: 40,
+                decoration: const BoxDecoration(
+                  color: AppColors.backgroundChatVoice,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: _isPlaying
+                    ? Assets.icons.pause16.svg()
+                    : Assets.icons.play20.svg(),
+              ),
+            ),
+            const SizedBox(width: 11),
+            Stack(
+              children: <Widget>[
+                waveForms,
+                Positioned.fill(
+                  child: FractionallySizedBox(
+                    widthFactor: _currentDuration.inMilliseconds /
+                        _totalDuration.inMilliseconds,
+                    alignment: Alignment.centerLeft,
+                    child: ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                        Colors.blue.withOpacity(0.5),
+                        BlendMode.srcATop,
+                      ),
+                      child: waveForms,
                     ),
                   ),
-                );
-              },
-              separatorBuilder: (BuildContext context, int index) {
-                return const SizedBox(width: 2);
-              },
+                ),
+              ],
             ),
-          ),
-          const SizedBox(width: 7),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundChatVoice,
-              borderRadius: BorderRadius.circular(100),
-            ),
-            child: Text(
-              formatDuration(_totalDuration),
-              style: AppTextStyles.callout.copyWith(
-                color: Colors.white,
+            const SizedBox(width: 7),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.voiceTint,
+                borderRadius: BorderRadius.circular(100),
+              ),
+              child: Text(
+                formatDuration(_totalDuration - _currentDuration),
+                style: AppTextStyles.callout.copyWith(
+                  color: Colors.white,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -292,12 +286,16 @@ class _AudioMessageViewState extends State<AudioMessageView> {
   }
 
   List<double> resample(List<double> list, int newLength) {
+    if (list.isEmpty) {
+      return List<double>.generate(newLength, (_) => 0);
+    }
+
     if (newLength < 0) {
       throw ArgumentError('newLength must be non-negative');
     }
 
     if (newLength == 0) {
-      return <double>[];
+      return List<double>.generate(newLength, (_) => 0);
     }
 
     final List<double> result = <double>[];
