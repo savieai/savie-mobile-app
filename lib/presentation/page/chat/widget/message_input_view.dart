@@ -572,11 +572,13 @@ class _ActiveRecordingButton extends StatelessWidget {
         if (result == RecordingResult.cancel) {
           opacityAnimationController.reverse();
           verticalSwipeAnimationController.reverse();
-          completeAnimationController.forward().then((_) {
-            completeAnimationController.value = 0;
-            horizontalSwipeAnimationController.value = 0;
-            scaleAnimationController.value = 1;
-          });
+          if (completeAnimationController.value != 0) {
+            completeAnimationController.forward().then((_) {
+              completeAnimationController.value = 0;
+              horizontalSwipeAnimationController.value = 0;
+              scaleAnimationController.value = 1;
+            });
+          }
           scaleAnimationController.reverse();
         } else if (result == RecordingResult.finish ||
             result == RecordingResult.none) {
