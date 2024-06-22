@@ -237,8 +237,9 @@ class _AudioMessageViewState extends State<AudioMessageView> {
                 waveForms,
                 Positioned.fill(
                   child: FractionallySizedBox(
-                    widthFactor: _currentDuration.inMilliseconds /
-                        _totalDuration.inMilliseconds,
+                    widthFactor: (_currentDuration.inMilliseconds /
+                            _totalDuration.inMilliseconds)
+                        .clamp(0, 1),
                     alignment: Alignment.centerLeft,
                     child: ColorFiltered(
                       colorFilter: const ColorFilter.mode(

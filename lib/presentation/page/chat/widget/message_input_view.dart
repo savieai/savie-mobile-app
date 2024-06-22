@@ -361,15 +361,39 @@ class _AudioInputViewState extends State<_AudioInputView>
                       child: const _ElapsedTime(),
                     ),
                   if (isRecording)
-                    if (!state.isFixed)
-                      Container(
-                        alignment: const Alignment(0.35, 0),
-                        child: _SwipeToCancel(
-                          swipeAnimation: _horizontalSwipeAnimation,
+                    AnimatedCrossFade(
+                        alignment: Alignment.center,
+                        firstChild: Container(
+                          alignment: const Alignment(0.35, 0),
+                          child: _SwipeToCancel(
+                            swipeAnimation: _horizontalSwipeAnimation,
+                          ),
                         ),
-                      )
-                    else
-                      const Center(child: _CanecelButton()),
+                        secondChild: const Center(child: _CanecelButton()),
+                        crossFadeState: state.isFixed
+                            ? CrossFadeState.showSecond
+                            : CrossFadeState.showFirst,
+                        duration: const Duration(milliseconds: 200),
+                        layoutBuilder: (
+                          Widget topChild,
+                          Key topKey,
+                          Widget bottomChild,
+                          Key bottomKey,
+                        ) {
+                          return Stack(
+                            alignment: Alignment.center,
+                            children: <Widget>[
+                              Positioned.fill(
+                                key: topKey,
+                                child: Center(child: bottomChild),
+                              ),
+                              Positioned(
+                                key: bottomKey,
+                                child: topChild,
+                              ),
+                            ],
+                          );
+                        }),
                 ],
               ),
             ),
