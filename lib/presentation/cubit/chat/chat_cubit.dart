@@ -14,24 +14,15 @@ class ChatCubit extends Cubit<ChatState> {
 
   final List<Message> _messages = <Message>[];
 
-  void sendMessage(String message) {
+  void sendMessage({
+    String? message,
+    List<String>? mediaPaths,
+  }) {
     _messages.add(
       Message(
         id: const Uuid().v4(),
         text: message,
-      ),
-    );
-
-    emit(state.copyWith(
-      messages: _messages.toList(),
-    ));
-  }
-
-  void sendMedia(List<String> mediaPaths) {
-    _messages.add(
-      Message(
-        id: const Uuid().v4(),
-        mediaPaths: mediaPaths,
+        mediaPaths: mediaPaths ?? <String>[],
       ),
     );
 

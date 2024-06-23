@@ -33,4 +33,12 @@ sealed class AppTextStyles {
     height: 18 / 14,
     letterSpacing: -0.4,
   );
+
+  static const TextStyle headline = TextStyle(
+    fontFamily: FontFamily.inter,
+    fontWeight: FontWeight.w500,
+    fontSize: 18,
+    height: 24 / 18,
+    letterSpacing: -0.4,
+  );
 }

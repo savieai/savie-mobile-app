@@ -57,8 +57,9 @@ class _MessageInputViewState extends State<MessageInputView> {
   }
 }
 
-class _SendButton extends StatelessWidget {
-  const _SendButton({
+class SendButton extends StatelessWidget {
+  const SendButton({
+    super.key,
     required this.onTap,
   });
 
@@ -67,6 +68,7 @@ class _SendButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(8),
@@ -151,9 +153,11 @@ class _TextInputViewState extends State<_TextInputView> {
                   crossFadeState: canRecord
                       ? CrossFadeState.showSecond
                       : CrossFadeState.showFirst,
-                  firstChild: _SendButton(
+                  firstChild: SendButton(
                     onTap: () {
-                      context.read<ChatCubit>().sendMessage(_controller.text);
+                      context
+                          .read<ChatCubit>()
+                          .sendMessage(message: _controller.text);
                       _controller.value = TextEditingValue.empty;
                     },
                   ),

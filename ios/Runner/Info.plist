@@ -30,6 +30,8 @@
 	<string>This will allow you to send audio messages</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This will allow you to attach media to your messages</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This will allow to take a photo for a message</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

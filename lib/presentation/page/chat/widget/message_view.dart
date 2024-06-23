@@ -156,7 +156,7 @@ class _AudioMessageViewState extends State<AudioMessageView> {
   late final Duration _totalDuration = Duration(
     seconds: widget.audioMessage.seconds,
   );
-  Duration _currentDuration = Duration.zero;
+  late Duration _currentDuration;
   bool _isPlaying = false;
   List<double>? _peeks;
 
@@ -172,6 +172,19 @@ class _AudioMessageViewState extends State<AudioMessageView> {
       final int maxPeeksLength = maxSpace ~/ 4;
       final int acutalPeeksLength = min(maxPeeksLength, projectedPeeksLength);
       _peeks = resample(widget.audioMessage.peeks, acutalPeeksLength);
+    }
+
+    final PlayerState state = context.read<PlayerCubit>().state;
+    _updateVariables(state);
+  }
+
+  void _updateVariables(PlayerState state) {
+    if (state.audio?.audioPath == widget.audioMessage.path) {
+      _currentDuration = state.audio!.duration;
+      _isPlaying = state.audio!.isPlaying;
+    } else {
+      _isPlaying = false;
+      _currentDuration = Duration.zero;
     }
   }
 
@@ -204,13 +217,10 @@ class _AudioMessageViewState extends State<AudioMessageView> {
 
     return BlocListener<PlayerCubit, PlayerState>(
       listener: (BuildContext context, PlayerState state) {
-        if (state.audio?.audioPath == widget.audioMessage.path) {
-          setState(() {
-            _currentDuration = state.audio!.duration;
-            _isPlaying = state.audio!.isPlaying;
-          });
-        }
+        setState(() => _updateVariables(state));
       },
+      listenWhen: (_, PlayerState current) =>
+          current.audio?.audioPath == widget.audioMessage.path,
       child: _MessageContainer(
         child: Row(
           mainAxisSize: MainAxisSize.min,

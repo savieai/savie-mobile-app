@@ -1,8 +1,8 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../presentation.dart';
+import '../../../router/app_router.gr.dart';
 
 class FilePickerButton extends StatelessWidget {
   const FilePickerButton({super.key});
@@ -17,19 +17,6 @@ class FilePickerButton extends StatelessWidget {
   }
 
   Future<void> _onTap(BuildContext context) async {
-    final FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: true,
-    );
-
-    if (result == null || result.files.isEmpty) {
-      return;
-    }
-
-    if (context.mounted) {
-      context.read<ChatCubit>().sendMedia(
-            result.files.map((PlatformFile e) => e.path).nonNulls.toList(),
-          );
-    }
+    context.router.push(const CameraRollRoute());
   }
 }
