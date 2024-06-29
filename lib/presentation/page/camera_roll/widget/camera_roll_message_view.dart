@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -58,14 +60,13 @@ class _CameraRollMessageViewState extends State<CameraRollMessageView> {
               padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
               child: SendButton(
                 onTap: () async {
-                  final List<String> paths = await context
-                      .read<CameraRollCubit>()
-                      .getSelectedPhotoPaths();
+                  final List<File> files =
+                      await context.read<CameraRollCubit>().getSelectedPhotos();
 
                   if (context.mounted) {
                     getIt.get<ChatCubit>().sendMessage(
                           message: _controller.text,
-                          mediaPaths: paths,
+                          mediaPaths: files.map((File f) => f.path).toList(),
                         );
                     _controller.value = TextEditingValue.empty;
                     context.router.maybePop();

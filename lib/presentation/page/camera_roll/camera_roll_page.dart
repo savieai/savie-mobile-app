@@ -33,14 +33,21 @@ class _CameraRollPageState extends State<CameraRollPage> {
   Widget build(BuildContext context) {
     return BlocProvider<CameraRollCubit>.value(
       value: _cameraRollCubit,
-      child: const Scaffold(
-        appBar: CameraRollTopBar(),
+      child: Scaffold(
+        appBar: const CameraRollTopBar(),
         body: Stack(
           alignment: Alignment.bottomCenter,
           children: <Widget>[
-            CameraRollPhotos(),
-            _AnimatedCameraRollBottomBar(),
-            _AnimatedCameraRollMessageView(),
+            MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                padding: MediaQuery.paddingOf(context).copyWith(
+                  bottom: MediaQuery.paddingOf(context).bottom + 56,
+                ),
+              ),
+              child: const CameraRollPhotos(),
+            ),
+            const _AnimatedCameraRollBottomBar(),
+            const _AnimatedCameraRollMessageView(),
           ],
         ),
       ),
@@ -70,7 +77,7 @@ class _AnimatedCameraRollMessageView extends StatelessWidget {
       right: 0,
       curve: Curves.linearToEaseOut,
       child: AnimatedOpacity(
-        opacity: hasSelectedPhotos ? 1 : 0.3,
+        opacity: hasSelectedPhotos ? 1 : 0.5,
         duration: const Duration(milliseconds: 500),
         curve: Curves.linearToEaseOut,
         child: const CameraRollMessageView(),
@@ -94,18 +101,11 @@ class _AnimatedCameraRollBottomBar extends StatelessWidget {
 
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 500),
-      bottom: hasSelectedPhotos
-          ? (-56 - MediaQuery.viewPaddingOf(context).bottom)
-          : 0,
+      bottom: hasSelectedPhotos ? -20 : 0,
       left: 0,
       right: 0,
       curve: Curves.linearToEaseOut,
-      child: AnimatedOpacity(
-        opacity: hasSelectedPhotos ? 0.3 : 1,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.linearToEaseOut,
-        child: const CameraRollBottomBar(),
-      ),
+      child: const CameraRollBottomBar(),
     );
   }
 }

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
@@ -254,13 +254,16 @@ class _AlbumItem extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            FutureBuilder<File?>(
-              future: album
-                  .getAssetListRange(start: 0, end: 1)
-                  .then((List<AssetEntity> assets) => assets.firstOrNull?.file),
+            FutureBuilder<Uint8List?>(
+              future: album.getAssetListRange(start: 0, end: 1).then(
+                    (List<AssetEntity> assets) =>
+                        assets.firstOrNull?.thumbnailDataWithSize(
+                      const ThumbnailSize.square(56),
+                    ),
+                  ),
               builder: (
                 BuildContext context,
-                AsyncSnapshot<File?> snapshot,
+                AsyncSnapshot<Uint8List?> snapshot,
               ) {
                 if (!snapshot.hasData || snapshot.data == null) {
                   return const SizedBox();
@@ -274,7 +277,7 @@ class _AlbumItem extends StatelessWidget {
                     color: AppColors.strokeSecondaryAlpha,
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Image.file(
+                  child: Image.memory(
                     snapshot.data!,
                     fit: BoxFit.cover,
                   ),

@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:photo_manager/photo_manager.dart';
 
 import '../../../presentation.dart';
 import 'widget.dart';
@@ -15,13 +12,13 @@ class CameraRollPhotos extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<CameraRollCubit, CameraRollState>(
       buildWhen: (CameraRollState previous, CameraRollState current) {
-        List<AssetEntity> getPhotos(CameraRollState state) => state.map(
-              loading: (_) => <AssetEntity>[],
+        List<CameraRollPhoto> getPhotos(CameraRollState state) => state.map(
+              loading: (_) => <CameraRollPhoto>[],
               fecthed: (CameraRollStateFetched fetched) =>
-                  fetched.photos ?? <AssetEntity>[],
+                  fetched.photos ?? <CameraRollPhoto>[],
             );
 
-        return !const ListEquality<AssetEntity>()
+        return !const ListEquality<CameraRollPhoto>()
             .equals(getPhotos(previous), getPhotos(current));
       },
       builder: (BuildContext context, CameraRollState state) {
@@ -55,7 +52,7 @@ class _CameraRollPhotoList extends StatefulWidget {
     required this.displayCamera,
   });
 
-  final List<AssetEntity> photos;
+  final List<CameraRollPhoto> photos;
   final bool displayCamera;
 
   @override
@@ -102,10 +99,10 @@ class _CameraRollPhotoListState extends State<_CameraRollPhotoList> {
           return const CameraRollCameraPreview();
         }
 
-        final AssetEntity photo = widget.photos[index - indexOffset];
+        final CameraRollPhoto photo = widget.photos[index - indexOffset];
 
         return _CameraRollPhotoItem(
-          key: ValueKey<String>(photo.id),
+          key: ValueKey<String>(photo.assetEntity.id),
           photo: photo,
         );
       },
@@ -119,60 +116,68 @@ class _CameraRollPhotoItem extends StatelessWidget {
     required this.photo,
   });
 
-  final AssetEntity photo;
+  final CameraRollPhoto photo;
 
   @override
   Widget build(BuildContext context) {
     return BlocSelector<CameraRollCubit, CameraRollState, bool>(
       selector: (CameraRollState state) {
         return state.mapOrNull(fecthed: (CameraRollStateFetched fetched) {
-              return fetched.selectedPhotoIds.contains(photo.id);
+              return fetched.selectedPhotoIds.contains(photo.assetEntity.id);
             }) ??
             false;
       },
       builder: (BuildContext context, bool isSelected) {
-        return FutureBuilder<File?>(
-          future: photo.file,
-          builder: (BuildContext context, AsyncSnapshot<File?> snapshot) {
-            final File? file = snapshot.data;
-
-            return Stack(
-              alignment: Alignment.topRight,
-              children: <Widget>[
-                if (file == null)
-                  Positioned.fill(
-                    child: Container(
-                      color: AppColors.strokePrimaryAlpha,
-                    ),
-                  )
-                else
-                  Positioned.fill(
-                    child: Image(
-                      image: FileImage(file),
-                      fit: BoxFit.cover,
-                      loadingBuilder: (
-                        _,
-                        Widget child,
-                        ImageChunkEvent? loadingProgress,
-                      ) {
-                        if (loadingProgress == null) {
-                          return child;
-                        }
-
-                        return Container(
-                          color: AppColors.strokePrimaryAlpha,
-                        );
-                      },
-                    ),
-                  ),
-                _SelectionIndicator(
-                  isSelected: isSelected,
-                  onTap: () =>
-                      context.read<CameraRollCubit>().togglePhotoId(photo.id),
+        return Stack(
+          alignment: Alignment.topRight,
+          children: <Widget>[
+            if (photo.thumbnailData == null)
+              Positioned.fill(
+                child: Container(
+                  color: AppColors.strokePrimaryAlpha,
                 ),
-              ],
-            );
-          },
+              )
+            else
+              Positioned.fill(
+                child: Image(
+                  image: MemoryImage(photo.thumbnailData!),
+                  gaplessPlayback: true,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (
+                    _,
+                    Widget child,
+                    ImageChunkEvent? loadingProgress,
+                  ) {
+                    if (loadingProgress == null) {
+                      return child;
+                    }
+
+                    return Container(
+                      color: AppColors.strokePrimaryAlpha,
+                    );
+                  },
+                  // frameBuilder: (
+                  //   context,
+                  //   child,
+                  //   frame,
+                  //   wasSynchronouslyLoaded,
+                  // ) {
+                  //   if (frame != null) {
+                  //     return child;
+                  //   }
+                  //   return Container(
+                  //     color: AppColors.strokePrimaryAlpha,
+                  //   );
+                  // },
+                ),
+              ),
+            _SelectionIndicator(
+              isSelected: isSelected,
+              onTap: () => context
+                  .read<CameraRollCubit>()
+                  .togglePhotoId(photo.assetEntity.id),
+            ),
+          ],
         );
       },
     );

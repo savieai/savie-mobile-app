@@ -1,6 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -20,19 +20,24 @@ class CameraRollCubit extends Cubit<CameraRollState> {
     if (ps == PermissionState.authorized) {
       final List<AssetPathEntity> paths = await PhotoManager.getAssetPathList(
         type: RequestType.image,
+        pathFilterOption: const PMPathFilter(
+          darwin: PMDarwinPathFilter(
+            subType: <PMDarwinAssetCollectionSubtype>[
+              PMDarwinAssetCollectionSubtype.albumRegular,
+              PMDarwinAssetCollectionSubtype.albumImported,
+              PMDarwinAssetCollectionSubtype.smartAlbumSelfPortraits,
+              PMDarwinAssetCollectionSubtype.smartAlbumSelfPortraits,
+              PMDarwinAssetCollectionSubtype.smartAlbumScreenshots,
+            ],
+          ),
+        ),
       );
-
-      final List<int> lengths = await Future.wait(
-        paths.map((AssetPathEntity e) => e.assetCountAsync),
-      );
-
-      final List<AssetPathEntity> albums =
-          paths.whereIndexed((int index, _) => lengths[index] != 0).toList();
 
       emit(CameraRollState.fecthed(
-        albums: albums,
-        selectedAlbum: albums.first,
-        photos: await albums.first.getAssetListRange(
+        albums: paths,
+        selectedAlbum: paths.first,
+        photos: await _getPhotos(
+          album: paths.first,
           start: _currentStartIndex,
           end: _currentStartIndex + _batch,
         ),
@@ -41,8 +46,32 @@ class CameraRollCubit extends Cubit<CameraRollState> {
     }
   }
 
+  Future<List<CameraRollPhoto>> _getPhotos({
+    required AssetPathEntity album,
+    required int start,
+    required int end,
+  }) async {
+    final List<AssetEntity> assets = await album.getAssetListRange(
+      start: start,
+      end: end,
+    );
+
+    final List<CameraRollPhoto> photos = await Future.wait(
+      assets.map(
+        (AssetEntity asset) async => CameraRollPhoto(
+          assetEntity: asset,
+          thumbnailData: await asset.thumbnailDataWithSize(
+            const ThumbnailSize(200, 200),
+          ),
+        ),
+      ),
+    );
+
+    return photos;
+  }
+
   int _currentStartIndex = 0;
-  final int _batch = 20;
+  final int _batch = 40;
 
   Future<void> selectAlbum(AssetPathEntity album) async {
     _shouldLoad = true;
@@ -55,13 +84,12 @@ class CameraRollCubit extends Cubit<CameraRollState> {
       ));
     }
 
-    final List<AssetEntity> photos = await album.getAssetListRange(
-      start: _currentStartIndex,
-      end: _batch,
-    );
-
     emit((state as CameraRollStateFetched).copyWith(
-      photos: photos,
+      photos: await _getPhotos(
+        album: album,
+        start: _currentStartIndex,
+        end: _currentStartIndex + _batch,
+      ),
       selectedAlbum: album,
       selectedPhotoIds: <String>{},
     ));
@@ -80,7 +108,8 @@ class CameraRollCubit extends Cubit<CameraRollState> {
 
     _currentStartIndex += _batch;
 
-    final List<AssetEntity> nextPhotos = await album.getAssetListRange(
+    final List<CameraRollPhoto> nextPhotos = await _getPhotos(
+      album: album,
       start: _currentStartIndex,
       end: _currentStartIndex + _batch,
     );
@@ -90,7 +119,7 @@ class CameraRollCubit extends Cubit<CameraRollState> {
     }
 
     emit((state as CameraRollStateFetched).copyWith(
-      photos: <AssetEntity>[
+      photos: <CameraRollPhoto>[
         ...(state as CameraRollStateFetched).photos!,
         ...nextPhotos
       ],
@@ -115,24 +144,25 @@ class CameraRollCubit extends Cubit<CameraRollState> {
     }
   }
 
-  Future<List<String>> getSelectedPhotoPaths() async {
+  Future<List<File>> getSelectedPhotos() async {
     if (state is CameraRollStateFetched) {
       final Set<String> selectedPhotoIds =
           (state as CameraRollStateFetched).selectedPhotoIds.toSet();
 
-      final List<AssetEntity> photos = (state as CameraRollStateFetched)
+      final List<CameraRollPhoto> photos = (state as CameraRollStateFetched)
               .photos
-              ?.where((AssetEntity e) => selectedPhotoIds.contains(e.id))
+              ?.where((CameraRollPhoto e) =>
+                  selectedPhotoIds.contains(e.assetEntity.id))
               .toList() ??
-          <AssetEntity>[];
+          <CameraRollPhoto>[];
 
-      final List<String?> paths = await Future.wait(
-        photos.map((AssetEntity e) => e.file.then((File? e) => e?.path)),
+      final List<File?> files = await Future.wait(
+        photos.map((CameraRollPhoto e) => e.assetEntity.file),
       );
 
-      return paths.nonNulls.toList();
+      return files.nonNulls.toList();
     }
 
-    return <String>[];
+    return <File>[];
   }
 }
