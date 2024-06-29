@@ -3,6 +3,13 @@ import 'package:flutter/material.dart';
 import '../presentation.dart';
 
 sealed class AppTextStyles {
+  static const TextStyle title1 = TextStyle(
+    fontFamily: FontFamily.newYorkLarge,
+    fontWeight: FontWeight.w600,
+    fontSize: 32,
+    height: 40 / 32,
+  );
+
   static const TextStyle title2 = TextStyle(
     fontFamily: FontFamily.newYorkLarge,
     fontWeight: FontWeight.w500,

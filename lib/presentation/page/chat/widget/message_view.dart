@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../domain/domain.dart';
 import '../../../cubit/player_cubit/player_cubit.dart';
 import '../../../presentation.dart';
+import '../../../router/app_router.gr.dart';
 
 class MessageView extends StatelessWidget {
   const MessageView({
@@ -26,7 +28,31 @@ class MessageView extends StatelessWidget {
         child: Align(
           alignment: Alignment.centerRight,
           child: message.mediaPaths.isNotEmpty
-              ? MediaMessageView(mediaPaths: message.mediaPaths)
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: 216 +
+                            (message.mediaPaths.length != 1 ? 32 : 0) -
+                            18,
+                      ),
+                      child: OverflowBox(
+                        maxHeight: double.infinity,
+                        alignment: Alignment.topRight,
+                        child: MediaMessageView(message: message),
+                      ),
+                    ),
+                    if (message.text?.isNotEmpty ?? false)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 3),
+                        child: TextMessageView(text: message.text ?? ''),
+                      )
+                    else
+                      const SizedBox(height: 18)
+                  ],
+                )
               : message.audioMessage != null
                   ? AudioMessageView(
                       audioMessage: message.audioMessage!,
@@ -42,67 +68,91 @@ class MessageView extends StatelessWidget {
 class MediaMessageView extends StatelessWidget {
   const MediaMessageView({
     super.key,
-    required this.mediaPaths,
+    required this.message,
   });
 
-  final List<String> mediaPaths;
+  final Message message;
 
   @override
   Widget build(BuildContext context) {
-    final List<String> shownMediaPaths = mediaPaths.reversed.take(4).toList();
+    final List<String> shownMediaPaths =
+        message.mediaPaths.take(4).toList().reversed.toList();
+    final List<String> leftMediaPaths = message.mediaPaths.toList().sublist(4);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        if (mediaPaths.length != 1) ...<Widget>[
-          _ImageCountLabel(
-            count: mediaPaths.length,
-          ),
-        ],
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Stack(
-            alignment: Alignment.centerRight,
-            children: <Widget>[
-              ...shownMediaPaths.mapIndexed(
-                (int index, String path) {
-                  return Padding(
-                    padding: EdgeInsets.only(right: index * 8),
-                    child: Transform.rotate(
-                      angle:
-                          pi / 180 * (shownMediaPaths.length - index - 1) * 1.5,
-                      alignment: const Alignment(-0.5, 1),
-                      child: Transform.scale(
-                        scale: 1 - (shownMediaPaths.length - index - 1) * 0.05,
-                        child: Container(
-                          height: 216,
-                          width: 180,
-                          clipBehavior: Clip.hardEdge,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: <BoxShadow>[
-                              BoxShadow(
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                                color: Colors.black.withOpacity(0.16),
-                              ),
-                            ],
-                          ),
-                          child: Image.file(
-                            key: ValueKey<String>(path),
-                            File(path),
-                            fit: BoxFit.cover,
+    return GestureDetector(
+      onTap: () {
+        context.router.push(
+          PhotoCarouselRoute(message: message),
+        );
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          if (message.mediaPaths.length != 1) ...<Widget>[
+            _ImageCountLabel(
+              count: message.mediaPaths.length,
+            ),
+          ],
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Stack(
+              alignment: Alignment.centerRight,
+              children: <Widget>[
+                ...shownMediaPaths.mapIndexed(
+                  (int index, String path) {
+                    final Widget image = Image.file(
+                      key: ValueKey<String>(path),
+                      File(path),
+                      fit: BoxFit.cover,
+                    );
+
+                    return Padding(
+                      padding: EdgeInsets.only(right: index * 8),
+                      child: Transform.rotate(
+                        angle: pi /
+                            180 *
+                            (shownMediaPaths.length - index - 1) *
+                            1.5,
+                        alignment: const Alignment(-0.5, 1),
+                        child: Transform.scale(
+                          scale:
+                              1 - (shownMediaPaths.length - index - 1) * 0.05,
+                          child: Container(
+                            height: 216,
+                            width: 180,
+                            clipBehavior: Clip.hardEdge,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: <BoxShadow>[
+                                BoxShadow(
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                  color: Colors.black.withOpacity(0.16),
+                                ),
+                              ],
+                            ),
+                            child: Hero(
+                              tag: path + message.id,
+                              child: image,
+                              placeholderBuilder: (_, __, ___) => image,
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    );
+                  },
+                ),
+                ...leftMediaPaths.map((String path) {
+                  return Hero(
+                    tag: path + message.id,
+                    child: const SizedBox(),
                   );
-                },
-              ),
-            ],
+                }),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

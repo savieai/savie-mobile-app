@@ -96,7 +96,7 @@ class _AlbumsOverlayButtonState extends State<_AlbumsOverlayButton>
     _albumsOverlayAnimation = CurvedAnimation(
       parent: _albumsOverlayAnimationController,
       curve: Curves.linearToEaseOut,
-      reverseCurve: Curves.easeInToLinear,
+      reverseCurve: Curves.easeOutCubic,
     );
   }
 

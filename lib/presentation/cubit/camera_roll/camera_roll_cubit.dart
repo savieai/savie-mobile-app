@@ -74,15 +74,21 @@ class CameraRollCubit extends Cubit<CameraRollState> {
   final int _batch = 40;
 
   Future<void> selectAlbum(AssetPathEntity album) async {
+    if (state is! CameraRollStateFetched) {
+      return;
+    }
+
+    if ((state as CameraRollStateFetched).selectedAlbum.id == album.id) {
+      return;
+    }
+
     _shouldLoad = true;
     _currentStartIndex = 0;
 
-    if (state is CameraRollStateFetched) {
-      emit((state as CameraRollStateFetched).copyWith(
-        selectedAlbum: album,
-        photos: null,
-      ));
-    }
+    emit((state as CameraRollStateFetched).copyWith(
+      selectedAlbum: album,
+      photos: null,
+    ));
 
     emit((state as CameraRollStateFetched).copyWith(
       photos: await _getPhotos(

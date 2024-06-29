@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'application/application.dart';
 import 'savie_app.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  configureDependencies();
+  await configureDependencies();
   runApp(const SavieApp());
 }
