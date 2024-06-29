@@ -615,6 +615,8 @@ class _ActiveRecordingButton extends StatelessWidget {
           scaleAnimationController.forward();
           horizontalSwipeAnimationController.reverse();
         }
+
+        verticalSwipeAnimationController.reverse();
       },
       recording: (_, __, ___, ____) {
         HapticFeedback.lightImpact();
