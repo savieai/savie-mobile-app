@@ -76,7 +76,8 @@ class _CameraRollPhotoListState extends State<_CameraRollPhotoList> {
 
   void _loadMoreData() {
     if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+        _scrollController.position.maxScrollExtent -
+            MediaQuery.sizeOf(context).height) {
       context.read<CameraRollCubit>().loadMore();
     }
   }
@@ -143,32 +144,28 @@ class _CameraRollPhotoItem extends StatelessWidget {
                   image: MemoryImage(photo.thumbnailData!),
                   gaplessPlayback: true,
                   fit: BoxFit.cover,
-                  loadingBuilder: (
-                    _,
-                    Widget child,
-                    ImageChunkEvent? loadingProgress,
-                  ) {
-                    if (loadingProgress == null) {
-                      return child;
-                    }
-
-                    return Container(
-                      color: AppColors.strokePrimaryAlpha,
+                  frameBuilder: (_, Widget child, int? frame, __) {
+                    return AnimatedCrossFade(
+                      firstChild: child,
+                      secondChild: Container(
+                        color: AppColors.strokePrimaryAlpha,
+                      ),
+                      crossFadeState: frame != null
+                          ? CrossFadeState.showFirst
+                          : CrossFadeState.showSecond,
+                      duration: const Duration(milliseconds: 150),
+                      layoutBuilder:
+                          (Widget topChild, _, Widget bottomChild, ___) {
+                        return Stack(
+                          fit: StackFit.expand,
+                          children: <Widget>[
+                            topChild,
+                            bottomChild,
+                          ],
+                        );
+                      },
                     );
                   },
-                  // frameBuilder: (
-                  //   context,
-                  //   child,
-                  //   frame,
-                  //   wasSynchronouslyLoaded,
-                  // ) {
-                  //   if (frame != null) {
-                  //     return child;
-                  //   }
-                  //   return Container(
-                  //     color: AppColors.strokePrimaryAlpha,
-                  //   );
-                  // },
                 ),
               ),
             _SelectionIndicator(
