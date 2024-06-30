@@ -61,7 +61,7 @@ class CameraRollCubit extends Cubit<CameraRollState> {
         (AssetEntity asset) async => CameraRollPhoto(
           assetEntity: asset,
           thumbnailData: await asset.thumbnailDataWithSize(
-            const ThumbnailSize(200, 200),
+            const ThumbnailSize(400, 400),
           ),
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../domain/domain.dart';
 import '../../../presentation.dart';
 import 'widget.dart';
 
@@ -9,6 +10,11 @@ class MessageListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final List<Message> messages = context.select<ChatCubit, List<Message>>(
+      (ChatCubit cubit) => cubit.state.messages,
+    );
+    final int length = messages.length;
+
     return CustomScrollView(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       reverse: true,
@@ -16,21 +22,16 @@ class MessageListView extends StatelessWidget {
         ...<Widget>[
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
           const WelcomeMessageListView(),
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-          BlocBuilder<ChatCubit, ChatState>(
-            builder: (BuildContext context, ChatState state) {
-              final int length = state.messages.length;
-
-              return SliverList.separated(
-                itemBuilder: (BuildContext context, int index) {
-                  return MessageView(
-                    message: state.messages[length - index - 1],
-                  );
-                },
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemCount: length,
+          if (length != 0)
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          SliverList.separated(
+            itemBuilder: (BuildContext context, int index) {
+              return MessageView(
+                message: messages[length - index - 1],
               );
             },
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemCount: length,
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 32)),
         ].reversed.map(

@@ -22,36 +22,43 @@ class MessageInputView extends StatefulWidget {
 
 class _MessageInputViewState extends State<MessageInputView> {
   final ValueNotifier<bool> _canRecordNotifier = ValueNotifier<bool>(true);
+  final FocusNode _textFocusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewPaddingOf(context).bottom,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.backgroundChatInput,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(24),
+    return TapRegion(
+      onTapOutside: (_) {
+        _textFocusNode.unfocus();
+      },
+      child: Container(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.viewPaddingOf(context).bottom,
         ),
-      ),
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        children: <Widget>[
-          _TextInputView(
-            canRecordNotifier: _canRecordNotifier,
+        decoration: const BoxDecoration(
+          color: AppColors.backgroundChatInput,
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(24),
           ),
-          Positioned.fill(
-            child: ValueListenableBuilder<bool>(
-              valueListenable: _canRecordNotifier,
-              builder: (BuildContext context, bool canRecord, _) {
-                return _AudioInputView(
-                  canRecord: canRecord,
-                );
-              },
+        ),
+        child: Stack(
+          alignment: Alignment.bottomCenter,
+          children: <Widget>[
+            _TextInputView(
+              canRecordNotifier: _canRecordNotifier,
+              focusNode: _textFocusNode,
             ),
-          ),
-        ],
+            Positioned.fill(
+              child: ValueListenableBuilder<bool>(
+                valueListenable: _canRecordNotifier,
+                builder: (BuildContext context, bool canRecord, _) {
+                  return _AudioInputView(
+                    canRecord: canRecord,
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -90,9 +97,11 @@ class SendButton extends StatelessWidget {
 class _TextInputView extends StatefulWidget {
   const _TextInputView({
     required this.canRecordNotifier,
+    required this.focusNode,
   });
 
   final ValueNotifier<bool> canRecordNotifier;
+  final FocusNode focusNode;
 
   @override
   State<_TextInputView> createState() => _TextInputViewState();
@@ -126,6 +135,7 @@ class _TextInputViewState extends State<_TextInputView> {
           applyHeightToLastDescent: false,
         ),
         child: CupertinoTextField(
+          focusNode: widget.focusNode,
           controller: _controller,
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
           autofocus: true,

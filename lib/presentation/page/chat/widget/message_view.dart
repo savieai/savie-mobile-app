@@ -77,7 +77,9 @@ class MediaMessageView extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<String> shownMediaPaths =
         message.mediaPaths.take(4).toList().reversed.toList();
-    final List<String> leftMediaPaths = message.mediaPaths.toList().sublist(4);
+    final List<String> leftMediaPaths = shownMediaPaths.length >= 4
+        ? message.mediaPaths.toList().sublist(4)
+        : <String>[];
 
     return GestureDetector(
       onTap: () {
@@ -117,24 +119,40 @@ class MediaMessageView extends StatelessWidget {
                         child: Transform.scale(
                           scale:
                               1 - (shownMediaPaths.length - index - 1) * 0.05,
-                          child: Container(
-                            height: 216,
-                            width: 180,
-                            clipBehavior: Clip.hardEdge,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: <BoxShadow>[
-                                BoxShadow(
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                  color: Colors.black.withOpacity(0.16),
-                                ),
-                              ],
-                            ),
-                            child: Hero(
-                              tag: path + message.id,
+                          child: Hero(
+                            tag: path + message.id,
+                            placeholderBuilder:
+                                (_, Size heroSize, Widget child) => child,
+                            flightShuttleBuilder: (
+                              BuildContext flightContext,
+                              Animation<double> animation,
+                              HeroFlightDirection flightDirection,
+                              BuildContext fromHeroContext,
+                              BuildContext toHeroContext,
+                            ) {
+                              // make hero more smoothly
+                              final Hero hero =
+                                  (flightDirection == HeroFlightDirection.push
+                                      ? fromHeroContext.widget
+                                      : toHeroContext.widget) as Hero;
+
+                              return hero.child;
+                            },
+                            child: Container(
+                              height: 216,
+                              width: 180,
+                              clipBehavior: Clip.hardEdge,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: <BoxShadow>[
+                                  BoxShadow(
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                    color: Colors.black.withOpacity(0.16),
+                                  ),
+                                ],
+                              ),
                               child: image,
-                              placeholderBuilder: (_, __, ___) => image,
                             ),
                           ),
                         ),
@@ -145,7 +163,10 @@ class MediaMessageView extends StatelessWidget {
                 ...leftMediaPaths.map((String path) {
                   return Hero(
                     tag: path + message.id,
-                    child: const SizedBox(),
+                    child: const SizedBox(
+                      height: 216,
+                      width: 180,
+                    ),
                   );
                 }),
               ],
