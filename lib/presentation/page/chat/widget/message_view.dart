@@ -121,22 +121,8 @@ class MediaMessageView extends StatelessWidget {
                               1 - (shownMediaPaths.length - index - 1) * 0.05,
                           child: Hero(
                             tag: path + message.id,
-                            placeholderBuilder:
-                                (_, Size heroSize, Widget child) => child,
-                            flightShuttleBuilder: (
-                              BuildContext flightContext,
-                              Animation<double> animation,
-                              HeroFlightDirection flightDirection,
-                              BuildContext fromHeroContext,
-                              BuildContext toHeroContext,
-                            ) {
-                              // make hero more smoothly
-                              final Hero hero =
-                                  (flightDirection == HeroFlightDirection.push
-                                      ? fromHeroContext.widget
-                                      : toHeroContext.widget) as Hero;
-
-                              return hero.child;
+                            placeholderBuilder: (_, __, Widget child) {
+                              return child;
                             },
                             child: Container(
                               height: 216,
@@ -163,10 +149,7 @@ class MediaMessageView extends StatelessWidget {
                 ...leftMediaPaths.map((String path) {
                   return Hero(
                     tag: path + message.id,
-                    child: const SizedBox(
-                      height: 216,
-                      width: 180,
-                    ),
+                    child: const SizedBox(),
                   );
                 }),
               ],

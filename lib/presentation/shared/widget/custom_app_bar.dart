@@ -18,21 +18,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Hero(
-      tag: 'custom_app_bar',
-      child: SafeArea(
-        bottom: false,
-        minimum: const EdgeInsets.symmetric(horizontal: 12),
-        child: NavigationToolbar(
-          leading: leading,
-          middle: DefaultTextStyle(
-            style: AppTextStyles.title2.copyWith(
-              color: AppColors.textPrimary,
-            ),
-            child: middle,
+    return SafeArea(
+      bottom: false,
+      minimum: const EdgeInsets.symmetric(horizontal: 12),
+      child: NavigationToolbar(
+        leading: leading,
+        middle: DefaultTextStyle(
+          style: AppTextStyles.title2.copyWith(
+            color: AppColors.textPrimary,
           ),
-          trailing: trailing,
+          child: middle,
         ),
+        trailing: trailing,
       ),
     );
   }
