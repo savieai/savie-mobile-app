@@ -7,8 +7,30 @@ import '../../presentation.dart';
 import 'widget/widget.dart';
 
 @RoutePage()
-class ChatPage extends StatelessWidget {
+class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
+
+  @override
+  State<ChatPage> createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final double topInset = _getTopInset();
+    if (context.read<ChatInsetsCubit>().state.top != topInset) {
+      context.read<ChatInsetsCubit>().updateTopInset(topInset);
+    }
+  }
+
+  double _getTopInset() =>
+      MediaQuery.paddingOf(context).top + CustomAppBar.preferredHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -21,12 +43,26 @@ class ChatPage extends StatelessWidget {
           create: (_) => getIt.get<RecordingCubit>(),
         ),
       ],
-      child: const Scaffold(
-        appBar: _ChatAppBar(),
+      child: Scaffold(
+        appBar: const _ChatAppBar(),
+        backgroundColor: AppColors.backgroundChatInput,
         body: Column(
           children: <Widget>[
-            Expanded(child: MessageListView()),
-            MessageInputView(),
+            Expanded(
+              child: LayoutListener(
+                onConstraintsChanged: (BoxConstraints constraints) {
+                  final double bottomInset = MediaQuery.sizeOf(context).height -
+                      _getTopInset() -
+                      constraints.maxHeight;
+
+                  context
+                      .read<ChatInsetsCubit>()
+                      .updateBottomInset(bottomInset);
+                },
+                child: const MessageListView(),
+              ),
+            ),
+            const MessageInputView(),
           ],
         ),
       ),

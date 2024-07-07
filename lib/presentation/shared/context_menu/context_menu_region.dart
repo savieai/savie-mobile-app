@@ -1,0 +1,403 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:status_bar_control/status_bar_control.dart';
+
+import '../../presentation.dart';
+
+class ContextMenuRegion extends StatefulWidget {
+  const ContextMenuRegion({
+    super.key,
+    required this.data,
+    required this.heroTag,
+    required this.builder,
+  });
+
+  final List<ContextMenuItemData> data;
+  final Widget Function(
+    BuildContext context,
+    ContextMenuState contextMenuState,
+  ) builder;
+  final String heroTag;
+
+  @override
+  State<ContextMenuRegion> createState() => _ContextMenuRegionState();
+}
+
+class _ContextMenuRegionState extends State<ContextMenuRegion>
+    with SingleTickerProviderStateMixin {
+  final GlobalKey _childKey = GlobalKey();
+
+  OverlayEntry? _overlayEntry;
+  late final AnimationController _overlayAnimationController;
+  late final Animation<double> _overlayAnimation;
+
+  late final ValueNotifier<double> _childBottomDyNotifier =
+      ValueNotifier<double>(0);
+
+  @override
+  void initState() {
+    super.initState();
+
+    _overlayAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _overlayAnimation = CurvedAnimation(
+      parent: _overlayAnimationController,
+      curve: Curves.linearToEaseOut,
+      reverseCurve: Curves.easeOut,
+    );
+  }
+
+  void _showOverlay() {
+    context.read<ContextMenuCubit>().setShown();
+    HapticFeedback.lightImpact();
+    StatusBarControl.setHidden(true, animation: StatusBarAnimation.FADE);
+
+    final RenderBox renderBox = context.findRenderObject()! as RenderBox;
+    Offset posiiton = renderBox.localToGlobal(Offset.zero);
+
+    const double minOffsetDy = 120;
+    final double maxOffset = MediaQuery.sizeOf(context).height -
+        widget.data.length * 40 -
+        renderBox.size.height -
+        MediaQuery.paddingOf(context).bottom -
+        20;
+
+    if (posiiton.dy < minOffsetDy) {
+      posiiton = posiiton.translate(0, minOffsetDy - posiiton.dy);
+    }
+
+    if (posiiton.dy > maxOffset) {
+      posiiton = posiiton.translate(0, maxOffset - posiiton.dy);
+    }
+
+    const double width = 218;
+
+    _childBottomDyNotifier.value = renderBox.size.height + posiiton.dy;
+
+    final double childWidth = renderBox.size.width;
+    final bool shouldAttachToRight = width > childWidth;
+
+    Navigator.push(
+      context,
+      PageRouteBuilder<dynamic>(
+        fullscreenDialog: true,
+        opaque: false,
+        barrierDismissible: true,
+        pageBuilder: (BuildContext context, Animation<double> animation, ___) {
+          return Material(
+            type: MaterialType.transparency,
+            child: Stack(
+              children: <Widget>[
+                AnimatedBuilder(
+                  animation: animation,
+                  builder: (BuildContext _, Widget? child) {
+                    return BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: 15.0 * animation.value,
+                        sigmaY: 15.0 * animation.value,
+                      ),
+                      child: child,
+                    );
+                  },
+                  child: Container(
+                    color: Colors.transparent,
+                  ),
+                ),
+                Positioned.fill(
+                  child: TapRegion(
+                    onTapInside: (PointerDownEvent event) {
+                      final RenderBox renderBox = _childKey.currentContext!
+                          .findRenderObject()! as RenderBox;
+                      final Size size = renderBox.size;
+                      final Offset offset =
+                          renderBox.localToGlobal(Offset.zero);
+                      final Offset tapPosition = event.position;
+
+                      final Offset delta = tapPosition - offset;
+
+                      final bool hit = delta.dx >= 0 &&
+                          delta.dx <= size.width &&
+                          delta.dy >= 0 &&
+                          delta.dy <= size.height;
+
+                      if (hit) {
+                        // TODO: on hit
+                      } else {
+                        _hideOverlay();
+                      }
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: const SizedBox(),
+                  ),
+                ),
+                Positioned(
+                  left: posiiton.dx,
+                  top: posiiton.dy,
+                  child: Hero(
+                    key: _childKey,
+                    tag: widget.heroTag,
+                    flightShuttleBuilder: flightShuttleBuilder,
+                    child: IgnorePointer(child: contrainedChild),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    // Setting up the autofill
+    _overlayEntry = OverlayEntry(
+      builder: (BuildContext overlayContext) {
+        return Material(
+          type: MaterialType.transparency,
+          child: Stack(
+            children: <Widget>[
+              ValueListenableBuilder<double>(
+                  valueListenable: _childBottomDyNotifier,
+                  builder: (BuildContext context, double value, _) {
+                    return Positioned(
+                      width: width,
+                      right: shouldAttachToRight ? 16 : null,
+                      left: shouldAttachToRight ? null : posiiton.dx,
+                      top: value + 4,
+                      child: FadeTransition(
+                        opacity: _overlayAnimation,
+                        child: ScaleTransition(
+                          scale: _overlayAnimation,
+                          alignment: shouldAttachToRight
+                              ? Alignment(
+                                  1 - renderBox.size.width / 2 / width, -1)
+                              : Alignment.topCenter,
+                          child: _ContextMenuListView(
+                            mainContext: context,
+                            data: widget.data,
+                            pop: _hideOverlay,
+                          ),
+                        ),
+                      ),
+                    );
+                  })
+            ],
+          ),
+        );
+      },
+    );
+
+    final OverlayState overlay = Overlay.of(context);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      overlay.insert(_overlayEntry!);
+    });
+
+    Future<void>.delayed(const Duration(milliseconds: 50), () {
+      _overlayAnimationController.forward();
+    });
+  }
+
+  void _hideOverlay() {
+    Future<void>.delayed(const Duration(milliseconds: 600), () {
+      context.read<ContextMenuCubit>().setNotShown();
+    });
+    StatusBarControl.setHidden(false, animation: StatusBarAnimation.FADE);
+    Navigator.of(context).pop();
+    _overlayAnimationController.reverse().then((_) {
+      setState(() {
+        _overlayEntry?.remove();
+        _overlayEntry = null;
+      });
+    });
+  }
+
+  Widget get contrainedChild => ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: (MediaQuery.of(context).size.width - 32) * 0.8,
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: BlocBuilder<ContextMenuCubit, ContextMenuState>(
+            builder: (BuildContext context, ContextMenuState state) {
+              return widget.builder(context, state);
+            },
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onLongPress: () {
+        _showOverlay();
+      },
+      child: BlocBuilder<ContextMenuCubit, ContextMenuState>(
+        builder: (BuildContext context, ContextMenuState state) {
+          return state == ContextMenuState.shown
+              ? Hero(
+                  tag: widget.heroTag,
+                  flightShuttleBuilder: flightShuttleBuilder,
+                  child: contrainedChild,
+                )
+              : contrainedChild;
+        },
+      ),
+    );
+  }
+
+  Widget flightShuttleBuilder(
+    BuildContext flightContext,
+    Animation<double> animation,
+    HeroFlightDirection flightDirection,
+    BuildContext fromHeroContext,
+    BuildContext toHeroContext,
+  ) {
+    animation.addListener(() {
+      if (!flightContext.mounted) {
+        return;
+      }
+
+      final RenderBox? flightRenderBox =
+          flightContext.findRenderObject() as RenderBox?;
+
+      if (flightRenderBox != null) {
+        final double bottom = flightRenderBox.size.height +
+            flightRenderBox.localToGlobal(Offset.zero).dy;
+        _childBottomDyNotifier.value = bottom;
+      }
+    });
+
+    return BlocBuilder<ChatInsetsCubit, EdgeInsets>(
+      builder: (_, EdgeInsets chatInsets) {
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (_, __) {
+            final RenderBox? renderBox =
+                flightContext.findRenderObject() as RenderBox? ??
+                    fromHeroContext.findRenderObject() as RenderBox?;
+
+            if (renderBox != null) {
+              final Offset offset = renderBox.localToGlobal(Offset.zero);
+
+              final double top = offset.dy;
+              final double maxTop = chatInsets.top;
+
+              final double bottom = offset.dy + renderBox.size.height;
+              final double maxBottom =
+                  MediaQuery.sizeOf(context).height - chatInsets.bottom;
+
+              return ClipRect(
+                clipper: TopBottomClipper(
+                  maxTop - top,
+                  (bottom - maxBottom) * (1 - animation.value),
+                ),
+                child: contrainedChild,
+              );
+            }
+            return contrainedChild;
+          },
+        );
+      },
+    );
+  }
+}
+
+class _ContextMenuListView extends StatelessWidget {
+  const _ContextMenuListView({
+    required this.mainContext,
+    required this.data,
+    required this.pop,
+  });
+
+  final BuildContext mainContext;
+  final List<ContextMenuItemData> data;
+  final VoidCallback pop;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.systemMenuBackground,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.strokeSecondaryAlpha),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              offset: const Offset(0, 6),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+            ),
+            BoxShadow(
+              offset: const Offset(0, -4),
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+            ),
+          ],
+        ),
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          itemCount: data.length,
+          shrinkWrap: true,
+          itemBuilder: (BuildContext context, int index) => _ContextMennuItem(
+            data: data[index],
+            onTap: () {
+              pop();
+            },
+          ),
+          separatorBuilder: (_, __) => Container(
+            height: 1,
+            color: AppColors.strokeSecondaryAlpha,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ContextMennuItem extends StatelessWidget {
+  const _ContextMennuItem({
+    required this.data,
+    required this.onTap,
+  });
+
+  final ContextMenuItemData data;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        height: 40,
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 16),
+        child: Row(
+          children: <Widget>[
+            data.icon.svg(
+              colorFilter: ColorFilter.mode(
+                data.color,
+                BlendMode.srcIn,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                data.title,
+                style: AppTextStyles.paragraph.copyWith(
+                  color: data.color,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

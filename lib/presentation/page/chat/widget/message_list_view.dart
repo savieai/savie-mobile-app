@@ -15,32 +15,35 @@ class MessageListView extends StatelessWidget {
     );
     final int length = messages.length;
 
-    return CustomScrollView(
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      reverse: true,
-      slivers: <Widget>[
-        ...<Widget>[
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-          const WelcomeMessageListView(),
-          if (length != 0)
+    return Container(
+      color: AppColors.backgroundPrimary,
+      child: CustomScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        reverse: true,
+        slivers: <Widget>[
+          ...<Widget>[
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-          SliverList.separated(
-            itemBuilder: (BuildContext context, int index) {
-              return MessageView(
-                message: messages[length - index - 1],
-              );
-            },
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemCount: length,
-          ),
-          const SliverToBoxAdapter(child: SizedBox(height: 32)),
-        ].reversed.map(
-              (Widget w) => SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                sliver: w,
-              ),
+            const WelcomeMessageListView(),
+            if (length != 0)
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverList.separated(
+              itemBuilder: (BuildContext context, int index) {
+                return MessageView(
+                  message: messages[length - index - 1],
+                );
+              },
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemCount: length,
             ),
-      ],
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+          ].reversed.map(
+                (Widget w) => SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  sliver: w,
+                ),
+              ),
+        ],
+      ),
     );
   }
 }

@@ -26,10 +26,8 @@ class _MessageInputViewState extends State<MessageInputView> {
 
   @override
   Widget build(BuildContext context) {
-    return TapRegion(
-      onTapOutside: (_) {
-        _textFocusNode.unfocus();
-      },
+    return Container(
+      color: AppColors.backgroundPrimary,
       child: Container(
         padding: EdgeInsets.only(
           bottom: MediaQuery.viewPaddingOf(context).bottom,

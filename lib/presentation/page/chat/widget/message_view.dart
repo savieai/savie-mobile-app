@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../domain/domain.dart';
@@ -27,38 +28,102 @@ class MessageView extends StatelessWidget {
         widthFactor: 0.8,
         child: Align(
           alignment: Alignment.centerRight,
-          child: message.mediaPaths.isNotEmpty
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: <Widget>[
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: 216 +
-                            (message.mediaPaths.length != 1 ? 32 : 0) -
-                            18,
-                      ),
-                      child: OverflowBox(
-                        maxHeight: double.infinity,
-                        alignment: Alignment.topRight,
-                        child: MediaMessageView(message: message),
-                      ),
-                    ),
-                    if (message.text?.isNotEmpty ?? false)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 3),
-                        child: TextMessageView(text: message.text ?? ''),
-                      )
-                    else
-                      const SizedBox(height: 18)
-                  ],
-                )
-              : message.audioMessage != null
-                  ? AudioMessageView(
-                      audioMessage: message.audioMessage!,
-                      key: Key(message.audioMessage!.path),
-                    )
-                  : TextMessageView(text: message.text ?? ''),
+          child: ContextMenuRegion(
+            heroTag: '${message.id}_context_menu',
+            data: <ContextMenuItemData>[
+              ContextMenuItemData(
+                title: 'Edit',
+                icon: Assets.icons.edit16,
+                color: AppColors.textPrimary,
+                onTap: () {},
+              ),
+              ContextMenuItemData(
+                title: 'Copy',
+                icon: Assets.icons.copy16,
+                color: AppColors.textPrimary,
+                onTap: () {},
+              ),
+              ContextMenuItemData(
+                title: 'Pin',
+                icon: Assets.icons.pin16,
+                color: AppColors.textPrimary,
+                onTap: () {},
+              ),
+              ContextMenuItemData(
+                title: 'Unpin',
+                icon: Assets.icons.unpin16,
+                color: AppColors.textPrimary,
+                onTap: () {},
+              ),
+              ContextMenuItemData(
+                title: 'Save',
+                icon: Assets.icons.download16,
+                color: AppColors.textPrimary,
+                onTap: () {},
+              ),
+              ContextMenuItemData(
+                title: 'Save all (8)',
+                icon: Assets.icons.download16,
+                color: AppColors.textPrimary,
+                onTap: () {},
+              ),
+              ContextMenuItemData(
+                title: 'Delete',
+                icon: Assets.icons.delete16,
+                color: AppColors.iconNegative,
+                onTap: () {},
+              ),
+            ],
+            builder: (
+              BuildContext context,
+              ContextMenuState contextMenuState,
+            ) =>
+                message.mediaPaths.isNotEmpty
+                    ? message.text?.isNotEmpty ?? false
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: <Widget>[
+                              ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxHeight: 216 +
+                                      (message.mediaPaths.length != 1
+                                          ? 32
+                                          : 0) -
+                                      18,
+                                ),
+                                child: OverflowBox(
+                                  maxHeight: double.infinity,
+                                  fit: OverflowBoxFit.deferToChild,
+                                  child: MediaMessageView(
+                                    message: message,
+                                    menuContextShown: contextMenuState ==
+                                        ContextMenuState.shown,
+                                  ),
+                                ),
+                              ),
+                              if (message.text?.isNotEmpty ?? false)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 3),
+                                  child:
+                                      TextMessageView(text: message.text ?? ''),
+                                )
+                              else
+                                const SizedBox(height: 18)
+                            ],
+                          )
+                        : MediaMessageView(
+                            message: message,
+                            menuContextShown:
+                                contextMenuState == ContextMenuState.shown,
+                          )
+                    : message.audioMessage != null
+                        ? AudioMessageView(
+                            audioMessage: message.audioMessage!,
+                            key: Key(message.audioMessage!.path),
+                          )
+                        : TextMessageView(text: message.text ?? ''),
+          ),
         ),
       ),
     );
@@ -69,9 +134,16 @@ class MediaMessageView extends StatelessWidget {
   const MediaMessageView({
     super.key,
     required this.message,
+    required this.menuContextShown,
   });
 
   final Message message;
+  final bool menuContextShown;
+
+  String get heroTag => shownMediaPaths.first + message.id;
+
+  List<String> get shownMediaPaths =>
+      message.mediaPaths.take(4).toList().reversed.toList();
 
   @override
   Widget build(BuildContext context) {
@@ -108,6 +180,25 @@ class MediaMessageView extends StatelessWidget {
                       fit: BoxFit.cover,
                     );
 
+                    final Widget child = Container(
+                      height: 216,
+                      width: 180,
+                      clipBehavior: Clip.hardEdge,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                            color: Colors.black.withOpacity(0.16),
+                          ),
+                        ],
+                      ),
+                      child: image,
+                    );
+
+                    final bool isMain = shownMediaPaths.length - index - 1 == 0;
+
                     return Padding(
                       padding: EdgeInsets.only(right: index * 8),
                       child: Transform.rotate(
@@ -119,44 +210,96 @@ class MediaMessageView extends StatelessWidget {
                         child: Transform.scale(
                           scale:
                               1 - (shownMediaPaths.length - index - 1) * 0.05,
-                          child: Hero(
-                            tag: path + message.id,
-                            placeholderBuilder: (_, __, Widget child) {
-                              return child;
-                            },
-                            child: Container(
-                              height: 216,
-                              width: 180,
-                              clipBehavior: Clip.hardEdge,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(24),
-                                boxShadow: <BoxShadow>[
-                                  BoxShadow(
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4),
-                                    color: Colors.black.withOpacity(0.16),
-                                  ),
-                                ],
-                              ),
-                              child: image,
-                            ),
-                          ),
+                          child: menuContextShown
+                              ? child
+                              : Hero(
+                                  tag: path + message.id,
+                                  flightShuttleBuilder: isMain
+                                      // ignore: always_specify_types
+                                      ? (p1, p2, p3, p4, p5) {
+                                          return _flightShuttleBilder(
+                                              p1, p2, p3, p4, p5,
+                                              child: child);
+                                        }
+                                      : null,
+                                  placeholderBuilder: (
+                                    _,
+                                    Size size,
+                                    Widget child,
+                                  ) {
+                                    return isMain
+                                        ? SizedBox(
+                                            height: size.height,
+                                            width: size.width,
+                                          )
+                                        : child;
+                                  },
+                                  child: child,
+                                ),
                         ),
                       ),
                     );
                   },
                 ),
-                ...leftMediaPaths.map((String path) {
-                  return Hero(
-                    tag: path + message.id,
-                    child: const SizedBox(),
-                  );
-                }),
+                if (!menuContextShown)
+                  ...leftMediaPaths.map((String path) {
+                    return Hero(
+                      tag: path + message.id,
+                      child: const SizedBox(),
+                    );
+                  }),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _flightShuttleBilder(
+    BuildContext flightContext,
+    Animation<double> animation,
+    HeroFlightDirection flightDirection,
+    BuildContext fromHeroContext,
+    BuildContext toHeroContext, {
+    required Widget child,
+  }) {
+    return BlocBuilder<ChatInsetsCubit, EdgeInsets>(
+      builder: (BuildContext context, EdgeInsets chatInsets) {
+        return AnimatedBuilder(
+          animation: animation,
+          builder: (BuildContext context, _) {
+            final RenderBox? renderBox =
+                flightContext.findRenderObject() as RenderBox?;
+
+            if (renderBox != null) {
+              final RenderBox? renderBox =
+                  flightContext.findRenderObject() as RenderBox?;
+
+              if (renderBox != null) {
+                final Offset offset = renderBox.localToGlobal(Offset.zero);
+
+                final double top = offset.dy;
+                final double maxTop = chatInsets.top;
+
+                final double bottom = offset.dy + renderBox.size.height;
+                final double maxBottom =
+                    MediaQuery.sizeOf(context).height - chatInsets.bottom;
+
+                return ClipRect(
+                  clipper: TopBottomClipper(
+                    (maxTop - top) * (1 - animation.value),
+                    (bottom - maxBottom) * (1 - animation.value),
+                  ),
+                  child: child,
+                );
+              }
+            }
+
+            return child;
+          },
+        );
+      },
     );
   }
 }
