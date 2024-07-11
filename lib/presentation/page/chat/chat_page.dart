@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../application/application.dart';
 import '../../presentation.dart';
+import '../../router/app_router.gr.dart';
 import 'widget/widget.dart';
 
 @RoutePage()
@@ -84,7 +85,9 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
       trailing: CustomIconButton(
         svgGenImage: Assets.icons.search24,
         color: AppColors.iconSecodary,
-        onTap: null,
+        onTap: () {
+          context.router.push(const SearchRoute());
+        },
       ),
       middle: const Text('Today'),
     );

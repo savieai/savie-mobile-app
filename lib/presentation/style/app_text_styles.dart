@@ -48,4 +48,12 @@ sealed class AppTextStyles {
     height: 24 / 18,
     letterSpacing: -0.4,
   );
+
+  static const TextStyle description = TextStyle(
+    fontFamily: 'SF Mono',
+    fontWeight: FontWeight.w600,
+    fontSize: 12,
+    height: 14 / 12,
+    letterSpacing: -0.4,
+  );
 }

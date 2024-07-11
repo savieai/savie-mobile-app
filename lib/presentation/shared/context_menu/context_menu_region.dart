@@ -292,7 +292,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
 
               return ClipRect(
                 clipper: TopBottomClipper(
-                  maxTop - top,
+                  (maxTop - top) * (1 - animation.value),
                   (bottom - maxBottom) * (1 - animation.value),
                 ),
                 child: contrainedChild,

@@ -337,7 +337,7 @@ class _ImageCountLabel extends StatelessWidget {
   }
 }
 
-class AudioMessageView extends StatefulWidget {
+class AudioMessageView extends StatelessWidget {
   const AudioMessageView({
     super.key,
     required this.audioMessage,
@@ -346,10 +346,34 @@ class AudioMessageView extends StatefulWidget {
   final AudioMessage audioMessage;
 
   @override
-  State<AudioMessageView> createState() => _AudioMessageViewState();
+  Widget build(BuildContext context) {
+    return _MessageContainer(
+      child: AudioView(
+        audioMessage: audioMessage,
+        expand: false,
+        previewInfo: false,
+      ),
+    );
+  }
 }
 
-class _AudioMessageViewState extends State<AudioMessageView> {
+class AudioView extends StatefulWidget {
+  const AudioView({
+    super.key,
+    required this.audioMessage,
+    required this.expand,
+    required this.previewInfo,
+  });
+
+  final AudioMessage audioMessage;
+  final bool expand;
+  final bool previewInfo;
+
+  @override
+  State<AudioView> createState() => _AudioViewState();
+}
+
+class _AudioViewState extends State<AudioView> {
   late final Duration _totalDuration = Duration(
     seconds: widget.audioMessage.seconds,
   );
@@ -360,16 +384,6 @@ class _AudioMessageViewState extends State<AudioMessageView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_peeks == null) {
-      final int projectedPeeksLength =
-          (widget.audioMessage.seconds * 2).clamp(10, 60);
-      final double maxSpace =
-          (MediaQuery.sizeOf(context).width - 20 * 2) * 0.8 - 67 - 80;
-      // TODO: calculate text instead of 80;
-      final int maxPeeksLength = maxSpace ~/ 4;
-      final int acutalPeeksLength = min(maxPeeksLength, projectedPeeksLength);
-      _peeks = resample(widget.audioMessage.peeks, acutalPeeksLength);
-    }
 
     final PlayerState state = context.read<PlayerCubit>().state;
     _updateVariables(state);
@@ -385,31 +399,54 @@ class _AudioMessageViewState extends State<AudioMessageView> {
     }
   }
 
+  void _calculatePeeksIfNeeded(double maxWidth) {
+    if (_peeks == null) {
+      if (widget.expand) {
+        final int peeksLength = maxWidth ~/ 4;
+        _peeks = resample(widget.audioMessage.peeks, peeksLength);
+      } else {
+        final int projectedPeeksLength =
+            (widget.audioMessage.seconds * 2).clamp(10, 60);
+        final double maxSpace =
+            (MediaQuery.sizeOf(context).width - 20 * 2) * 0.8 - 67 - 80;
+        // TODO: calculate text instead of 80;
+        final int maxPeeksLength = maxSpace ~/ 4;
+        final int acutalPeeksLength = min(maxPeeksLength, projectedPeeksLength);
+        _peeks = resample(widget.audioMessage.peeks, acutalPeeksLength);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final Widget waveForms = SizedBox(
-      height: 20,
-      child: ListView.separated(
-        itemCount: _peeks!.length,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        scrollDirection: Axis.horizontal,
-        itemBuilder: (BuildContext context, int index) {
-          return FractionallySizedBox(
-            heightFactor: max(_peeks![index], 0.1),
-            child: Container(
-              width: 2,
-              decoration: BoxDecoration(
-                color: AppColors.voiceTint,
-                borderRadius: BorderRadius.circular(1),
-              ),
-            ),
-          );
-        },
-        separatorBuilder: (BuildContext context, int index) {
-          return const SizedBox(width: 2);
-        },
-      ),
+    final Widget waveForms = LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        _calculatePeeksIfNeeded(constraints.maxWidth);
+        return SizedBox(
+          height: 20,
+          child: ListView.separated(
+            itemCount: _peeks!.length,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            scrollDirection: Axis.horizontal,
+            itemBuilder: (BuildContext context, int index) {
+              return FractionallySizedBox(
+                heightFactor: max(_peeks![index], 0.1),
+                child: Container(
+                  width: 2,
+                  decoration: BoxDecoration(
+                    color: AppColors.voiceTint,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+              );
+            },
+            separatorBuilder: (BuildContext context, int index) {
+              return const SizedBox(width: 2);
+            },
+          ),
+        );
+      },
     );
 
     return BlocListener<PlayerCubit, PlayerState>(
@@ -418,47 +455,72 @@ class _AudioMessageViewState extends State<AudioMessageView> {
       },
       listenWhen: (_, PlayerState current) =>
           current.audio?.audioPath == widget.audioMessage.path,
-      child: _MessageContainer(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            GestureDetector(
-              onTap: () =>
-                  context.read<PlayerCubit>().toggleAudio(widget.audioMessage),
-              child: Container(
-                height: 40,
-                width: 40,
-                decoration: const BoxDecoration(
-                  color: AppColors.backgroundChatVoice,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: _isPlaying
-                    ? Assets.icons.pause16.svg()
-                    : Assets.icons.play20.svg(),
+      child: Row(
+        mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
+        children: <Widget>[
+          GestureDetector(
+            onTap: () =>
+                context.read<PlayerCubit>().toggleAudio(widget.audioMessage),
+            child: Container(
+              height: 40,
+              width: 40,
+              decoration: const BoxDecoration(
+                color: AppColors.backgroundChatVoice,
+                shape: BoxShape.circle,
               ),
+              alignment: Alignment.center,
+              child: _isPlaying
+                  ? Assets.icons.pause16.svg()
+                  : Assets.icons.play20.svg(),
             ),
-            const SizedBox(width: 11),
-            Stack(
-              children: <Widget>[
-                waveForms,
-                Positioned.fill(
-                  child: FractionallySizedBox(
-                    widthFactor: (_currentDuration.inMilliseconds /
-                            _totalDuration.inMilliseconds)
-                        .clamp(0, 1),
-                    alignment: Alignment.centerLeft,
-                    child: ColorFiltered(
-                      colorFilter: const ColorFilter.mode(
-                        AppColors.backgroundChatVoice,
-                        BlendMode.srcATop,
-                      ),
-                      child: waveForms,
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            flex: widget.expand ? 1 : 0,
+            child: widget.previewInfo
+                ? SizedBox(
+                    height: 40,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'June 14, 2024 at 20:21',
+                          style: AppTextStyles.callout.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '0:44',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
+                  )
+                : Stack(
+                    children: <Widget>[
+                      waveForms,
+                      Positioned.fill(
+                        child: FractionallySizedBox(
+                          widthFactor: (_currentDuration.inMilliseconds /
+                                  _totalDuration.inMilliseconds)
+                              .clamp(0, 1),
+                          alignment: Alignment.centerLeft,
+                          child: ColorFiltered(
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.backgroundChatVoice,
+                              BlendMode.srcATop,
+                            ),
+                            child: waveForms,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
+          ),
+          if (!widget.previewInfo) ...<Widget>[
             const SizedBox(width: 7),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -474,7 +536,7 @@ class _AudioMessageViewState extends State<AudioMessageView> {
               ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }

@@ -34,6 +34,9 @@ class AppRouter extends $AppRouter {
           fullscreenDialog: true,
           opaque: false,
           barrierColor: Colors.transparent,
-        )
+        ),
+        AutoRoute(
+          page: SearchRoute.page,
+        ),
       ];
 }
