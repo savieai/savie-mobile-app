@@ -64,15 +64,17 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     final double maxOffset = MediaQuery.sizeOf(context).height -
         widget.data.length * 40 -
         renderBox.size.height -
-        MediaQuery.paddingOf(context).bottom -
-        20;
+        30;
 
     if (posiiton.dy < minOffsetDy) {
       posiiton = posiiton.translate(0, minOffsetDy - posiiton.dy);
     }
 
     if (posiiton.dy > maxOffset) {
-      posiiton = posiiton.translate(0, maxOffset - posiiton.dy);
+      posiiton = posiiton.translate(
+        0,
+        maxOffset - posiiton.dy - 30,
+      );
     }
 
     const double width = 218;
@@ -290,14 +292,27 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
               final double maxBottom =
                   MediaQuery.sizeOf(context).height - chatInsets.bottom;
 
+              final Widget unconstrainedChild = OverflowBox(
+                maxWidth: renderBox.size.width + 40,
+                maxHeight: renderBox.size.height + 40,
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: contrainedChild,
+                ),
+              );
+
+              final double dyTop = maxTop - top;
+              final double dyBottom = bottom - maxBottom;
+
               return ClipRect(
                 clipper: TopBottomClipper(
-                  (maxTop - top) * (1 - animation.value),
-                  (bottom - maxBottom) * (1 - animation.value),
+                  dyTop > 0 ? dyTop * (1 - animation.value) : null,
+                  dyBottom > 0 ? dyBottom * (1 - animation.value) : null,
                 ),
-                child: contrainedChild,
+                child: unconstrainedChild,
               );
             }
+
             return contrainedChild;
           },
         );

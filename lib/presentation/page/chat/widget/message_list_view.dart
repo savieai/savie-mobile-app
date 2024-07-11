@@ -38,7 +38,7 @@ class MessageListView extends StatelessWidget {
             const SliverToBoxAdapter(child: SizedBox(height: 32)),
           ].reversed.map(
                 (Widget w) => SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 22),
                   sliver: w,
                 ),
               ),

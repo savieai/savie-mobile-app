@@ -3,12 +3,17 @@ import 'package:flutter/widgets.dart';
 class TopBottomClipper extends CustomClipper<Rect> {
   const TopBottomClipper(this.dyTop, this.dyBottom);
 
-  final double dyTop;
-  final double dyBottom;
+  final double? dyTop;
+  final double? dyBottom;
 
   @override
   Rect getClip(Size size) {
-    return Rect.fromLTRB(0, dyTop, size.width, size.height - dyBottom);
+    return Rect.fromLTRB(
+      -20,
+      dyTop ?? -20,
+      size.width + 20,
+      size.height - (dyBottom ?? -20),
+    );
   }
 
   @override
