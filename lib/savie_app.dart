@@ -17,7 +17,9 @@ class SavieApp extends StatelessWidget {
         BlocProvider<ChatInsetsCubit>(create: (_) => ChatInsetsCubit()),
       ],
       child: MaterialApp.router(
-        routerConfig: getIt.get<AppRouter>().config(),
+        routerConfig: getIt.get<AppRouter>().config(
+              navigatorObservers: () => <NavigatorObserver>[HeroController()],
+            ),
         theme: ThemeData(
           scaffoldBackgroundColor: AppColors.backgroundPrimary,
         ),
