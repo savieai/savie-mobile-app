@@ -21,22 +21,30 @@ class AppRouter extends $AppRouter {
           guards: <AutoRouteGuard>[_onboardingGuard],
           page: OnboardingdRoute.page,
         ),
-        CustomRoute(
-          page: ChatRoute.page,
-          customRouteBuilder: RouteBuilders.materialWithModalsBuilder,
-        ),
-        CustomRoute(
-          page: CameraRollRoute.page,
-          customRouteBuilder: RouteBuilders.modalBottomSheet,
-        ),
-        CustomRoute(
-          page: PhotoCarouselRoute.page,
-          fullscreenDialog: true,
-          opaque: false,
-          barrierColor: Colors.transparent,
+        AutoRoute(
+          page: EmptyRoute.page,
+          children: <AutoRoute>[
+            CustomRoute(
+              page: ChatRoute.page,
+              customRouteBuilder: RouteBuilders.materialWithModalsBuilder,
+            ),
+            CustomRoute(
+              page: CameraRollRoute.page,
+              customRouteBuilder: RouteBuilders.modalBottomSheet,
+            ),
+            CustomRoute(
+              page: PhotoCarouselRoute.page,
+              fullscreenDialog: true,
+              opaque: false,
+              barrierColor: Colors.transparent,
+            ),
+          ],
         ),
         AutoRoute(
           page: SearchRoute.page,
+        ),
+        AutoRoute(
+          page: ProfileRoute.page,
         ),
       ];
 }

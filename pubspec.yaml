@@ -38,6 +38,7 @@ dependencies:
   photo_view: ^0.15.0
   status_bar_control: ^3.2.1
   flutter_sticky_header: ^0.6.5
+  supabase_flutter: ^2.5.8
 
 dev_dependencies:
   flutter_test:

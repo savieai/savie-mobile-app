@@ -80,7 +80,9 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: CustomIconButton(
         svgGenImage: Assets.icons.user24,
         color: AppColors.iconSecodary,
-        onTap: null,
+        onTap: () {
+          context.router.push(const ProfileRoute());
+        },
       ),
       trailing: CustomIconButton(
         svgGenImage: Assets.icons.search24,
