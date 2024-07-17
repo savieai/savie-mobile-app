@@ -2,7 +2,6 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../application/application.dart';
 import '../../presentation.dart';
 import '../../router/app_router.gr.dart';
 import 'widget/widget.dart';
@@ -35,37 +34,25 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: <BlocProvider<void>>[
-        BlocProvider<ChatCubit>(
-          create: (_) => getIt.get<ChatCubit>(),
-        ),
-        BlocProvider<RecordingCubit>(
-          create: (_) => getIt.get<RecordingCubit>(),
-        ),
-      ],
-      child: Scaffold(
-        appBar: const _ChatAppBar(),
-        backgroundColor: AppColors.backgroundChatInput,
-        body: Column(
-          children: <Widget>[
-            Expanded(
-              child: LayoutListener(
-                onConstraintsChanged: (BoxConstraints constraints) {
-                  final double bottomInset = MediaQuery.sizeOf(context).height -
-                      _getTopInset() -
-                      constraints.maxHeight;
+    return Scaffold(
+      appBar: const _ChatAppBar(),
+      backgroundColor: AppColors.backgroundChatInput,
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            child: LayoutListener(
+              onConstraintsChanged: (BoxConstraints constraints) {
+                final double bottomInset = MediaQuery.sizeOf(context).height -
+                    _getTopInset() -
+                    constraints.maxHeight;
 
-                  context
-                      .read<ChatInsetsCubit>()
-                      .updateBottomInset(bottomInset);
-                },
-                child: const MessageListView(),
-              ),
+                context.read<ChatInsetsCubit>().updateBottomInset(bottomInset);
+              },
+              child: const MessageListView(),
             ),
-            const MessageInputView(),
-          ],
-        ),
+          ),
+          const MessageInputView(),
+        ],
       ),
     );
   }

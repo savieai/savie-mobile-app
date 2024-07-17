@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../presentation.dart';
 
@@ -22,7 +24,8 @@ class ProfilePage extends StatelessWidget {
       body: Column(
         children: <Widget>[
           _ProfileTile(
-            title: 'kropotkin.danila@gmail.com',
+            title:
+                Supabase.instance.client.auth.currentSession!.user.email ?? '',
             icon: Assets.icons.user24,
             color: AppColors.textPrimary,
             onTap: null,
@@ -45,7 +48,7 @@ class ProfilePage extends StatelessWidget {
             title: 'Log out',
             icon: Assets.icons.logOut24,
             color: AppColors.iconNegative,
-            onTap: () {},
+            onTap: context.read<AuthCubit>().logOut,
           ),
           const Spacer(),
           Text(
@@ -136,6 +139,8 @@ class _ProfileSeparator extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Divider(
       height: 4,
+      indent: 16,
+      endIndent: 16,
       thickness: 1,
       color: AppColors.strokePrimaryAlpha,
     );

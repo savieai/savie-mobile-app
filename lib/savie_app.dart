@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'application/application.dart';
-import 'presentation/cubit/player_cubit/player_cubit.dart';
 import 'presentation/presentation.dart';
 
 class SavieApp extends StatelessWidget {
@@ -12,9 +11,9 @@ class SavieApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: <BlocProvider<void>>[
-        BlocProvider<PlayerCubit>.value(value: getIt.get<PlayerCubit>()),
-        BlocProvider<ContextMenuCubit>(create: (_) => ContextMenuCubit()),
-        BlocProvider<ChatInsetsCubit>(create: (_) => ChatInsetsCubit()),
+        BlocProvider<AuthStatusCubit>.value(
+          value: getIt.get<AuthStatusCubit>(),
+        ),
       ],
       child: MaterialApp.router(
         routerConfig: getIt.get<AppRouter>().config(
@@ -23,11 +22,6 @@ class SavieApp extends StatelessWidget {
         theme: ThemeData(
           scaffoldBackgroundColor: AppColors.backgroundPrimary,
         ),
-        builder: (BuildContext context, Widget? child) {
-          return ContextMenuListener(
-            child: child ?? const SizedBox(),
-          );
-        },
       ),
     );
   }

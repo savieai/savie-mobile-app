@@ -11,7 +11,7 @@ import '../../../domain/domain.dart';
 part 'player_state.dart';
 part 'player_cubit.freezed.dart';
 
-@Singleton()
+@Injectable()
 class PlayerCubit extends Cubit<PlayerState> {
   PlayerCubit() : super(PlayerState(audio: null)) {
     _nativeStateSubscription = _player.onPlayerStateChanged.listen(

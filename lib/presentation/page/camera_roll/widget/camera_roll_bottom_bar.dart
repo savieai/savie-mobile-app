@@ -1,8 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../application/application.dart';
 import '../../../presentation.dart';
 
 class CameraRollBottomBar extends StatelessWidget {
@@ -59,10 +59,12 @@ class CameraRollBottomBar extends StatelessWidget {
       return;
     }
 
-    getIt.get<ChatCubit>().sendMessage(
-          mediaPaths:
-              result.files.map((PlatformFile e) => e.path).nonNulls.toList(),
-        );
+    if (context.mounted) {
+      context.read<ChatCubit>().sendMessage(
+            mediaPaths:
+                result.files.map((PlatformFile e) => e.path).nonNulls.toList(),
+          );
+    }
   }
 }
 

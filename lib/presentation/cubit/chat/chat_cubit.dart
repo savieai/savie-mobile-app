@@ -8,7 +8,7 @@ import '../../../domain/domain.dart';
 part 'chat_state.dart';
 part 'chat_cubit.freezed.dart';
 
-@Singleton()
+@Injectable()
 class ChatCubit extends Cubit<ChatState> {
   ChatCubit() : super(const ChatState(messages: <Message>[]));
 

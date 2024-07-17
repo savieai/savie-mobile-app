@@ -14,7 +14,7 @@ import '../../../domain/domain.dart';
 part 'recording_state.dart';
 part 'recording_cubit.freezed.dart';
 
-@Singleton()
+@Injectable()
 class RecordingCubit extends Cubit<RecordingState> {
   RecordingCubit()
       : super(RecordingState.idle(
