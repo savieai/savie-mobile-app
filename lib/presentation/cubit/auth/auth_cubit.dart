@@ -37,6 +37,25 @@ class AuthCubit extends Cubit<AuthState> {
     emit(_authStatusToState(result));
   }
 
+  /// Emits [LoggingIn] state
+  ///
+  /// Email submission logic is handled by [OTPCubit]
+  Future<void> initiateEmailSignIn() async {
+    if (state is! LoggedOut) {
+      return;
+    }
+
+    emit(const AuthState.loggingIn());
+  }
+
+  /// Emits [LoggedOut] or [LoggedIn] state, based on [result]
+  /// which is produced by [OTPCubit]
+  Future<void> closeEmailSingIn({
+    required bool result,
+  }) async {
+    emit(_authStatusToState(result));
+  }
+
   Future<void> logOut() async {
     emit(const AuthState.loggingOut());
     await _authRepository.logout();

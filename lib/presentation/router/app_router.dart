@@ -14,11 +14,11 @@ class AppRouter extends $AppRouter {
   @override
   List<AutoRoute> get routes => <AutoRoute>[
         AutoRoute(
-          page: AuthWrapperRoute.page,
+          page: AuthWrapperFlowRoute.page,
           initial: true,
           children: <AutoRoute>[
             AutoRoute(
-              page: AppRoute.page,
+              page: AppFlowRoute.page,
               children: <AutoRoute>[
                 AutoRoute(
                   initial: true,
@@ -50,7 +50,27 @@ class AppRouter extends $AppRouter {
                 ),
               ],
             ),
-            AutoRoute(page: OnboardingdRoute.page),
+            AutoRoute(
+              page: OnboardingFlowRoute.page,
+              children: <AutoRoute>[
+                AutoRoute(
+                  initial: true,
+                  page: WelcomeRoute.page,
+                ),
+                AutoRoute(
+                  page: OtpFlowRoute.page,
+                  children: <AutoRoute>[
+                    AutoRoute(
+                      initial: true,
+                      page: OtpSubmissionRoute.page,
+                    ),
+                    AutoRoute(
+                      page: OtpConfirmationRoute.page,
+                    ),
+                  ],
+                )
+              ],
+            ),
           ],
         ),
       ];

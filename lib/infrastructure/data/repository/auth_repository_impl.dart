@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
+import 'package:either_dart/either.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -11,30 +12,66 @@ import '../../../domain/domain.dart';
 @Singleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
   @override
-  Future<bool> signInWithApple() async {
-    final String rawNonce = Supabase.instance.client.auth.generateRawNonce();
-    final String hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+  Future<Either<String, void>> requestOtp({
+    required String email,
+  }) async {
+    try {
+      await Supabase.instance.client.auth.signInWithOtp(
+        email: email,
+      );
+      return const Right<String, void>(null);
+    } on AuthException catch (e) {
+      return Left<String, void>(e.message);
+    }
+  }
 
-    final AuthorizationCredentialAppleID credential =
-        await SignInWithApple.getAppleIDCredential(
-      scopes: <AppleIDAuthorizationScopes>[
-        AppleIDAuthorizationScopes.email,
-      ],
-      nonce: hashedNonce,
-    );
-
-    final String? idToken = credential.identityToken;
-    if (idToken == null) {
+  @override
+  Future<bool> signInWithEmail({
+    required String email,
+    required String otp,
+  }) async {
+    try {
+      await Supabase.instance.client.auth.verifyOTP(
+        email: email,
+        token: otp,
+        type: OtpType.email,
+      );
+      return getAuthStatus();
+    } catch (_) {
       return false;
     }
+  }
 
-    await Supabase.instance.client.auth.signInWithIdToken(
-      provider: OAuthProvider.apple,
-      idToken: idToken,
-      nonce: rawNonce,
-    );
+  @override
+  Future<bool> signInWithApple() async {
+    try {
+      final String rawNonce = Supabase.instance.client.auth.generateRawNonce();
+      final String hashedNonce =
+          sha256.convert(utf8.encode(rawNonce)).toString();
 
-    return getAuthStatus();
+      final AuthorizationCredentialAppleID credential =
+          await SignInWithApple.getAppleIDCredential(
+        scopes: <AppleIDAuthorizationScopes>[
+          AppleIDAuthorizationScopes.email,
+        ],
+        nonce: hashedNonce,
+      );
+
+      final String? idToken = credential.identityToken;
+      if (idToken == null) {
+        return false;
+      }
+
+      await Supabase.instance.client.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+
+      return getAuthStatus();
+    } catch (_) {
+      return false;
+    }
   }
 
   @override
