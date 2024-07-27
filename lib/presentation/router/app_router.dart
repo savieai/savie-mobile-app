@@ -17,61 +17,67 @@ class AppRouter extends $AppRouter {
           page: AuthWrapperFlowRoute.page,
           initial: true,
           children: <AutoRoute>[
-            AutoRoute(
-              page: AppFlowRoute.page,
-              children: <AutoRoute>[
-                AutoRoute(
-                  initial: true,
-                  page: EmptyRoute.page,
-                  children: <AutoRoute>[
-                    CustomRoute(
-                      initial: true,
-                      page: ChatRoute.page,
-                      customRouteBuilder:
-                          RouteBuilders.materialWithModalsBuilder,
-                    ),
-                    CustomRoute(
-                      page: CameraRollRoute.page,
-                      customRouteBuilder: RouteBuilders.modalBottomSheet,
-                    ),
-                    CustomRoute(
-                      page: PhotoCarouselRoute.page,
-                      fullscreenDialog: true,
-                      opaque: false,
-                      barrierColor: Colors.transparent,
-                    ),
-                  ],
-                ),
-                AutoRoute(
-                  page: SearchRoute.page,
-                ),
-                AutoRoute(
-                  page: ProfileRoute.page,
-                ),
-              ],
-            ),
-            AutoRoute(
-              page: OnboardingFlowRoute.page,
-              children: <AutoRoute>[
-                AutoRoute(
-                  initial: true,
-                  page: WelcomeRoute.page,
-                ),
-                AutoRoute(
-                  page: OtpFlowRoute.page,
-                  children: <AutoRoute>[
-                    AutoRoute(
-                      initial: true,
-                      page: OtpSubmissionRoute.page,
-                    ),
-                    AutoRoute(
-                      page: OtpConfirmationRoute.page,
-                    ),
-                  ],
-                )
-              ],
-            ),
+            _appFlow,
+            _onboardingFlow,
+            AutoRoute(page: EnterReferralCodeRoute.page),
           ],
         ),
       ];
+
+  late final AutoRoute _appFlow = AutoRoute(
+    page: AppFlowRoute.page,
+    children: <AutoRoute>[
+      _chatFlow,
+      AutoRoute(
+        page: SearchRoute.page,
+      ),
+      AutoRoute(
+        page: ProfileRoute.page,
+      ),
+    ],
+  );
+
+  final AutoRoute _chatFlow = AutoRoute(
+    initial: true,
+    page: EmptyRoute.page,
+    children: <AutoRoute>[
+      CustomRoute(
+        initial: true,
+        page: ChatRoute.page,
+        customRouteBuilder: RouteBuilders.materialWithModalsBuilder,
+      ),
+      CustomRoute(
+        page: CameraRollRoute.page,
+        customRouteBuilder: RouteBuilders.modalBottomSheet,
+      ),
+      CustomRoute(
+        page: PhotoCarouselRoute.page,
+        fullscreenDialog: true,
+        opaque: false,
+        barrierColor: Colors.transparent,
+      ),
+    ],
+  );
+
+  final AutoRoute _onboardingFlow = AutoRoute(
+    page: OnboardingFlowRoute.page,
+    children: <AutoRoute>[
+      AutoRoute(
+        initial: true,
+        page: WelcomeRoute.page,
+      ),
+      AutoRoute(
+        page: OtpFlowRoute.page,
+        children: <AutoRoute>[
+          AutoRoute(
+            initial: true,
+            page: OtpSubmissionRoute.page,
+          ),
+          AutoRoute(
+            page: OtpConfirmationRoute.page,
+          ),
+        ],
+      )
+    ],
+  );
 }

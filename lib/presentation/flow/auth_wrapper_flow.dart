@@ -17,7 +17,11 @@ class AuthWrapperFlow extends StatelessWidget implements AutoRouteWrapper {
       builder: (BuildContext context, bool loggedIn) {
         return AutoRouter.declarative(
           routes: (_) => <PageRouteInfo>[
-            if (loggedIn) const AppFlowRoute() else const OnboardingFlowRoute(),
+            if (loggedIn) ...<PageRouteInfo>[
+              const AppFlowRoute(),
+              const EnterReferralCodeRoute(),
+            ] else
+              const OnboardingFlowRoute(),
           ],
         );
       },
