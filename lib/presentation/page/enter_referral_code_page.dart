@@ -46,7 +46,7 @@ class EnterReferralCodePage extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    _JoinWishListButton(),
+                    const _JoinWishListButton(),
                   ],
                 ),
               ),

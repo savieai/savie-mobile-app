@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:status_bar_control/status_bar_control.dart';
 
 import '../../presentation.dart';
 
@@ -55,7 +54,6 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   void _showOverlay() {
     context.read<ContextMenuCubit>().setShown();
     HapticFeedback.lightImpact();
-    StatusBarControl.setHidden(true, animation: StatusBarAnimation.FADE);
 
     final RenderBox renderBox = context.findRenderObject()! as RenderBox;
     Offset posiiton = renderBox.localToGlobal(Offset.zero);
@@ -98,12 +96,16 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
                 AnimatedBuilder(
                   animation: animation,
                   builder: (BuildContext _, Widget? child) {
-                    return BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: 15.0 * animation.value,
-                        sigmaY: 15.0 * animation.value,
+                    return Opacity(
+                      opacity: animation.value,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(
+                          sigmaX: 20 + 20 * animation.value,
+                          sigmaY: 20 + 20 * animation.value,
+                          tileMode: TileMode.repeated,
+                        ),
+                        child: child,
                       ),
-                      child: child,
                     );
                   },
                   child: Container(
@@ -207,7 +209,6 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     Future<void>.delayed(const Duration(milliseconds: 600), () {
       context.read<ContextMenuCubit>().setNotShown();
     });
-    StatusBarControl.setHidden(false, animation: StatusBarAnimation.FADE);
     Navigator.of(context).pop();
     _overlayAnimationController.reverse().then((_) {
       setState(() {
@@ -358,7 +359,7 @@ class _ContextMenuListView extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 4),
           itemCount: data.length,
           shrinkWrap: true,
-          itemBuilder: (BuildContext context, int index) => _ContextMennuItem(
+          itemBuilder: (BuildContext context, int index) => _ContextMenuItem(
             data: data[index],
             onTap: () {
               pop();
@@ -374,8 +375,8 @@ class _ContextMenuListView extends StatelessWidget {
   }
 }
 
-class _ContextMennuItem extends StatelessWidget {
-  const _ContextMennuItem({
+class _ContextMenuItem extends StatelessWidget {
+  const _ContextMenuItem({
     required this.data,
     required this.onTap,
   });
