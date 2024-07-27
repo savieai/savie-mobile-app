@@ -74,15 +74,17 @@ class _OtpConfirmationPageState extends State<OtpConfirmationPage> {
                 ),
               ),
               const SizedBox(height: 24),
-              _OtpTextField(controller: _controller),
+              _OtpTextField(
+                controller: _controller,
+                email: widget.email,
+              ),
               _MaybeError(hasErrorNotifier: _hasErrorNotifier),
               const Spacer(),
               _ResendButton(email: widget.email),
-              const SizedBox(height: 20),
-              _ContinueButton(
-                email: widget.email,
-                controller: _controller,
-              ),
+              // _ContinueButton(
+              //   email: widget.email,
+              //   controller: _controller,
+              // ),
               Builder(builder: (BuildContext context) {
                 return SizedBox(
                   height: MediaQuery.paddingOf(context).bottom + 20,
@@ -132,40 +134,6 @@ class _MaybeError extends StatelessWidget {
 class _OtpTextField extends StatelessWidget {
   const _OtpTextField({
     required this.controller,
-  });
-
-  final TextEditingController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        return Pinput(
-          length: 6,
-          controller: controller,
-          separatorBuilder: (_) => const SizedBox(width: 8),
-          defaultPinTheme: PinTheme(
-            constraints: BoxConstraints.tightFor(
-              width: (constraints.maxWidth - 30) / 6,
-              height: 56,
-            ),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: AppColors.backgroundChatInput,
-            ),
-            textStyle: AppTextStyles.paragraph.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ContinueButton extends StatelessWidget {
-  const _ContinueButton({
-    required this.controller,
     required this.email,
   });
 
@@ -174,44 +142,60 @@ class _ContinueButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocSelector<OtpCubit, OtpState, bool>(
-      selector: (OtpState state) {
-        return state is VerifyingOTP;
-      },
-      builder: (BuildContext context, bool isVerifyingOtp) {
-        return ValueListenableBuilder<TextEditingValue>(
-          valueListenable: controller,
-          builder: (BuildContext context, TextEditingValue value, _) {
-            final bool isCodeEntered = value.text.length == 6;
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final PinTheme defaultPinTheme = PinTheme(
+          constraints: BoxConstraints.tightFor(
+            width: (constraints.maxWidth - 30) / 6,
+            height: 56,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: AppColors.backgroundChatInput,
+          ),
+          textStyle: AppTextStyles.paragraph.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        );
 
-            return AnimatedOpacity(
-              duration: const Duration(milliseconds: 100),
-              opacity: !isVerifyingOtp && isCodeEntered ? 1 : 0.5,
-              child: CupertinoButton(
-                padding: EdgeInsets.zero,
-                borderRadius: BorderRadius.circular(20),
-                minSize: 0,
-                onPressed: !isVerifyingOtp && isCodeEntered
-                    ? () => context.read<OtpCubit>().verifyOTP(
-                          email: email,
-                          otp: value.text,
-                        )
-                    : null,
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: AppColors.iconAccent,
-                  ),
-                  child: Text(
-                    'Continue',
-                    style: AppTextStyles.paragraph.copyWith(
-                      color: Colors.white,
-                    ),
-                  ),
+        return BlocSelector<OtpCubit, OtpState, bool>(
+          selector: (OtpState state) {
+            return state is VerifyingOTP;
+          },
+          builder: (BuildContext context, bool isVerifyingOtp) {
+            return Pinput(
+              length: 6,
+              enabled: !isVerifyingOtp,
+              controller: controller,
+              separatorBuilder: (_) => const SizedBox(width: 8),
+              animationDuration: const Duration(milliseconds: 300),
+              defaultPinTheme: PinTheme(
+                constraints: BoxConstraints.tightFor(
+                  width: (constraints.maxWidth - 30) / 6,
+                  height: 56,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.backgroundChatInput,
+                ),
+                textStyle: AppTextStyles.paragraph.copyWith(
+                  color: AppColors.textSecondary,
                 ),
               ),
+              disabledPinTheme: defaultPinTheme.copyWith(
+                decoration: defaultPinTheme.decoration?.copyWith(
+                  color: AppColors.backgroundChatInput.withOpacity(0.5),
+                ),
+                textStyle: defaultPinTheme.textStyle?.copyWith(
+                  color: AppColors.textSecondary.withOpacity(0.5),
+                ),
+              ),
+              onCompleted: !isVerifyingOtp
+                  ? (String otpValue) => context.read<OtpCubit>().verifyOTP(
+                        email: email,
+                        otp: otpValue,
+                      )
+                  : null,
             );
           },
         );
