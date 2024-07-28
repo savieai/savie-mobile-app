@@ -90,7 +90,7 @@ class _MessageListViewState extends State<MessageListView> {
             const SliverToBoxAdapter(child: SizedBox(height: 32)),
           ].reversed.map(
                 (Widget w) => SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 22),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: w,
                 ),
               ),

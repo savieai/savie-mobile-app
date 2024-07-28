@@ -38,10 +38,11 @@ class _MessagesHorizontalDragListenerState
         builder: (BuildContext context) {
           return GestureDetector(
             onHorizontalDragStart: _onHorizontalDragStart,
-            onHorizontalDragUpdate: _onHorizontalDragUpdate,
             onHorizontalDragEnd: _onHorizontalDragEnd,
             child: Listener(
               onPointerDown: _onPointerDown,
+              onPointerUp: _onHorizontalDragEnd,
+              onPointerMove: _onHorizontalDragUpdate,
               child: widget.child,
             ),
           );
@@ -59,12 +60,12 @@ class _MessagesHorizontalDragListenerState
     _initialPointerPosition = details.globalPosition;
   }
 
-  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+  void _onHorizontalDragUpdate(PointerMoveEvent details) {
     if (_initialPointerPosition != null && !_isHorizontalDrag) {
       final double dx =
-          (details.globalPosition.dx - _initialPointerPosition!.dx).abs();
+          (details.position.dx - _initialPointerPosition!.dx).abs();
       final double dy =
-          (details.globalPosition.dy - _initialPointerPosition!.dy).abs();
+          (details.position.dy - _initialPointerPosition!.dy).abs();
       // Determine if the drag is horizontal with a vertical tolerance
       if (dx > dy && dy < _verticalTolerance) {
         _isHorizontalDrag = true;
@@ -88,7 +89,7 @@ class _MessagesHorizontalDragListenerState
     }
   }
 
-  void _onHorizontalDragEnd(DragEndDetails details) {
+  void _onHorizontalDragEnd(_) {
     if (_isHorizontalDrag) {
       final AnimationController animationController = AnimationController(
         vsync: this,

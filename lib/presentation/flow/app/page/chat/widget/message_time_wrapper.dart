@@ -28,7 +28,7 @@ class MessageTimeWrapper extends StatelessWidget {
               Align(
                 alignment: FractionalOffset.centerLeft,
                 child: Transform.translate(
-                  offset: Offset(MediaQuery.sizeOf(context).width - 20, 0),
+                  offset: Offset(MediaQuery.sizeOf(context).width - 16, 0),
                   child: Text(
                     DateFormat('hh:mm').format(time),
                     style: AppTextStyles.caption.copyWith(
