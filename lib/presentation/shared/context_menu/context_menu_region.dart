@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../flow/app/page/chat/cubit/cubit.dart';
 import '../../presentation.dart';
 
 //TODO: TOTOALLY REFACTOR THIS SANDBOX CLASS
@@ -42,10 +43,17 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
       ValueNotifier<bool>(false);
   final ValueNotifier<double> _scrollPositionNotifier =
       ValueNotifier<double>(0);
-  late final ScrollController _scrollController = ScrollController()
-    ..addListener(() {
-      _scrollPositionNotifier.value = _scrollController.offset;
+  late ScrollController _scrollController;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _sizeNotifier.value = context.size;
     });
+  }
+
+  final ValueNotifier<Size?> _sizeNotifier = ValueNotifier<Size?>(null);
 
   @override
   void initState() {
@@ -107,6 +115,12 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
 
     final double screenHeight = MediaQuery.sizeOf(context).height;
 
+    _scrollPositionNotifier.value = 0;
+    _scrollController = ScrollController()
+      ..addListener(() {
+        _scrollPositionNotifier.value = _scrollController.offset;
+      });
+
     Navigator.push(
       context,
       PageRouteBuilder<dynamic>(
@@ -167,9 +181,8 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
                   ),
                 ),
                 Positioned(
-                  left: posiiton.dx,
-                  // top: max(posiiton.dy, 0),
-                  right: 20,
+                  left: posiiton.dx - 20,
+                  right: 0,
                   child: SizedBox(
                     height: screenHeight,
                     child: SingleChildScrollView(
@@ -273,6 +286,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     Future<void>.delayed(const Duration(milliseconds: 600), () {
       context.read<ContextMenuCubit>().setNotShown();
       _contextMenuShownNotifier.value = false;
+      _scrollController.dispose();
     });
     Navigator.of(context).pop();
     _overlayAnimationController.reverse().then((_) {
@@ -289,18 +303,27 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
         ),
         child: Material(
           type: MaterialType.transparency,
-          child: ValueListenableBuilder<bool>(
-            valueListenable: _contextMenuShownNotifier,
-            builder: (BuildContext context, bool isShown, _) {
-              return AnimatedBuilder(
-                animation: _longPressAnimation,
-                builder: (BuildContext context, Widget? child) {
-                  return Transform.scale(
-                    scale: 1 - _longPressAnimation.value * 0.05,
-                    child: child,
+          child: ValueListenableBuilder<Size?>(
+            valueListenable: _sizeNotifier,
+            builder: (BuildContext context, Size? size, _) {
+              return ValueListenableBuilder<bool>(
+                valueListenable: _contextMenuShownNotifier,
+                builder: (BuildContext context, bool isShown, _) {
+                  return AnimatedBuilder(
+                    animation: _longPressAnimation,
+                    builder: (BuildContext context, Widget? child) {
+                      return Transform.scale(
+                        scale: size == null
+                            ? 1
+                            : (size.longestSide -
+                                    16 * _longPressAnimation.value) /
+                                size.longestSide,
+                        child: child,
+                      );
+                    },
+                    child: widget.builder(context, isShown),
                   );
                 },
-                child: widget.builder(context, isShown),
               );
             },
           ),
@@ -315,11 +338,21 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
       onLongPressDown: (_) {
         _pressedDown = true;
         Future<void>.delayed(const Duration(milliseconds: 200), () {
+          if (context.read<ChatHorizontalDragCubit>().state != 0) {
+            _pressedDown = false;
+            return;
+          }
+
           if (_pressedDown) {
             _longPressAnimationController.forward().then((_) {
-              _showOverlay();
               _longPressAnimationController.reverse();
               _pressedDown = false;
+
+              if (context.read<ChatHorizontalDragCubit>().state != 0) {
+                return;
+              }
+
+              _showOverlay();
             });
           }
         });

@@ -26,6 +26,9 @@ class _MessagesHorizontalDragListenerState
   double _dragPosition = 0.0;
   double _displayedPosition = 0.0;
   final double _constantMultiplier = 120.0; // Adjust this value as needed
+  bool _isHorizontalDrag = false; // To track if the drag is horizontal
+  Offset? _initialPointerPosition; // Track the initial pointer position
+  final double _verticalTolerance = 10.0; // Tolerance for vertical movement
 
   @override
   Widget build(BuildContext context) {
@@ -34,52 +37,86 @@ class _MessagesHorizontalDragListenerState
       child: Builder(
         builder: (BuildContext context) {
           return GestureDetector(
+            onHorizontalDragStart: _onHorizontalDragStart,
             onHorizontalDragUpdate: _onHorizontalDragUpdate,
             onHorizontalDragEnd: _onHorizontalDragEnd,
-            child: widget.child,
+            child: Listener(
+              onPointerDown: _onPointerDown,
+              child: widget.child,
+            ),
           );
         },
       ),
     );
   }
 
-  void _onHorizontalDragUpdate(DragUpdateDetails details) {
-    setState(() {
-      _dragPosition += details.delta.dx;
-      if (_dragPosition >= 0) {
-        _dragPosition = 0;
-        return;
-      }
-
-      _displayedPosition = _mapValue(_dragPosition);
-      _cubit.updateOffset(
-          _displayedPosition); // Update the Cubit with the new position
-    });
+  void _onPointerDown(PointerDownEvent details) {
+    _initialPointerPosition = details.position;
+    _isHorizontalDrag = false;
   }
 
-  void _onHorizontalDragEnd(_) {
-    final AnimationController animationController = AnimationController(
-      vsync: this,
-      value: -_dragPosition / _constantMultiplier,
-    );
+  void _onHorizontalDragStart(DragStartDetails details) {
+    _initialPointerPosition = details.globalPosition;
+  }
 
-    animationController.addListener(() {
-      _dragPosition = -animationController.value * _constantMultiplier;
-      _displayedPosition =
-          -_mapValue(animationController.value) * _constantMultiplier;
-      _cubit.updateOffset(_displayedPosition);
-      setState(() {});
-    });
+  void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    if (_initialPointerPosition != null && !_isHorizontalDrag) {
+      final double dx =
+          (details.globalPosition.dx - _initialPointerPosition!.dx).abs();
+      final double dy =
+          (details.globalPosition.dy - _initialPointerPosition!.dy).abs();
+      // Determine if the drag is horizontal with a vertical tolerance
+      if (dx > dy && dy < _verticalTolerance) {
+        _isHorizontalDrag = true;
+      } else {
+        return; // Ignore if not horizontal drag within the tolerance
+      }
+    }
 
-    animationController
-        .animateTo(
-      0,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.linearToEaseOut,
-    )
-        .then((_) {
-      animationController.dispose();
-    });
+    if (_isHorizontalDrag) {
+      setState(() {
+        _dragPosition += details.delta.dx;
+        if (_dragPosition >= 0) {
+          _dragPosition = 0;
+          return;
+        }
+
+        _displayedPosition = _mapValue(_dragPosition);
+        _cubit.updateOffset(
+            _displayedPosition); // Update the Cubit with the new position
+      });
+    }
+  }
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    if (_isHorizontalDrag) {
+      final AnimationController animationController = AnimationController(
+        vsync: this,
+        value: -_dragPosition / _constantMultiplier,
+      );
+
+      animationController.addListener(() {
+        _dragPosition = -animationController.value * _constantMultiplier;
+        _displayedPosition =
+            -_mapValue(animationController.value) * _constantMultiplier;
+        _cubit.updateOffset(_displayedPosition);
+        setState(() {});
+      });
+
+      animationController
+          .animateTo(
+        0,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.linearToEaseOut,
+      )
+          .then((_) {
+        animationController.dispose();
+      });
+    }
+
+    // Reset the horizontal drag flag and initial pointer position
+    _isHorizontalDrag = false;
+    _initialPointerPosition = null;
   }
 
   double _mapValue(double input) {
