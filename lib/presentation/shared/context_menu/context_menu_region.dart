@@ -6,6 +6,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../presentation.dart';
 
+//TODO: TOTOALLY REFACTOR THIS SANDBOX CLASS
+
 class ContextMenuRegion extends StatefulWidget {
   const ContextMenuRegion({
     super.key,
@@ -15,10 +17,7 @@ class ContextMenuRegion extends StatefulWidget {
   });
 
   final List<ContextMenuItemData> data;
-  final Widget Function(
-    BuildContext context,
-    ContextMenuState contextMenuState,
-  ) builder;
+  final Widget Function(BuildContext context, bool contextMenuShown) builder;
   final String heroTag;
 
   @override
@@ -38,6 +37,15 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
 
   late final AnimationController _longPressAnimationController;
   late final Animation<double> _longPressAnimation;
+
+  final ValueNotifier<bool> _contextMenuShownNotifier =
+      ValueNotifier<bool>(false);
+  final ValueNotifier<double> _scrollPositionNotifier =
+      ValueNotifier<double>(0);
+  late final ScrollController _scrollController = ScrollController()
+    ..addListener(() {
+      _scrollPositionNotifier.value = _scrollController.offset;
+    });
 
   @override
   void initState() {
@@ -67,6 +75,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
 
   void _showOverlay() {
     context.read<ContextMenuCubit>().setShown();
+    _contextMenuShownNotifier.value = true;
     HapticFeedback.lightImpact();
 
     final RenderBox renderBox = context.findRenderObject()! as RenderBox;
@@ -95,6 +104,8 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
 
     final double childWidth = renderBox.size.width;
     final bool shouldAttachToRight = width > childWidth;
+
+    final double screenHeight = MediaQuery.sizeOf(context).height;
 
     Navigator.push(
       context,
@@ -157,12 +168,43 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
                 ),
                 Positioned(
                   left: posiiton.dx,
-                  top: posiiton.dy,
-                  child: Hero(
-                    key: _childKey,
-                    tag: widget.heroTag,
-                    flightShuttleBuilder: flightShuttleBuilder,
-                    child: contrainedChild,
+                  // top: max(posiiton.dy, 0),
+                  right: 20,
+                  child: SizedBox(
+                    height: screenHeight,
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      reverse: true,
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: <Widget>[
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: _hideOverlay,
+                            child: const SizedBox(
+                              height: minOffsetDy,
+                              width: double.infinity,
+                            ),
+                          ),
+                          Hero(
+                            key: _childKey,
+                            tag: widget.heroTag,
+                            flightShuttleBuilder: flightShuttleBuilder,
+                            child: contrainedChild,
+                          ),
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: _hideOverlay,
+                            child: SizedBox(
+                              height: screenHeight -
+                                  posiiton.dy -
+                                  renderBox.size.height,
+                              width: double.infinity,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -180,30 +222,36 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
           child: Stack(
             children: <Widget>[
               ValueListenableBuilder<double>(
-                  valueListenable: _childBottomDyNotifier,
-                  builder: (BuildContext context, double value, _) {
-                    return Positioned(
-                      width: width,
-                      right: shouldAttachToRight ? 16 : null,
-                      left: shouldAttachToRight ? null : posiiton.dx,
-                      top: value + 4,
-                      child: FadeTransition(
-                        opacity: _overlayAnimation,
-                        child: ScaleTransition(
-                          scale: _overlayAnimation,
-                          alignment: shouldAttachToRight
-                              ? Alignment(
-                                  1 - renderBox.size.width / 2 / width, -1)
-                              : Alignment.topCenter,
-                          child: _ContextMenuListView(
-                            mainContext: context,
-                            data: widget.data,
-                            pop: _hideOverlay,
+                valueListenable: _scrollPositionNotifier,
+                builder: (BuildContext context, double value, _) {
+                  return ValueListenableBuilder<double>(
+                    valueListenable: _childBottomDyNotifier,
+                    builder: (BuildContext context, double value, _) {
+                      return Positioned(
+                        width: width,
+                        right: shouldAttachToRight ? 16 : null,
+                        left: shouldAttachToRight ? null : posiiton.dx,
+                        top: value + 4 + _scrollPositionNotifier.value,
+                        child: FadeTransition(
+                          opacity: _overlayAnimation,
+                          child: ScaleTransition(
+                            scale: _overlayAnimation,
+                            alignment: shouldAttachToRight
+                                ? Alignment(
+                                    1 - renderBox.size.width / 2 / width, -1)
+                                : Alignment.topCenter,
+                            child: _ContextMenuListView(
+                              mainContext: context,
+                              data: widget.data,
+                              pop: _hideOverlay,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  })
+                      );
+                    },
+                  );
+                },
+              )
             ],
           ),
         );
@@ -224,6 +272,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   void _hideOverlay() {
     Future<void>.delayed(const Duration(milliseconds: 600), () {
       context.read<ContextMenuCubit>().setNotShown();
+      _contextMenuShownNotifier.value = false;
     });
     Navigator.of(context).pop();
     _overlayAnimationController.reverse().then((_) {
@@ -240,17 +289,18 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
         ),
         child: Material(
           type: MaterialType.transparency,
-          child: BlocBuilder<ContextMenuCubit, ContextMenuState>(
-            builder: (BuildContext context, ContextMenuState state) {
+          child: ValueListenableBuilder<bool>(
+            valueListenable: _contextMenuShownNotifier,
+            builder: (BuildContext context, bool isShown, _) {
               return AnimatedBuilder(
                 animation: _longPressAnimation,
                 builder: (BuildContext context, Widget? child) {
                   return Transform.scale(
-                    scale: 1 - _longPressAnimation.value * 0.075,
+                    scale: 1 - _longPressAnimation.value * 0.05,
                     child: child,
                   );
                 },
-                child: widget.builder(context, state),
+                child: widget.builder(context, isShown),
               );
             },
           ),
@@ -286,9 +336,10 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
           _longPressAnimationController.reverse();
         }
       },
-      child: BlocBuilder<ContextMenuCubit, ContextMenuState>(
-        builder: (BuildContext context, ContextMenuState state) {
-          return state == ContextMenuState.shown
+      child: ValueListenableBuilder<bool>(
+        valueListenable: _contextMenuShownNotifier,
+        builder: (BuildContext context, bool value, _) {
+          return value
               ? Hero(
                   tag: widget.heroTag,
                   flightShuttleBuilder: flightShuttleBuilder,

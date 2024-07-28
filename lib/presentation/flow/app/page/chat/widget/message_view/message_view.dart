@@ -1,12 +1,17 @@
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
+import 'package:dio/dio.dart';
+import 'package:favicon/favicon.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../../../../../../domain/domain.dart';
 import '../../../../../../presentation.dart';
@@ -78,21 +83,16 @@ class MessageView extends StatelessWidget {
               onTap: () {},
             ),
           ],
-          builder: (
-            BuildContext context,
-            ContextMenuState contextMenuState,
-          ) {
+          builder: (BuildContext context, bool contextMenuShown) {
             return message.mediaPaths.isNotEmpty
                 ? message.text?.isNotEmpty ?? false
                     ? _TextWithMediaMessageView(
                         message: message,
-                        contextMenuShown:
-                            contextMenuState == ContextMenuState.shown,
+                        contextMenuShown: contextMenuShown,
                       )
                     : MediaMessageView(
                         message: message,
-                        contextMenuShown:
-                            contextMenuState == ContextMenuState.shown,
+                        contextMenuShown: contextMenuShown,
                       )
                 : message.audioMessage != null
                     ? AudioMessageView(
@@ -100,9 +100,9 @@ class MessageView extends StatelessWidget {
                         key: Key(message.audioMessage!.path),
                       )
                     : TextMessageView(
+                        key: Key('TextMessageView${message.id}'),
                         text: message.text ?? '',
-                        contextMenuShown:
-                            contextMenuState == ContextMenuState.shown,
+                        contextMenuShown: contextMenuShown,
                       );
           },
         ),

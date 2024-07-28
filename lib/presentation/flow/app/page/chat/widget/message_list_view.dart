@@ -72,10 +72,13 @@ class _MessageListViewState extends State<MessageListView> {
                     itemBuilder: (_, int index) {
                       final int length = groupedMessages[date]!.length;
                       final bool isFirstInGroup = index == length - 1;
+                      final Message message =
+                          groupedMessages[date]![length - index - 1];
                       return Padding(
                         padding: EdgeInsets.only(top: isFirstInGroup ? 58 : 0),
                         child: MessageView(
-                          message: groupedMessages[date]![length - index - 1],
+                          key: Key('MessageView${message.id}'),
+                          message: message,
                         ),
                       );
                     },
