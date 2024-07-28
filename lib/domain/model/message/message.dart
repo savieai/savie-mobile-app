@@ -11,5 +11,6 @@ class Message with _$Message {
     String? text,
     @Default(<String>[]) List<String> mediaPaths,
     AudioMessage? audioMessage,
+    required DateTime date,
   }) = _Message;
 }

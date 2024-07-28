@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../domain/model/audio_message/audio_message.dart';
 import '../../../../../presentation.dart';
-import '../../chat/widget/message_view.dart';
+import '../../chat/widget/message_view/message_view.dart';
 
 class SearchAudioFiles extends StatelessWidget {
   const SearchAudioFiles({super.key});

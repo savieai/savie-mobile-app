@@ -26,7 +26,7 @@ class ContextMenuRegion extends StatefulWidget {
 }
 
 class _ContextMenuRegionState extends State<ContextMenuRegion>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final GlobalKey _childKey = GlobalKey();
 
   OverlayEntry? _overlayEntry;
@@ -36,18 +36,32 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   late final ValueNotifier<double> _childBottomDyNotifier =
       ValueNotifier<double>(0);
 
+  late final AnimationController _longPressAnimationController;
+  late final Animation<double> _longPressAnimation;
+
   @override
   void initState() {
     super.initState();
 
     _overlayAnimationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 150),
     );
     _overlayAnimation = CurvedAnimation(
       parent: _overlayAnimationController,
       curve: Curves.linearToEaseOut,
       reverseCurve: Curves.easeOut,
+    );
+
+    _longPressAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+      reverseDuration: const Duration(milliseconds: 200),
+    );
+    _longPressAnimation = CurvedAnimation(
+      parent: _longPressAnimationController,
+      curve: Curves.linearToEaseOut,
+      reverseCurve: Curves.easeOut.flipped,
     );
   }
 
@@ -88,6 +102,8 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
         fullscreenDialog: true,
         opaque: false,
         barrierDismissible: true,
+        transitionDuration: const Duration(milliseconds: 250),
+        reverseTransitionDuration: const Duration(milliseconds: 250),
         pageBuilder: (BuildContext context, Animation<double> animation, ___) {
           return Material(
             type: MaterialType.transparency,
@@ -100,8 +116,8 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
                       opacity: animation.value,
                       child: BackdropFilter(
                         filter: ImageFilter.blur(
-                          sigmaX: 20 + 20 * animation.value,
-                          sigmaY: 20 + 20 * animation.value,
+                          sigmaX: 15 + 15 * animation.value,
+                          sigmaY: 15 + 15 * animation.value,
                           tileMode: TileMode.repeated,
                         ),
                         child: child,
@@ -146,7 +162,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
                     key: _childKey,
                     tag: widget.heroTag,
                     flightShuttleBuilder: flightShuttleBuilder,
-                    child: IgnorePointer(child: contrainedChild),
+                    child: contrainedChild,
                   ),
                 ),
               ],
@@ -226,17 +242,49 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
           type: MaterialType.transparency,
           child: BlocBuilder<ContextMenuCubit, ContextMenuState>(
             builder: (BuildContext context, ContextMenuState state) {
-              return widget.builder(context, state);
+              return AnimatedBuilder(
+                animation: _longPressAnimation,
+                builder: (BuildContext context, Widget? child) {
+                  return Transform.scale(
+                    scale: 1 - _longPressAnimation.value * 0.075,
+                    child: child,
+                  );
+                },
+                child: widget.builder(context, state),
+              );
             },
           ),
         ),
       );
 
+  bool _pressedDown = false;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onLongPress: () {
-        _showOverlay();
+      onLongPressDown: (_) {
+        _pressedDown = true;
+        Future<void>.delayed(const Duration(milliseconds: 200), () {
+          if (_pressedDown) {
+            _longPressAnimationController.forward().then((_) {
+              _showOverlay();
+              _longPressAnimationController.reverse();
+              _pressedDown = false;
+            });
+          }
+        });
+      },
+      onLongPressCancel: () {
+        if (_pressedDown) {
+          _pressedDown = false;
+          _longPressAnimationController.reverse();
+        }
+      },
+      onLongPressEnd: (_) {
+        if (_pressedDown) {
+          _pressedDown = false;
+          _longPressAnimationController.reverse();
+        }
       },
       child: BlocBuilder<ContextMenuCubit, ContextMenuState>(
         builder: (BuildContext context, ContextMenuState state) {

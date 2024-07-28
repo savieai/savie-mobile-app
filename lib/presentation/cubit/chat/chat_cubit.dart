@@ -23,6 +23,7 @@ class ChatCubit extends Cubit<ChatState> {
         id: const Uuid().v4(),
         text: message,
         mediaPaths: mediaPaths ?? <String>[],
+        date: DateTime.now(),
       ),
     );
 
@@ -36,6 +37,7 @@ class ChatCubit extends Cubit<ChatState> {
       Message(
         id: const Uuid().v4(),
         audioMessage: audioMessage,
+        date: DateTime.now(),
       ),
     );
 

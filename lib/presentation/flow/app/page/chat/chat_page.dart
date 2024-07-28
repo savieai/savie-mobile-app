@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../presentation.dart';
 import '../../../../router/app_router.gr.dart';
+import 'widget/chat_horizontal_drag_listener.dart';
 import 'widget/widget.dart';
 
 @RoutePage()
@@ -48,7 +49,9 @@ class _ChatPageState extends State<ChatPage> {
 
                 context.read<ChatInsetsCubit>().updateBottomInset(bottomInset);
               },
-              child: const MessageListView(),
+              child: const MessagesHorizontalDragListener(
+                child: MessageListView(),
+              ),
             ),
           ),
           const MessageInputView(),
