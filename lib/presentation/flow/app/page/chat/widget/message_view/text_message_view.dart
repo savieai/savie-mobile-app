@@ -13,30 +13,33 @@ class TextMessageView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<String> links = _extractLinks(text);
-    final List<InlineSpan> spans = _convertToSpans(text);
+    final List<InlineSpan> spans = _convertToSpans(text, false);
+
+    final bool linkOnly = text == links.firstOrNull;
 
     return _MessageContainer(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          SelectableText.rich(
-            TextSpan(children: spans),
-            enableInteractiveSelection: contextMenuShown,
-            cursorWidth: 0,
-            style: AppTextStyles.paragraph.copyWith(
-              color: AppColors.textPrimary,
+          if (!linkOnly)
+            SelectableText.rich(
+              TextSpan(children: spans),
+              enableInteractiveSelection: contextMenuShown,
+              cursorWidth: 0,
+              style: AppTextStyles.paragraph.copyWith(
+                color: AppColors.textPrimary,
+              ),
             ),
-          ),
-          if (links.isNotEmpty)
+          if (links.length == 1)
             Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const SizedBox(height: 6),
+                if (!linkOnly) const SizedBox(height: 6),
                 ...links.map(
                   (String link) => SelectableText.rich(
-                    TextSpan(children: _convertToSpans(link)),
+                    TextSpan(children: _convertToSpans(link, true)),
                     enableInteractiveSelection: contextMenuShown,
                     cursorWidth: 0,
                     style: AppTextStyles.paragraph.copyWith(
@@ -68,7 +71,7 @@ class TextMessageView extends StatelessWidget {
     return url;
   }
 
-  List<InlineSpan> _convertToSpans(String text) {
+  List<InlineSpan> _convertToSpans(String text, bool addFavicon) {
     final List<InlineSpan> spans = <InlineSpan>[];
     final List<RegExpMatch> matches = _linkRegExp.allMatches(text).toList();
 
@@ -81,15 +84,16 @@ class TextMessageView extends StatelessWidget {
       spans.add(
         TextSpan(
           children: <InlineSpan>[
-            WidgetSpan(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: _FavIcon(
-                  key: Key('Favicon$_completeLink(url)'),
-                  completeLink: _completeLink(url),
+            if (addFavicon)
+              WidgetSpan(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: _FavIcon(
+                    key: Key('Favicon$_completeLink(url)'),
+                    completeLink: _completeLink(url),
+                  ),
                 ),
               ),
-            ),
             TextSpan(
               text: url,
               style: const TextStyle(
@@ -132,6 +136,7 @@ class _FavIconState extends State<_FavIcon> {
   Uint8List? _imageBytes;
   bool _isSvg = false;
   bool _isLoading = true;
+  bool _noIcon = false;
 
   @override
   void initState() {
@@ -146,6 +151,9 @@ class _FavIconState extends State<_FavIcon> {
         _imageBytes = _faviconCache[widget.completeLink];
         _isSvg = _isSvgMap[widget.completeLink] ?? false;
         _isLoading = false;
+        if (_imageBytes!.isEmpty) {
+          _noIcon = true;
+        }
       });
       return;
     }
@@ -177,15 +185,17 @@ class _FavIconState extends State<_FavIcon> {
           }
         });
       } else {
-        _faviconCache[widget.completeLink] = null;
+        _faviconCache[widget.completeLink] = Uint8List(0);
         setState(() {
           _isLoading = false;
+          _noIcon = true;
         });
       }
     } catch (e) {
-      _faviconCache[widget.completeLink] = null;
+      _faviconCache[widget.completeLink] = Uint8List(0);
       setState(() {
         _isLoading = false;
+        _noIcon = true;
       });
     }
   }
@@ -207,6 +217,10 @@ class _FavIconState extends State<_FavIcon> {
           ),
         ),
       );
+    }
+
+    if (_noIcon) {
+      return Assets.icons.linkIcon.svg();
     }
 
     if (_imageBytes == null) {

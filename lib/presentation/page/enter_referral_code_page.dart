@@ -41,7 +41,7 @@ class EnterReferralCodePage extends StatelessWidget {
                     const _EnterReferalCodeBox(),
                     const Spacer(),
                     Text(
-                      'I don’t have a referral code, but I’d\nlike to join the whitelist',
+                      'No referral code? Join the whitelist.',
                       textAlign: TextAlign.center,
                       style: AppTextStyles.paragraph.copyWith(
                         color: Colors.white.withOpacity(0.6),
@@ -82,7 +82,7 @@ class _EnterReferalCodeBox extends StatelessWidget {
             ),
             SizedBox(height: 12),
             Text(
-              'Final step! We’re in test mode and only letting in people with invites. You have an invite, right?',
+              "Almost there! We're currently in test mode and only allowing people with invites. You have an invite, right?",
               style: AppTextStyles.paragraph,
               textAlign: TextAlign.center,
             ),

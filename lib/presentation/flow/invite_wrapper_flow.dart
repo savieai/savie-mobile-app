@@ -13,6 +13,9 @@ class InviteWrapperFlow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<UserCubit, SavieUser?>(
+      buildWhen: (SavieUser? previous, SavieUser? current) {
+        return current?.accessAllowed ?? false;
+      },
       builder: (BuildContext context, SavieUser? user) {
         final bool accessAllowed = user?.accessAllowed ?? false;
 

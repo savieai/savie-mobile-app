@@ -36,7 +36,7 @@ class GetInvitePage extends StatelessWidget {
                   _GiftWidget(),
                   SizedBox(height: 20),
                   Text(
-                    'Gift Savie to Friend',
+                    'Gift Savie',
                     style: AppTextStyles.title2,
                   ),
                   _InviteInfoBody(),
@@ -75,8 +75,8 @@ class _InviteInfoBody extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       numOfAvailable <= 0
-                          ? 'You’ve used all 5 invites.\nStay tuned for more!'
-                          : 'Share up to 5 invites with friends!',
+                          ? "You've used all your invites.\nStay tuned for more!"
+                          : 'Invite up to five friends',
                       style: AppTextStyles.paragraph.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -107,20 +107,65 @@ class _GiftWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(100),
-        gradient: const LinearGradient(
-          colors: <Color>[
-            Color(0xFFFB5012),
-            Color(0xFFFF783A),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+    return Stack(
+      alignment: Alignment.bottomRight,
+      children: <Widget>[
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(100),
+            gradient: const LinearGradient(
+              colors: <Color>[
+                Color(0xFFFB5012),
+                Color(0xFFFF783A),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Assets.icons.gift24.svg(),
         ),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Assets.icons.gift24.svg(),
+        BlocBuilder<GetInviteCubit, GetInviteState>(
+          builder: (BuildContext context, GetInviteState state) {
+            final int? numOfAvailable = state.maybeWhen(
+              orElse: () => null,
+              fetched: (_, int n) => n,
+            );
+
+            return Transform.translate(
+              offset: const Offset(2, 2),
+              child: AnimatedOpacity(
+                opacity: numOfAvailable == null ? 0 : 1,
+                duration: const Duration(milliseconds: 450),
+                curve: Curves.linearToEaseOut,
+                child: AnimatedScale(
+                  scale: numOfAvailable == null ? 0.75 : 1,
+                  duration: const Duration(milliseconds: 450),
+                  curve: Curves.linearToEaseOut,
+                  child: Container(
+                    height: 24,
+                    width: 24,
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundSecondary,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 2,
+                        strokeAlign: 1,
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      numOfAvailable?.toString() ?? '',
+                      style: AppTextStyles.callout,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }

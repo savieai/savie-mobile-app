@@ -17,16 +17,19 @@ enum _UserKeys {
 @Singleton()
 class UserStorage {
   UserStorage(this._sharedPreferences) {
-    _userSubject = BehaviorSubject<UserDTO?>.seeded(getUser());
+    _seedUserSubject();
   }
 
   final SharedPreferences _sharedPreferences;
-  late final BehaviorSubject<UserDTO?> _userSubject;
+  final BehaviorSubject<UserDTO?> _userSubject = BehaviorSubject<UserDTO?>();
 
-  Future<void> saveUser(UserDTO userDto) => _sharedPreferences.setString(
-        _UserKeys.user.key,
-        jsonEncode(userDto),
-      );
+  Future<void> saveUser(UserDTO userDto) async {
+    await _sharedPreferences.setString(
+      _UserKeys.user.key,
+      jsonEncode(userDto),
+    );
+    _userSubject.add(userDto);
+  }
 
   Stream<UserDTO?> watchUser() => _userSubject.stream;
 
@@ -37,5 +40,17 @@ class UserStorage {
     }
 
     return UserDTO.fromJson(jsonDecode(data) as Map<String, dynamic>);
+  }
+
+  void _seedUserSubject() {
+    final String? data = _sharedPreferences.getString(_UserKeys.user.key);
+    if (data == null) {
+      _userSubject.add(null);
+      return;
+    }
+
+    final UserDTO userDto =
+        UserDTO.fromJson(jsonDecode(data) as Map<String, dynamic>);
+    _userSubject.add(userDto);
   }
 }
