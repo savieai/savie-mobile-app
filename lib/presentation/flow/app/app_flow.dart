@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:in_app_notification/in_app_notification.dart';
 
 import '../../../application/application.dart';
 import '../../presentation.dart';
@@ -22,8 +23,12 @@ class AppFlow extends StatelessWidget {
           create: (_) => getIt.get<RecordingCubit>(),
         ),
       ],
-      child: const ContextMenuListener(
-        child: AutoRouter(),
+      child: const InAppNotification(
+        child: ProgressHud(
+          child: ContextMenuListener(
+            child: AutoRouter(),
+          ),
+        ),
       ),
     );
   }

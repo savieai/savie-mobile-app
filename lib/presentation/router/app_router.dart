@@ -19,21 +19,30 @@ class AppRouter extends $AppRouter {
           children: <AutoRoute>[
             _appFlow,
             _onboardingFlow,
-            AutoRoute(page: EnterReferralCodeRoute.page),
           ],
         ),
       ];
 
   late final AutoRoute _appFlow = AutoRoute(
-    page: AppFlowRoute.page,
+    page: InviteWrapperFlowRoute.page,
     children: <AutoRoute>[
-      _chatFlow,
       AutoRoute(
-        page: SearchRoute.page,
+        page: AppFlowRoute.page,
+        children: <AutoRoute>[
+          _chatFlow,
+          AutoRoute(
+            page: SearchRoute.page,
+          ),
+          AutoRoute(
+            page: ProfileRoute.page,
+          ),
+          CustomRoute(
+            customRouteBuilder: RouteBuilders.modalPopupSheet,
+            page: GetInviteRoute.page,
+          ),
+        ],
       ),
-      AutoRoute(
-        page: ProfileRoute.page,
-      ),
+      AutoRoute(page: EnterReferralCodeRoute.page),
     ],
   );
 

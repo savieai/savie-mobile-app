@@ -1,0 +1,255 @@
+import 'package:auto_route/auto_route.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:in_app_notification/in_app_notification.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../../application/application.dart';
+import '../../presentation.dart';
+import 'get_invite_cubit.dart';
+
+@RoutePage()
+class GetInvitePage extends StatelessWidget {
+  const GetInvitePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<GetInviteCubit>(
+      create: (_) => getIt.get<GetInviteCubit>(),
+      child: Material(
+        type: MaterialType.transparency,
+        child: SafeArea(
+          minimum: const EdgeInsets.all(12),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(36),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  SizedBox(height: 44),
+                  _GiftWidget(),
+                  SizedBox(height: 20),
+                  Text(
+                    'Gift Savie to Friend',
+                    style: AppTextStyles.title2,
+                  ),
+                  _InviteInfoBody(),
+                  SizedBox(height: 24),
+                  _ShareButton(),
+                  SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InviteInfoBody extends StatelessWidget {
+  const _InviteInfoBody();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<GetInviteCubit, GetInviteState>(
+      builder: (BuildContext context, GetInviteState state) {
+        return AnimatedOpacity(
+          opacity: state.maybeMap(fetched: (_) => 1, orElse: () => 0),
+          duration: const Duration(milliseconds: 450),
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 450),
+            curve: Curves.linearToEaseOut,
+            alignment: Alignment.topCenter,
+            child: state.maybeWhen(
+              fetched: (String? code, int numOfAvailable) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const SizedBox(height: 4),
+                    Text(
+                      numOfAvailable <= 0
+                          ? 'You’ve used all 5 invites.\nStay tuned for more!'
+                          : 'Share up to 5 invites with friends!',
+                      style: AppTextStyles.paragraph.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (numOfAvailable > 0) ...<Widget>[
+                      const SizedBox(height: 24),
+                      _InviteCodeBox(
+                        code: code ?? '',
+                      ),
+                    ],
+                  ],
+                );
+              },
+              orElse: () {
+                return const SizedBox(width: double.infinity);
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _GiftWidget extends StatelessWidget {
+  const _GiftWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(100),
+        gradient: const LinearGradient(
+          colors: <Color>[
+            Color(0xFFFB5012),
+            Color(0xFFFF783A),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Assets.icons.gift24.svg(),
+    );
+  }
+}
+
+class _InviteCodeBox extends StatelessWidget {
+  const _InviteCodeBox({
+    required this.code,
+  });
+
+  final String code;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.backgroundChatInput,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Invite Code',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  code,
+                  style: AppTextStyles.paragraph,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 20),
+          GestureDetector(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: code));
+              InAppNotification.show(
+                child: const _CopiedNotification(),
+                duration: const Duration(seconds: 3),
+                curve: Curves.linearToEaseOut,
+                context: context,
+              );
+            },
+            child: Assets.icons.copy24.svg(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShareButton extends StatelessWidget {
+  const _ShareButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<GetInviteCubit, GetInviteState>(
+      builder: (BuildContext context, GetInviteState state) {
+        return CupertinoButton(
+          onPressed: state.maybeWhen(
+            orElse: () => null,
+            fetched: (String? code, int numOfAvailable) => () {
+              if (numOfAvailable > 0) {
+                Share.share(code ?? '');
+              } else {
+                context.router.maybePop();
+              }
+            },
+          ),
+          minSize: 0,
+          padding: EdgeInsets.zero,
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            height: 54,
+            decoration: BoxDecoration(
+              color: AppColors.iconAccent,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            alignment: Alignment.center,
+            child: state.maybeWhen(
+              fetched: (_, int numOfAvailable) {
+                return Text(
+                  numOfAvailable > 0 ? 'Share' : 'Close',
+                  style: AppTextStyles.paragraph.copyWith(
+                    color: AppColors.textInvert,
+                  ),
+                );
+              },
+              orElse: () => const CircularProgressIndicator.adaptive(
+                backgroundColor: AppColors.textInvert,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CopiedNotification extends StatelessWidget {
+  const _CopiedNotification();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(100),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 24,
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: const Text(
+          'Copied',
+          style: AppTextStyles.paragraph,
+        ),
+      ),
+    );
+  }
+}

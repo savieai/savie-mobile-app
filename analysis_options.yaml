@@ -3,6 +3,7 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   errors:
     depend_on_referenced_packages: ignore
+    invalid_annotation_target: ignore
   exclude:
     - 'build/**'
     - '**.freezed.dart'

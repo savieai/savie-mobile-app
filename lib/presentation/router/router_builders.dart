@@ -55,4 +55,17 @@ abstract class RouteBuilders {
       },
     );
   }
+
+  static Route<T> modalPopupSheet<T>(
+    BuildContext context,
+    Widget child,
+    AutoRoutePage<T> page,
+  ) {
+    return CupertinoModalPopupRoute<T>(
+      settings: page,
+      builder: (BuildContext context) {
+        return child;
+      },
+    );
+  }
 }

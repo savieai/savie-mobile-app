@@ -1,11 +1,13 @@
 import 'dart:math';
 
 import 'package:auto_route/auto_route.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../presentation.dart';
+import '../../../../router/app_router.gr.dart';
 
 @RoutePage()
 class ProfilePage extends StatelessWidget {
@@ -51,6 +53,8 @@ class ProfilePage extends StatelessWidget {
             onTap: context.read<AuthCubit>().logOut,
           ),
           const Spacer(),
+          const _GiftButton(),
+          const SizedBox(height: 32),
           Text(
             'Terms & Terms',
             style: AppTextStyles.caption.copyWith(
@@ -143,6 +147,50 @@ class _ProfileSeparator extends StatelessWidget {
       endIndent: 16,
       thickness: 1,
       color: AppColors.strokePrimaryAlpha,
+    );
+  }
+}
+
+class _GiftButton extends StatelessWidget {
+  const _GiftButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoButton(
+      onPressed: () => context.router.push(const GetInviteRoute()),
+      minSize: 0,
+      padding: EdgeInsets.zero,
+      borderRadius: BorderRadius.circular(100),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(100),
+          gradient: const LinearGradient(
+            colors: <Color>[
+              Color(0xFFFB5012),
+              Color(0xFFFF783A),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(
+          vertical: 24,
+          horizontal: 28,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Assets.icons.gift24.svg(),
+            const SizedBox(width: 12),
+            Text(
+              'Gift Savie',
+              style: AppTextStyles.paragraph.copyWith(
+                color: AppColors.textInvert,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nested/nested.dart';
 
 import '../../application/di/di.dart';
+import '../../domain/model/savie_user/savie_user.dart';
+import '../cubit/user/user_cubit.dart';
 import '../presentation.dart';
 import '../router/app_router.gr.dart';
 
@@ -13,13 +15,12 @@ class AuthWrapperFlow extends StatelessWidget implements AutoRouteWrapper {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthStatusCubit, bool>(
-      builder: (BuildContext context, bool loggedIn) {
+    return BlocBuilder<UserCubit, SavieUser?>(
+      builder: (BuildContext context, SavieUser? savieUser) {
         return AutoRouter.declarative(
           routes: (_) => <PageRouteInfo>[
-            if (loggedIn) ...<PageRouteInfo>[
-              const AppFlowRoute(),
-              const EnterReferralCodeRoute(),
+            if (savieUser != null) ...<PageRouteInfo>[
+              const InviteWrapperFlowRoute(),
             ] else
               const OnboardingFlowRoute(),
           ],
@@ -37,6 +38,9 @@ class AuthWrapperFlow extends StatelessWidget implements AutoRouteWrapper {
         ),
         BlocProvider<AuthCubit>.value(
           value: getIt.get<AuthCubit>(),
+        ),
+        BlocProvider<UserCubit>.value(
+          value: getIt.get<UserCubit>(),
         ),
       ],
       child: this,

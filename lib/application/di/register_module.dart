@@ -1,7 +1,7 @@
 // ignore_for_file: invalid_annotation_target
 
 import 'package:injectable/injectable.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rx_shared_preferences/rx_shared_preferences.dart';
 
 @module
 abstract class RegisterModule {
@@ -9,4 +9,10 @@ abstract class RegisterModule {
   @preResolve
   Future<SharedPreferences> get sharedPreferences =>
       SharedPreferences.getInstance();
+
+  @singleton
+  RxSharedPreferences rxSharedPreferences(
+    SharedPreferences sharedPreferences,
+  ) =>
+      RxSharedPreferences(sharedPreferences);
 }

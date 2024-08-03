@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gradient_borders/box_borders/gradient_box_border.dart';
 
+import '../../application/application.dart';
+import '../../application/use_case/invites/apply_invite_use_case.dart';
 import '../presentation.dart';
 
 @RoutePage()
@@ -94,30 +96,73 @@ class _EnterReferalCodeBox extends StatelessWidget {
   }
 }
 
-class _EnterReferalCodeField extends StatelessWidget {
+class _EnterReferalCodeField extends StatefulWidget {
   const _EnterReferalCodeField();
 
   @override
+  State<_EnterReferalCodeField> createState() => _EnterReferalCodeFieldState();
+}
+
+class _EnterReferalCodeFieldState extends State<_EnterReferalCodeField>
+    with SingleTickerProviderStateMixin {
+  bool _isRequesting = false;
+  final TextEditingController _controller = TextEditingController();
+  late final AnimationController _errorController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 150),
+  );
+
+  @override
   Widget build(BuildContext context) {
-    return CupertinoTextField(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: AppColors.backgroundChatInput,
-      ),
-      style: AppTextStyles.paragraph,
-      placeholderStyle: const TextStyle(color: AppColors.textSecondary),
-      placeholder: 'Enter a referral code',
-      cursorColor: AppColors.iconAccent,
-      suffix: Padding(
-        padding: const EdgeInsets.only(right: 20),
-        child: Assets.icons.selected24.svg(
-          colorFilter: const ColorFilter.mode(
-            AppColors.iconAccent,
-            BlendMode.srcIn,
+    return AnimatedBuilder(
+      animation: _errorController,
+      builder: (BuildContext context, _) {
+        return CupertinoTextField(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Color.lerp(AppColors.backgroundChatInput,
+                  AppColors.iconNegative, _errorController.value)!,
+            ),
+            color: AppColors.backgroundChatInput,
           ),
-        ),
-      ),
+          controller: _controller,
+          enabled: !_isRequesting,
+          onChanged: (_) {
+            if (!_errorController.isDismissed) {
+              _errorController.reverse();
+            }
+          },
+          style: AppTextStyles.paragraph,
+          placeholderStyle: const TextStyle(color: AppColors.textSecondary),
+          placeholder: 'Enter a referral code',
+          cursorColor: AppColors.iconAccent,
+          suffix: GestureDetector(
+            onTap: () async {
+              setState(() => _isRequesting = true);
+
+              final bool result = await getIt
+                  .get<ApplyInviteUseCase>()
+                  .execute(_controller.text);
+
+              setState(() => _isRequesting = false);
+              if (!result) {
+                _errorController.forward();
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(right: 20),
+              child: Assets.icons.selected24.svg(
+                colorFilter: const ColorFilter.mode(
+                  AppColors.iconAccent,
+                  BlendMode.srcIn,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
