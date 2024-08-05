@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:auto_route/auto_route.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:dio/dio.dart';
 import 'package:favicon/favicon.dart';
@@ -84,26 +84,37 @@ class MessageView extends StatelessWidget {
             ),
           ],
           builder: (BuildContext context, bool contextMenuShown) {
-            return message.mediaPaths.isNotEmpty
-                ? message.text?.isNotEmpty ?? false
-                    ? _TextWithMediaMessageView(
-                        message: message,
-                        contextMenuShown: contextMenuShown,
-                      )
-                    : MediaMessageView(
-                        message: message,
-                        contextMenuShown: contextMenuShown,
-                      )
-                : message.audioMessage != null
-                    ? AudioMessageView(
-                        audioMessage: message.audioMessage!,
-                        key: Key(message.audioMessage!.path),
-                      )
-                    : TextMessageView(
-                        key: Key('TextMessageView${message.id}'),
-                        text: message.text ?? '',
-                        contextMenuShown: contextMenuShown,
-                      );
+            return message.map(
+              text: (TextMessage textMessage) {
+                if (textMessage.images.isNotEmpty) {
+                  if (textMessage.text != null) {
+                    return _TextWithMediaMessageView(
+                      message: textMessage,
+                      contextMenuShown: contextMenuShown,
+                    );
+                  } else {
+                    return MediaMessageView(
+                      message: textMessage,
+                      contextMenuShown: contextMenuShown,
+                    );
+                  }
+                } else {
+                  return TextMessageView(
+                    key: Key('TextMessageView${message.id}'),
+                    text: textMessage.text ?? '',
+                    contextMenuShown: contextMenuShown,
+                  );
+                }
+              },
+              audio: (AudioMessage audioMessage) {
+                return AudioMessageView(
+                  audioMessage: audioMessage,
+                  key: Key(audioMessage.url),
+                );
+              },
+              // TODO: add file
+              file: (_) => const SizedBox(),
+            );
           },
         ),
       ),

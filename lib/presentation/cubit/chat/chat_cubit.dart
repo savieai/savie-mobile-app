@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
-import 'package:uuid/uuid.dart';
 
+import '../../../application/application.dart';
 import '../../../domain/domain.dart';
 
 part 'chat_state.dart';
@@ -10,39 +10,44 @@ part 'chat_cubit.freezed.dart';
 
 @Injectable()
 class ChatCubit extends Cubit<ChatState> {
-  ChatCubit() : super(const ChatState(messages: <Message>[]));
+  ChatCubit(
+    this._createMessageUseCase,
+    this._getMessageUseCase,
+  ) : super(const ChatState(messages: <Message>[])) {
+    _fetchMessages();
+  }
 
-  final List<Message> _messages = <Message>[];
+  final CreateMessageUseCase _createMessageUseCase;
+  final GetMessageUseCase _getMessageUseCase;
 
-  void sendMessage({
+  Future<void> _fetchMessages() async {
+    final List<Message> messages = await _getMessageUseCase.execute();
+    emit(ChatState(messages: messages));
+  }
+
+  Future<void> sendMessage({
     String? message,
     List<String>? mediaPaths,
-  }) {
-    _messages.add(
-      Message(
-        id: const Uuid().v4(),
-        text: message,
-        mediaPaths: mediaPaths ?? <String>[],
-        date: DateTime.now(),
-      ),
+  }) async {
+    await _createMessageUseCase.execute(
+      imagePaths: mediaPaths ?? <String>[],
+      text: message ?? '',
     );
 
-    emit(state.copyWith(
-      messages: _messages.toList(),
-    ));
+    _fetchMessages();
   }
 
   void sendAudio(AudioMessage? audioMessage) {
-    _messages.add(
-      Message(
-        id: const Uuid().v4(),
-        audioMessage: audioMessage,
-        date: DateTime.now(),
-      ),
-    );
+    // _messages.add(
+    //   Message(
+    //     id: const Uuid().v4(),
+    //     audioMessage: audioMessage,
+    //     date: DateTime.now(),
+    //   ),
+    // );
 
-    emit(state.copyWith(
-      messages: _messages.toList(),
-    ));
+    // emit(state.copyWith(
+    //   messages: _messages.toList(),
+    // ));
   }
 }

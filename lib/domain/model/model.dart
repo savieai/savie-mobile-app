@@ -1,2 +1,2 @@
-export 'audio_message/audio_message.dart';
+export 'attachment/attachment.dart';
 export 'message/message.dart';

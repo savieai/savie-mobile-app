@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../../domain/model/audio_message/audio_message.dart';
+import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
 import '../../chat/widget/message_view/message_view.dart';
 
@@ -23,27 +23,30 @@ class SearchAudioFiles extends StatelessWidget {
           child: AudioView(
             expand: true,
             previewInfo: index != 1,
-            audioMessage: const AudioMessage(
-              peeks: <double>[
-                .0,
-                .1,
-                .2,
-                .3,
-                .4,
-                .3,
-                .2,
-                .1,
-                .2,
-                .2,
-                .2,
-                .3,
-                .4,
-                .3,
-                .3,
-                .3
-              ],
-              path: '',
-              seconds: 44,
+            audioMessage: AudioMessage(
+              // peeks: <double>[
+              //   .0,
+              //   .1,
+              //   .2,
+              //   .3,
+              //   .4,
+              //   .3,
+              //   .2,
+              //   .1,
+              //   .2,
+              //   .2,
+              //   .2,
+              //   .3,
+              //   .4,
+              //   .3,
+              //   .3,
+              //   .3
+              // ],
+              // path: '',
+              // seconds: 44,
+              id: '',
+              date: DateTime.now(),
+              url: '',
             ),
           ),
         );

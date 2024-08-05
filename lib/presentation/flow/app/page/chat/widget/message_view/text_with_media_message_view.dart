@@ -6,7 +6,7 @@ class _TextWithMediaMessageView extends StatelessWidget {
     required this.contextMenuShown,
   });
 
-  final Message message;
+  final TextMessage message;
   final bool contextMenuShown;
 
   @override
@@ -18,7 +18,7 @@ class _TextWithMediaMessageView extends StatelessWidget {
         const SizedBox(height: 16),
         ConstrainedBox(
           constraints: BoxConstraints(
-            maxHeight: 216 + (message.mediaPaths.length != 1 ? 32 : 0) - 18,
+            maxHeight: 216 + (message.images.length != 1 ? 32 : 0) - 18,
           ),
           child: OverflowBox(
             maxHeight: double.infinity,

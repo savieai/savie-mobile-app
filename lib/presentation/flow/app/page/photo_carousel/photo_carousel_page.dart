@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:auto_route/auto_route.dart';
@@ -6,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
-import '../../../../../domain/model/message/message.dart';
+import '../../../../../domain/domain.dart';
 import '../../../../presentation.dart';
 
 @RoutePage()
@@ -16,7 +15,7 @@ class PhotoCarouselPage extends StatefulWidget {
     required this.message,
   });
 
-  final Message message;
+  final TextMessage message;
 
   @override
   State<PhotoCarouselPage> createState() => _PhotoCarouselPageState();
@@ -183,7 +182,7 @@ class _Carousel extends StatefulWidget {
     required this.selectedIndex,
   });
 
-  final Message message;
+  final TextMessage message;
   final PageController pageController;
   final int selectedIndex;
 
@@ -199,15 +198,16 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
       scrollPhysics: const BouncingScrollPhysics(),
       builder: (BuildContext context, int index) {
         final PhotoViewController photoViewController = PhotoViewController();
-        final String path = widget.message.mediaPaths[index];
+        final Attachment attachment = widget.message.images[index];
 
         return PhotoViewGalleryPageOptions(
           controller: photoViewController,
-          imageProvider: FileImage(File(path)),
+          imageProvider:
+              AuthProtectedNetworkImageProvider.getProvider(attachment.url),
           disableGestures: true,
           heroAttributes: widget.selectedIndex == index
               ? PhotoViewHeroAttributes(
-                  tag: path + widget.message.id,
+                  tag: attachment.url + widget.message.id,
                   createRectTween: (Rect? begin, Rect? end) {
                     return RectTween(begin: begin, end: end);
                   },
@@ -233,8 +233,8 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
                           ),
                         );
                       },
-                      child: Image.file(
-                        File(path),
+                      child: AuthProtectedNetworkImage(
+                        attachment.name,
                         fit: BoxFit.cover,
                       ),
                     );
@@ -243,7 +243,7 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
               : null,
         );
       },
-      itemCount: widget.message.mediaPaths.length,
+      itemCount: widget.message.images.length,
       pageController: widget.pageController,
     );
   }
@@ -255,7 +255,7 @@ class _BottomBar extends StatefulWidget {
     required this.selectedIndex,
   });
 
-  final Message message;
+  final TextMessage message;
   final int selectedIndex;
 
   @override
@@ -264,7 +264,7 @@ class _BottomBar extends StatefulWidget {
 
 class _BottomBarState extends State<_BottomBar> {
   late final List<GlobalKey> _keys = List<GlobalKey>.generate(
-    widget.message.mediaPaths.length,
+    widget.message.images.length,
     (_) => GlobalKey(),
   );
 
@@ -311,12 +311,12 @@ class _BottomBarState extends State<_BottomBar> {
               itemBuilder: (BuildContext context, int index) {
                 return _ImagePreview(
                   key: _keys[index],
-                  path: widget.message.mediaPaths[index],
+                  attachment: widget.message.images[index],
                   isSelected: widget.selectedIndex == index,
                 );
               },
               separatorBuilder: (_, __) => const SizedBox(width: 4),
-              itemCount: widget.message.mediaPaths.length,
+              itemCount: widget.message.images.length,
             ),
           ),
           SizedBox(
@@ -331,11 +331,11 @@ class _BottomBarState extends State<_BottomBar> {
 class _ImagePreview extends StatefulWidget {
   const _ImagePreview({
     super.key,
-    required this.path,
+    required this.attachment,
     required this.isSelected,
   });
 
-  final String path;
+  final Attachment attachment;
   final bool isSelected;
 
   @override
@@ -378,8 +378,8 @@ class _ImagePreviewState extends State<_ImagePreview>
       builder: (BuildContext context, _) {
         return Align(
           alignment: Alignment.bottomCenter,
-          child: Image.file(
-            File(widget.path),
+          child: AuthProtectedNetworkImage(
+            widget.attachment.name,
             height: 28 + _animation.value * 8,
             width: 28 + _animation.value * 8,
             filterQuality: FilterQuality.none,

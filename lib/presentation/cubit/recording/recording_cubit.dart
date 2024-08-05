@@ -1,3 +1,5 @@
+// ignore_for_file: body_might_complete_normally_nullable
+
 import 'dart:async';
 import 'dart:io';
 
@@ -76,27 +78,28 @@ class RecordingCubit extends Cubit<RecordingState> {
   }
 
   Future<AudioMessage?> finishRecording() async {
-    _cancelEverything();
+    // TODO: finish recording
+    // _cancelEverything();
 
-    final String? path = await _recorder.stop();
-    AudioMessage? audioMessage;
+    // final String? path = await _recorder.stop();
+    // AudioMessage? audioMessage;
 
-    if (path != null) {
-      audioMessage = AudioMessage(
-        peeks: _peeks.toList(),
-        path: path,
-        seconds: _seconds,
-      );
-    }
+    // if (path != null) {
+    //   audioMessage = AudioMessage(
+    //     peeks: _peeks.toList(),
+    //     path: path,
+    //     seconds: _seconds,
+    //   );
+    // }
 
-    _peeks.clear();
-    _seconds = 0;
+    // _peeks.clear();
+    // _seconds = 0;
 
-    emit(RecordingState.idle(
-      lastRecordingResult: RecordingResult.finish,
-    ));
+    // emit(RecordingState.idle(
+    //   lastRecordingResult: RecordingResult.finish,
+    // ));
 
-    return audioMessage;
+    // return audioMessage;
   }
 
   Future<void> cancelRecording() async {

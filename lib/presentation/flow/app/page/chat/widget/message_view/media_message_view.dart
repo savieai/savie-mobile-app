@@ -7,13 +7,13 @@ class MediaMessageView extends StatelessWidget {
     required this.contextMenuShown,
   });
 
-  final Message message;
+  final TextMessage message;
   final bool contextMenuShown;
 
-  String get heroTag => shownMediaPaths.first + message.id;
+  String get heroTag => shownMediaPaths.first.url + message.id;
 
-  List<String> get shownMediaPaths =>
-      message.mediaPaths.take(4).toList().reversed.toList();
+  List<Attachment> get shownMediaPaths =>
+      message.images.take(4).toList().reversed.toList();
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +28,9 @@ class MediaMessageView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          if (message.mediaPaths.length != 1) ...<Widget>[
+          if (message.images.length != 1) ...<Widget>[
             _ImageCountLabel(
-              count: message.mediaPaths.length,
+              count: message.images.length,
             ),
           ],
           Padding(
@@ -53,24 +53,24 @@ class _ImageStack extends StatelessWidget {
   });
 
   final bool contextMenuShown;
-  final Message message;
+  final TextMessage message;
 
   @override
   Widget build(BuildContext context) {
-    final List<String> shownMediaPaths =
-        message.mediaPaths.take(4).toList().reversed.toList();
-    final List<String> leftMediaPaths = shownMediaPaths.length >= 4
-        ? message.mediaPaths.toList().sublist(4)
-        : <String>[];
+    final List<Attachment> shownMediaPaths =
+        message.images.take(4).toList().reversed.toList();
+    final List<Attachment> leftMediaPaths = shownMediaPaths.length >= 4
+        ? message.images.toList().sublist(4)
+        : <Attachment>[];
 
     return Stack(
       alignment: Alignment.centerRight,
       children: <Widget>[
         ...shownMediaPaths.mapIndexed(
-          (int index, String path) {
-            final Widget image = Image.file(
-              key: ValueKey<String>(path),
-              File(path),
+          (int index, Attachment attachment) {
+            final Widget image = AuthProtectedNetworkImage(
+              attachment.name,
+              key: ValueKey<String>(attachment.url),
               fit: BoxFit.cover,
             );
 
@@ -103,7 +103,7 @@ class _ImageStack extends StatelessWidget {
                   child: contextMenuShown
                       ? child
                       : Hero(
-                          tag: path + message.id,
+                          tag: attachment.url + message.id,
                           flightShuttleBuilder: isMain
                               // ignore: always_specify_types
                               ? (p1, p2, p3, p4, p5) {
@@ -133,9 +133,9 @@ class _ImageStack extends StatelessWidget {
           },
         ),
         if (!contextMenuShown)
-          ...leftMediaPaths.map((String path) {
+          ...leftMediaPaths.map((Attachment attachment) {
             return Hero(
-              tag: path + message.id,
+              tag: attachment.url + message.id,
               child: const SizedBox(),
             );
           }),

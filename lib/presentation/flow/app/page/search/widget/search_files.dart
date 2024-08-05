@@ -70,7 +70,7 @@ class _PreviewFile extends StatelessWidget {
       ),
       child: Stack(
         children: <Widget>[
-          Image.network(
+          const AuthProtectedNetworkImage(
             'https://s.cafebazaar.ir/images/icons/com.Nature.WallappersQuick-f4c4352a-467d-4ffb-85e9-f4fa7645f1e2_512x512.png?x-img=v1/resize,h_256,w_256,lossless_false/optimize',
           ),
           Positioned.fill(

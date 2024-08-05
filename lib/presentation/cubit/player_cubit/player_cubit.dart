@@ -1,7 +1,8 @@
+// ignore_for_file: unused_field
+
 import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart' as audio;
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -44,32 +45,33 @@ class PlayerCubit extends Cubit<PlayerState> {
   late final StreamSubscription<Duration> _positionSubscription;
 
   Future<void> toggleAudio(AudioMessage audioMessage) async {
-    if (audioMessage.path != state.audio?.audioPath) {
-      await _player.stop();
-      _player.play(DeviceFileSource(audioMessage.path));
-    } else {
-      switch (_nativeState) {
-        case audio.PlayerState.stopped:
-          _player.play(DeviceFileSource(audioMessage.path));
-        case audio.PlayerState.completed:
-        case audio.PlayerState.paused:
-          _player.resume();
-        case audio.PlayerState.playing:
-          _player.pause();
-        case audio.PlayerState.disposed:
-          break;
-      }
-    }
+    // TODO: toggle audio
+    // if (audioMessage.path != state.audio?.audioPath) {
+    //   await _player.stop();
+    //   _player.play(DeviceFileSource(audioMessage.path));
+    // } else {
+    //   switch (_nativeState) {
+    //     case audio.PlayerState.stopped:
+    //       _player.play(DeviceFileSource(audioMessage.path));
+    //     case audio.PlayerState.completed:
+    //     case audio.PlayerState.paused:
+    //       _player.resume();
+    //     case audio.PlayerState.playing:
+    //       _player.pause();
+    //     case audio.PlayerState.disposed:
+    //       break;
+    //   }
+    // }
 
-    emit(
-      state.copyWith(
-        audio: PlayingAudio(
-          audioPath: audioMessage.path,
-          duration: _position,
-          isPlaying: _nativeState == audio.PlayerState.playing,
-        ),
-      ),
-    );
+    // emit(
+    //   state.copyWith(
+    //     audio: PlayingAudio(
+    //       audioPath: audioMessage.path,
+    //       duration: _position,
+    //       isPlaying: _nativeState == audio.PlayerState.playing,
+    //     ),
+    //   ),
+    // );
   }
 
   @override

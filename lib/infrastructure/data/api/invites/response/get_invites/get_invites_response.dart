@@ -9,7 +9,7 @@ class GetInvitesResponse with _$GetInvitesResponse {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory GetInvitesResponse({
     required List<InviteDTO> invites,
-  }) = _InviteDTO;
+  }) = _GetInvitesResponse;
 
   const GetInvitesResponse._();
 
