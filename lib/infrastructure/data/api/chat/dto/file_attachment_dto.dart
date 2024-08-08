@@ -13,7 +13,7 @@ class FileAttachmentDTO with _$FileAttachmentDTO {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory FileAttachmentDTO({
     required String name,
-    required String url,
+    @Default('') String url,
     @JsonKey(includeToJson: false)
     required FileAttachmentTypeDTO attachmentType,
   }) = _FileAttachmentDTO;

@@ -18,7 +18,6 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<List<Message>> fetchMessages() async {
     final Response<dynamic> rawResponse = await _chatApi.getMessages();
-    print((rawResponse.data as List<dynamic>).last);
     final GetMessagesResponse response =
         GetMessagesResponse.fromJson(rawResponse.data as List<dynamic>);
 
@@ -30,18 +29,22 @@ class ChatRepositoryImpl implements ChatRepository {
     required String? text,
     required List<Attachment> images,
   }) async {
-    await _chatApi.createMessage(
-      CreateMessageRequest(
-        fileAttachments: <FileAttachmentDTO>[],
-        images: images
-            .map((Attachment a) => FileAttachmentMapper.toDto(
-                  a,
-                  type: FileAttachmentTypeDTO.image,
-                ))
-            .toList(),
-        textContent: text ?? '',
-        voiceMessageUrl: null,
-      ),
-    );
+    try {
+      await _chatApi.createMessage(
+        CreateMessageRequest(
+          fileAttachments: <FileAttachmentDTO>[],
+          images: images
+              .map((Attachment a) => FileAttachmentMapper.toDto(
+                    a,
+                    type: FileAttachmentTypeDTO.image,
+                  ))
+              .toList(),
+          textContent: text ?? '',
+          voiceMessageUrl: null,
+        ),
+      );
+    } on DioException catch (e) {
+      print(e.response?.data);
+    }
   }
 }

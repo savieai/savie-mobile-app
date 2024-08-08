@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:auto_route/auto_route.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -202,8 +203,7 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
 
         return PhotoViewGalleryPageOptions(
           controller: photoViewController,
-          imageProvider:
-              AuthProtectedNetworkImageProvider.getProvider(attachment.url),
+          imageProvider: CachedNetworkImageProvider(attachment.url),
           disableGestures: true,
           heroAttributes: widget.selectedIndex == index
               ? PhotoViewHeroAttributes(
@@ -233,8 +233,8 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
                           ),
                         );
                       },
-                      child: AuthProtectedNetworkImage(
-                        attachment.name,
+                      child: CachedNetworkImage(
+                        imageUrl: attachment.url,
                         fit: BoxFit.cover,
                       ),
                     );
@@ -378,12 +378,12 @@ class _ImagePreviewState extends State<_ImagePreview>
       builder: (BuildContext context, _) {
         return Align(
           alignment: Alignment.bottomCenter,
-          child: AuthProtectedNetworkImage(
-            widget.attachment.name,
+          child: CachedNetworkImage(
+            imageUrl: widget.attachment.url,
             height: 28 + _animation.value * 8,
             width: 28 + _animation.value * 8,
             filterQuality: FilterQuality.none,
-            cacheHeight: 100,
+            memCacheHeight: 100,
             fit: BoxFit.cover,
           ),
         );

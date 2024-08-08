@@ -68,8 +68,8 @@ class _ImageStack extends StatelessWidget {
       children: <Widget>[
         ...shownMediaPaths.mapIndexed(
           (int index, Attachment attachment) {
-            final Widget image = AuthProtectedNetworkImage(
-              attachment.name,
+            final Widget image = CachedNetworkImage(
+              imageUrl: attachment.name,
               key: ValueKey<String>(attachment.url),
               fit: BoxFit.cover,
             );

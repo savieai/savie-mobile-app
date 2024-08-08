@@ -37,7 +37,7 @@ class AudioView extends StatefulWidget {
 }
 
 class _AudioViewState extends State<AudioView> {
-  late final Duration _totalDuration = Duration(
+  late final Duration _totalDuration = const Duration(
       // seconds: widget.audioMessage.seconds, // TODO: add seconds
       );
   late Duration _currentDuration;

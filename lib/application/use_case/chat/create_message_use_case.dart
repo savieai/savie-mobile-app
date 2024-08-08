@@ -16,7 +16,7 @@ class CreateMessageUseCase {
     required List<String> imagePaths,
     required String text,
   }) async {
-    final List<String> remoteImagePaths = await Future.wait(
+    final List<String> fileNames = await Future.wait(
       imagePaths.map(
         (String localPath) async {
           final String extension = localPath.split('.').last;
@@ -25,19 +25,16 @@ class CreateMessageUseCase {
               .from('message_attachments')
               .upload(fileName, File(localPath));
 
-          return Supabase.instance.client.storage
-              .from('message_attachments')
-              .getPublicUrl(fileName);
+          return fileName;
         },
       ),
     );
 
     await _chatRepository.createMessage(
       text: text,
-      images: remoteImagePaths.map(
-        (String remotePath) {
-          final String name = remotePath.split('/').last;
-          return Attachment(name: name, url: remotePath);
+      images: fileNames.map(
+        (String fileName) {
+          return Attachment(name: fileName, url: fileName);
         },
       ).toList(),
     );

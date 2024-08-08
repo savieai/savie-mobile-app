@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
@@ -16,7 +14,6 @@ class ChatApi {
   Future<Response<dynamic>> createMessage(
     CreateMessageRequest request,
   ) {
-    print(jsonEncode(request.toJson()));
     return _apiBase.postData(
       '/messages',
       data: request.toJson(),
