@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../domain/domain.dart';
-import '../../../domain/model/savie_user/savie_user.dart';
 
 @Injectable()
 class UserCubit extends Cubit<SavieUser?> {

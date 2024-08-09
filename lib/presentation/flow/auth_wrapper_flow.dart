@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nested/nested.dart';
 
 import '../../application/di/di.dart';
-import '../../domain/model/savie_user/savie_user.dart';
+import '../../domain/model/savie_user.dart';
 import '../cubit/user/user_cubit.dart';
 import '../presentation.dart';
 import '../router/app_router.gr.dart';

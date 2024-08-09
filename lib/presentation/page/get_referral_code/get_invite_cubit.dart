@@ -4,7 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../application/use_case/invites/get_invites_use_case.dart';
-import '../../../domain/model/invite/invite.dart';
+import '../../../domain/model/invite.dart';
 
 part 'get_invite_cubit.freezed.dart';
 

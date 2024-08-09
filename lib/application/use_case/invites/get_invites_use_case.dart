@@ -2,7 +2,6 @@ import 'package:either_dart/either.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../domain/domain.dart';
-import '../../../domain/model/invite/invite.dart';
 import 'generate_invites_use_case.dart';
 
 @Injectable()

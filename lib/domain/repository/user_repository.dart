@@ -1,4 +1,4 @@
-import '../model/savie_user/savie_user.dart';
+import '../model/savie_user.dart';
 
 abstract class UserRepository {
   Future<SavieUser?> fetchUser();

@@ -1,6 +1,6 @@
 import 'package:either_dart/either.dart';
 
-import '../model/invite/invite.dart';
+import '../model/invite.dart';
 
 abstract class InvitesRepository {
   Future<Either<void, List<Invite>>> getInvites();

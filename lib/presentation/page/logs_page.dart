@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../application/application.dart';
 import '../../domain/model/app_log.dart';
-import '../../infrastructure/data/service/logging_service.dart';
+import '../../infrastructure/service/logging_service.dart';
 import '../presentation.dart';
 
 @RoutePage()

@@ -7,7 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'application/application.dart';
 import 'domain/model/app_log.dart';
 import 'firebase_options.dart';
-import 'infrastructure/data/service/logging_service.dart';
+import 'infrastructure/service/logging_service.dart';
 import 'presentation/savie_app.dart';
 
 void main() async {
