@@ -8,19 +8,33 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../domain/domain.dart';
+import '../service/logging_service.dart';
 
 @Singleton(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
+  AuthRepositoryImpl(this._loggingService);
+
+  final LoggingService _loggingService;
+
   @override
   Future<Either<String, void>> requestOtp({
     required String email,
   }) async {
+    _loggingService.addLog(const InfoLog(info: 'Requesting OTP'));
     try {
       await Supabase.instance.client.auth.signInWithOtp(
         email: email,
       );
+      _loggingService.addLog(const InfoLog(info: 'OTP Success'));
       return const Right<String, void>(null);
-    } on AuthException catch (e) {
+    } on AuthException catch (e, s) {
+      _loggingService.addLog(
+        ErrorLog(
+          message: 'OTP Failure',
+          error: e,
+          stackTrace: s,
+        ),
+      );
       return Left<String, void>(e.message);
     }
   }
@@ -30,20 +44,30 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String otp,
   }) async {
+    _loggingService.addLog(const InfoLog(info: 'Signing in with email'));
     try {
       await Supabase.instance.client.auth.verifyOTP(
         email: email,
         token: otp,
         type: OtpType.email,
       );
+      _loggingService.addLog(const InfoLog(info: 'Sign in with email Success'));
       return getAuthStatus();
-    } catch (_) {
+    } catch (e, s) {
+      _loggingService.addLog(
+        ErrorLog(
+          message: 'Sign in with email Failure',
+          error: e,
+          stackTrace: s,
+        ),
+      );
       return false;
     }
   }
 
   @override
   Future<bool> signInWithApple() async {
+    _loggingService.addLog(const InfoLog(info: 'Signing in with Apple'));
     try {
       final String rawNonce = Supabase.instance.client.auth.generateRawNonce();
       final String hashedNonce =
@@ -68,14 +92,24 @@ class AuthRepositoryImpl implements AuthRepository {
         nonce: rawNonce,
       );
 
+      _loggingService
+          .addLog(const InfoLog(info: 'Signing in with Apple Success'));
       return getAuthStatus();
-    } catch (_) {
+    } catch (e, s) {
+      _loggingService.addLog(
+        ErrorLog(
+          message: 'Signing in with Apple Failure',
+          error: e,
+          stackTrace: s,
+        ),
+      );
       return false;
     }
   }
 
   @override
   Future<bool> signInWithGoogle() async {
+    _loggingService.addLog(const InfoLog(info: 'Signing in with Google'));
     try {
       const String iosClientId =
           '256363804943-pj14l9af8j4p07n5mqluhor3khmggm3t.apps.googleusercontent.com';
@@ -97,8 +131,17 @@ class AuthRepositoryImpl implements AuthRepository {
         accessToken: accessToken,
       );
 
+      _loggingService
+          .addLog(const InfoLog(info: 'Signing in with Google Success'));
       return getAuthStatus();
-    } catch (_) {
+    } catch (e, s) {
+      _loggingService.addLog(
+        ErrorLog(
+          message: 'Signing in with Google Failure',
+          error: e,
+          stackTrace: s,
+        ),
+      );
       return false;
     }
   }
