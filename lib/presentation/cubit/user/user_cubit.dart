@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../application/application.dart';
 import '../../../domain/domain.dart';
 
 @Injectable()
@@ -10,6 +11,7 @@ class UserCubit extends Cubit<SavieUser?> {
   UserCubit(
     this._authRepository,
     this._userRepository,
+    this._joinWhitelistUseCase,
   ) : super(_authRepository.getAuthStatus()
             ? _userRepository.getUser()
             : null) {
@@ -40,6 +42,8 @@ class UserCubit extends Cubit<SavieUser?> {
 
   final AuthRepository _authRepository;
   final UserRepository _userRepository;
+  final JoinWhitelistUseCase _joinWhitelistUseCase;
+
   late final StreamSubscription<bool> _authStatusSubscription;
   late final StreamSubscription<SavieUser?> _userSubscription;
 
@@ -49,4 +53,6 @@ class UserCubit extends Cubit<SavieUser?> {
     _userSubscription.cancel();
     return super.close();
   }
+
+  Future<void> joinWhiteList() => _joinWhitelistUseCase.execute();
 }

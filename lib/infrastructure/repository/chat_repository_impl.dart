@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -13,16 +12,10 @@ class ChatRepositoryImpl implements ChatRepository {
 
   @override
   Future<List<Message>> fetchMessages() async {
-    try {
-      final HttpResponse<GetMessagesResponse> response =
-          await _chatApi.getMessages();
+    final HttpResponse<GetMessagesResponse> response =
+        await _chatApi.getMessages();
 
-      return response.data.map(MessageMapper.toDomain).toList();
-    } on DioException catch (e) {
-      print(e.response?.data);
-
-      rethrow;
-    }
+    return response.data.map(MessageMapper.toDomain).toList();
   }
 
   @override

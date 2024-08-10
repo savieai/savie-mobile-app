@@ -29,6 +29,9 @@ void main() async {
       runApp(const SavieApp());
     },
     (Object e, StackTrace s) {
+      FlutterError.dumpErrorToConsole(
+        FlutterErrorDetails(exception: e, stack: s),
+      );
       getIt.get<LoggingService>().addLog(
             ErrorLog(
               error: e,

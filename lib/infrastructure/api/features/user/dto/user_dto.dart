@@ -11,6 +11,8 @@ class UserDTO with _$UserDTO {
     required DateTime createdAt,
     required bool accessAllowed,
     required String userId,
+    @Default(false) bool joinWaitlist,
+    @Default(false) bool notifyPro,
   }) = _UserDTO;
 
   factory UserDTO.fromJson(Map<String, Object?> json) =>

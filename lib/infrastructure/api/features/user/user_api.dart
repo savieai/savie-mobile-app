@@ -5,6 +5,7 @@ import 'package:retrofit/retrofit.dart';
 import '../../../infrastructure.dart';
 
 export 'dto/dto.dart';
+export 'request/request.dart';
 export 'response/response.dart';
 
 part 'user_api.g.dart';
@@ -21,4 +22,10 @@ abstract class UserApi {
 
   @GET('/users/self')
   Future<HttpResponse<GetUserResponse>> getUser();
+
+  @PATCH('/users/{id}')
+  Future<HttpResponse<void>> updateUser({
+    @Path() required String id,
+    @Body() required UpdateUserRequest request,
+  });
 }

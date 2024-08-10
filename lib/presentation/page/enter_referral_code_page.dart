@@ -1,9 +1,11 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gradient_borders/box_borders/gradient_box_border.dart';
 
 import '../../application/application.dart';
+import '../cubit/user/user_cubit.dart';
 import '../presentation.dart';
 
 @RoutePage()
@@ -36,38 +38,72 @@ class _EnterReferralCodePageState extends State<EnterReferralCodePage> {
           end: Alignment.bottomCenter,
         ),
       ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: Padding(
-          padding:
-              MediaQuery.viewInsetsOf(context) + MediaQuery.paddingOf(context),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: CustomAppBar(
+          middle: const SizedBox(),
+          leading: CustomIconButton(
+            svgGenImage: Assets.icons.logOut24,
+            color: AppColors.iconInvert,
+            onTap: () {
+              context.read<AuthCubit>().logOut();
+            },
+          ),
+          backgroundColor: Colors.transparent,
+        ),
+        body: SafeArea(
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(
                 maxHeight: 385,
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Column(
-                  children: <Widget>[
-                    const _EnterReferalCodeBox(),
-                    const Spacer(),
-                    Text(
-                      'No referral code? Join the whitelist.',
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.paragraph.copyWith(
-                        color: Colors.white.withOpacity(0.6),
-                      ),
-                    ),
-                    const Spacer(),
-                    const _JoinWishListButton(),
-                  ],
-                ),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40),
+                child: _Body(),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _Body extends StatelessWidget {
+  const _Body();
+
+  @override
+  Widget build(BuildContext context) {
+    final bool whitelistRequested = context.select<UserCubit, bool>(
+      (UserCubit cubit) => cubit.state?.joinWaitlist ?? false,
+    );
+
+    return Column(
+      children: <Widget>[
+        const _EnterReferalCodeBox(),
+        const Spacer(),
+        if (whitelistRequested)
+          Center(
+            child: Text(
+              'Requested to join the whitelist',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.paragraph.copyWith(
+                color: Colors.white.withOpacity(0.6),
+              ),
+            ),
+          )
+        else ...<Widget>[
+          Text(
+            'No referral code? Join the whitelist.',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.paragraph.copyWith(
+              color: Colors.white.withOpacity(0.6),
+            ),
+          ),
+          const Spacer(),
+          const _JoinWishListButton(),
+        ],
+      ],
     );
   }
 }
@@ -185,49 +221,65 @@ class _EnterReferalCodeFieldState extends State<_EnterReferalCodeField>
   }
 }
 
-class _JoinWishListButton extends StatelessWidget {
+class _JoinWishListButton extends StatefulWidget {
   const _JoinWishListButton();
 
   @override
-  Widget build(BuildContext context) {
-    return CupertinoButton(
-      padding: EdgeInsets.zero,
-      minSize: 0,
-      onPressed: () {
-        getIt
-            .get<TrackUseActivityUseCase>()
-            .execute(AppEvents.referralCheck.joinWhitelistPressed);
+  State<_JoinWishListButton> createState() => _JoinWishListButtonState();
+}
 
-        context.router.maybePopTop();
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: GradientBoxBorder(
-            gradient: LinearGradient(
-              colors: <Color>[
-                Colors.white.withOpacity(0.2),
-                Colors.white.withOpacity(0.04),
+class _JoinWishListButtonState extends State<_JoinWishListButton> {
+  bool _requesting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      ignoring: _requesting,
+      child: AnimatedOpacity(
+        opacity: _requesting ? 0.5 : 1,
+        duration: const Duration(milliseconds: 100),
+        child: CupertinoButton(
+          padding: EdgeInsets.zero,
+          minSize: 0,
+          onPressed: () async {
+            getIt
+                .get<TrackUseActivityUseCase>()
+                .execute(AppEvents.referralCheck.joinWhitelistPressed);
+
+            setState(() => _requesting = true);
+            await context.read<UserCubit>().joinWhiteList();
+            setState(() => _requesting = false);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: GradientBoxBorder(
+                gradient: LinearGradient(
+                  colors: <Color>[
+                    Colors.white.withOpacity(0.2),
+                    Colors.white.withOpacity(0.04),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+              color: Colors.white.withOpacity(0.2),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
               ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
             ),
-          ),
-          color: Colors.white.withOpacity(0.2),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+            child: Text(
+              'Join Whitelist',
+              style: AppTextStyles.paragraph.copyWith(
+                color: AppColors.textInvert,
+                height: 1,
+              ),
             ),
-          ],
-        ),
-        child: Text(
-          'Join Whitelist',
-          style: AppTextStyles.paragraph.copyWith(
-            color: AppColors.textInvert,
-            height: 1,
           ),
         ),
       ),

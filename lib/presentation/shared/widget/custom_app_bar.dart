@@ -8,18 +8,20 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.middle,
     this.leading,
     this.trailing,
+    this.backgroundColor,
   });
 
   final Widget middle;
   final Widget? leading;
   final Widget? trailing;
+  final Color? backgroundColor;
 
   static const double preferredHeight = 64;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.backgroundPrimary,
+      color: backgroundColor ?? AppColors.backgroundPrimary,
       child: SafeArea(
         bottom: false,
         minimum: const EdgeInsets.symmetric(horizontal: 12),

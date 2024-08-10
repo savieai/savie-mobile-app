@@ -22,7 +22,7 @@ class UserRepositoryImpl implements UserRepository {
       await _userStorage.saveUser(user);
       return UserMapper.toDomain(user);
     } catch (_) {
-      return null;
+      return getUser();
     }
   }
 
@@ -44,4 +44,19 @@ class UserRepositoryImpl implements UserRepository {
         (UserDTO? userDto) =>
             userDto == null ? null : UserMapper.toDomain(userDto),
       );
+
+  @override
+  Future<bool> updateUser(SavieUser user) async {
+    final UpdateUserRequest request = UpdateUserRequest(
+      joinWaitlist: user.joinWaitlist,
+      notifyPro: user.notifyPro,
+    );
+
+    final HttpResponse<void> response = await _userApi.updateUser(
+      id: user.id,
+      request: request,
+    );
+
+    return response.response.statusCode == 200;
+  }
 }
