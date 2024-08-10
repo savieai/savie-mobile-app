@@ -3,15 +3,17 @@ part of 'message_view.dart';
 class TextMessageView extends StatelessWidget {
   const TextMessageView({
     super.key,
-    required this.text,
+    required this.textMessage,
     required this.contextMenuShown,
   });
 
-  final String text;
+  final TextMessage textMessage;
   final bool contextMenuShown;
 
   @override
   Widget build(BuildContext context) {
+    final String text = textMessage.text ?? '';
+
     final List<String> links = _extractLinks(text);
     final List<InlineSpan> spans = _convertToSpans(text, false);
 
@@ -101,7 +103,15 @@ class TextMessageView extends StatelessWidget {
                 overflow: TextOverflow.visible,
               ),
               recognizer: TapGestureRecognizer()
-                ..onTap = () => launchUrlString(_completeLink(url)),
+                ..onTap = () {
+                  getIt.get<TrackUseActivityUseCase>().execute(
+                        AppEvents.chat.linkClicked(
+                          messageId: textMessage.id,
+                          type: textMessage.appEventMessageType,
+                        ),
+                      );
+                  launchUrlString(_completeLink(url));
+                },
             ),
           ],
         ),

@@ -1,7 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:floating_draggable_widget/floating_draggable_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 import '../../application/application.dart';
 import '../presentation.dart';
@@ -18,6 +17,7 @@ class LogsWrapperFlow extends StatelessWidget {
       floatingWidgetWidth: 100,
       autoAlign: true,
       mainScreenWidget: const AutoRouter(),
+      resizeToAvoidBottomInset: false,
       floatingWidget: Padding(
         padding: const EdgeInsets.all(25),
         child: Container(

@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:wave_blob/wave_blob.dart';
 
+import '../../../../../../application/application.dart';
 import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
 import 'widget.dart';
@@ -166,6 +167,9 @@ class _TextInputViewState extends State<_TextInputView> {
                       context
                           .read<ChatCubit>()
                           .sendMessage(message: _controller.text);
+                      getIt
+                          .get<TrackUseActivityUseCase>()
+                          .execute(AppEvents.chat.sendButtonClicked);
                       _controller.value = TextEditingValue.empty;
                     },
                   ),
@@ -563,6 +567,9 @@ class _ActiveRecordingButton extends StatelessWidget {
                     return;
                   }
 
+                  getIt
+                      .get<TrackUseActivityUseCase>()
+                      .execute(AppEvents.chat.voiceButtonClicked);
                   context.read<RecordingCubit>().startRecording();
                 },
                 longPressTimeConsider: 100,
@@ -642,12 +649,20 @@ class _ActiveRecordingButton extends StatelessWidget {
   }
 
   Future<void> _onCancel(BuildContext context) async {
+    // TODO: specify duration
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.chat.voiceCancelClicked(duration: Duration.zero));
     await context.read<RecordingCubit>().cancelRecording();
   }
 
   Future<void> _onFinish(BuildContext context) async {
     final AudioMessage? audioMessage =
         await context.read<RecordingCubit>().finishRecording();
+    // TODO: specify duration
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.chat.voiceButtonReleased(duration: Duration.zero));
     if (context.mounted) {
       context.read<ChatCubit>().sendAudio(audioMessage);
     }
@@ -687,6 +702,10 @@ class _ActiveRecordingButton extends StatelessWidget {
 
     if (newVerticalValue == 1) {
       HapticFeedback.lightImpact();
+      // TODO: specify duraiton
+      getIt
+          .get<TrackUseActivityUseCase>()
+          .execute(AppEvents.chat.voiceLocked(duration: Duration.zero));
       context.read<RecordingCubit>().fixRecording();
     }
 

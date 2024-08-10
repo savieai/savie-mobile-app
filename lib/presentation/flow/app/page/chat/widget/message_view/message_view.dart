@@ -13,6 +13,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+import '../../../../../../../application/application.dart';
 import '../../../../../../../domain/domain.dart';
 import '../../../../../../presentation.dart';
 import '../../../../../../router/app_router.gr.dart';
@@ -101,7 +102,7 @@ class MessageView extends StatelessWidget {
                 } else {
                   return TextMessageView(
                     key: Key('TextMessageView${message.id}'),
-                    text: textMessage.text ?? '',
+                    textMessage: textMessage,
                     contextMenuShown: contextMenuShown,
                   );
                 }

@@ -4,12 +4,26 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../application/application.dart';
 import '../../../presentation.dart';
 import '../../../router/app_router.gr.dart';
 
 @RoutePage()
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
+
+  @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  @override
+  void initState() {
+    super.initState();
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.welcome.screenOpened);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +89,12 @@ class _GoogleSignInButton extends StatelessWidget {
       title: 'Continue with Google',
       backgroundColor: Colors.white,
       textColor: AppColors.textPrimary,
-      onTap: context.read<AuthCubit>().signInWithGoogle,
+      onTap: () {
+        getIt
+            .get<TrackUseActivityUseCase>()
+            .execute(AppEvents.welcome.googleButtonPressed);
+        context.read<AuthCubit>().signInWithGoogle();
+      },
       addBorder: true,
     );
   }
@@ -91,7 +110,12 @@ class _AppleSignInButton extends StatelessWidget {
       title: 'Continue with Apple',
       backgroundColor: Colors.black,
       textColor: Colors.white,
-      onTap: context.read<AuthCubit>().signInWithApple,
+      onTap: () {
+        getIt
+            .get<TrackUseActivityUseCase>()
+            .execute(AppEvents.welcome.appleButtonPressed);
+        context.read<AuthCubit>().signInWithApple();
+      },
     );
   }
 }
@@ -106,6 +130,9 @@ class _EmailSignInButton extends StatelessWidget {
       backgroundColor: Colors.white,
       textColor: AppColors.textPrimary,
       onTap: () {
+        getIt
+            .get<TrackUseActivityUseCase>()
+            .execute(AppEvents.welcome.emailButtonPressed);
         context.router.push(const OtpFlowRoute());
       },
       addBorder: true,
@@ -192,7 +219,12 @@ class _TermsAndPolicy extends StatelessWidget {
             style: const TextStyle(
               decoration: TextDecoration.underline,
             ),
-            recognizer: TapGestureRecognizer()..onTap = () {},
+            recognizer: TapGestureRecognizer()
+              ..onTap = () {
+                getIt
+                    .get<TrackUseActivityUseCase>()
+                    .execute(AppEvents.welcome.privacyPolicyPressed);
+              },
           ),
           const TextSpan(text: ' and '),
           TextSpan(
@@ -200,7 +232,12 @@ class _TermsAndPolicy extends StatelessWidget {
             style: const TextStyle(
               decoration: TextDecoration.underline,
             ),
-            recognizer: TapGestureRecognizer()..onTap = () {},
+            recognizer: TapGestureRecognizer()
+              ..onTap = () {
+                getIt
+                    .get<TrackUseActivityUseCase>()
+                    .execute(AppEvents.welcome.termsOfUsePressed);
+              },
           ),
           const TextSpan(text: '.'),
         ],

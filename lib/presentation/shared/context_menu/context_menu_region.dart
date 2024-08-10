@@ -283,8 +283,9 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   }
 
   void _hideOverlay() {
+    final ContextMenuCubit cubit = context.read<ContextMenuCubit>();
     Future<void>.delayed(const Duration(milliseconds: 600), () {
-      context.read<ContextMenuCubit>().setNotShown();
+      cubit.setNotShown();
       _contextMenuShownNotifier.value = false;
       _scrollController.dispose();
     });
@@ -336,9 +337,11 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   Widget build(BuildContext context) {
     return GestureDetector(
       onLongPressDown: (_) {
+        final ChatHorizontalDragCubit cubit =
+            context.read<ChatHorizontalDragCubit>();
         _pressedDown = true;
         Future<void>.delayed(const Duration(milliseconds: 200), () {
-          if (context.read<ChatHorizontalDragCubit>().state != 0) {
+          if (cubit.state != 0) {
             _pressedDown = false;
             return;
           }
@@ -348,7 +351,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
               _longPressAnimationController.reverse();
               _pressedDown = false;
 
-              if (context.read<ChatHorizontalDragCubit>().state != 0) {
+              if (cubit.state != 0) {
                 return;
               }
 

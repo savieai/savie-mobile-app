@@ -24,4 +24,26 @@ class Message with _$Message {
     required DateTime date,
     required List<Attachment> files,
   }) = FileMessage;
+
+  const Message._();
+
+  AppEventMessageType get appEventMessageType {
+    return map(
+      audio: (_) => AppEventMessageType.voice,
+      file: (_) => AppEventMessageType.file,
+      text: (TextMessage message) {
+        if (message.images.isEmpty) {
+          return AppEventMessageType.text;
+        } else if (message.images.length == 1) {
+          return message.text == null
+              ? AppEventMessageType.image
+              : AppEventMessageType.imageWithCaption;
+        } else {
+          return message.text == null
+              ? AppEventMessageType.images
+              : AppEventMessageType.imagesWithCaption;
+        }
+      },
+    );
+  }
 }

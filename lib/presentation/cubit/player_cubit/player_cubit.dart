@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../application/use_case/metrcis/metrics.dart';
 import '../../../domain/domain.dart';
 
 part 'player_state.dart';
@@ -14,7 +15,9 @@ part 'player_cubit.freezed.dart';
 
 @Injectable()
 class PlayerCubit extends Cubit<PlayerState> {
-  PlayerCubit() : super(PlayerState(audio: null)) {
+  PlayerCubit(
+    this._trackUseActivityUseCase,
+  ) : super(PlayerState(audio: null)) {
     _nativeStateSubscription = _player.onPlayerStateChanged.listen(
       (audio.PlayerState nativeState) {
         _nativeState = nativeState;
@@ -43,8 +46,10 @@ class PlayerCubit extends Cubit<PlayerState> {
   Duration _position = Duration.zero;
   late final StreamSubscription<audio.PlayerState> _nativeStateSubscription;
   late final StreamSubscription<Duration> _positionSubscription;
+  final TrackUseActivityUseCase _trackUseActivityUseCase;
 
   Future<void> toggleAudio(AudioMessage audioMessage) async {
+    // TODO: track user activity
     // TODO: toggle audio
     // if (audioMessage.path != state.audio?.audioPath) {
     //   await _player.stop();

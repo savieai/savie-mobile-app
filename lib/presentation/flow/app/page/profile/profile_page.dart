@@ -6,12 +6,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../../application/application.dart';
 import '../../../../presentation.dart';
 import '../../../../router/app_router.gr.dart';
 
 @RoutePage()
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.profile.screenOpened);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,20 +51,33 @@ class ProfilePage extends StatelessWidget {
             title: 'Support',
             icon: Assets.icons.support24,
             color: AppColors.textPrimary,
-            onTap: () {},
+            onTap: () {
+              getIt
+                  .get<TrackUseActivityUseCase>()
+                  .execute(AppEvents.profile.supportClicked);
+            },
           ),
           const _ProfileSeparator(),
           _ProfileTile(
             title: 'Delete Profile',
             icon: Assets.icons.delete24,
             color: AppColors.iconNegative,
-            onTap: () {},
+            onTap: () {
+              getIt
+                  .get<TrackUseActivityUseCase>()
+                  .execute(AppEvents.profile.deleteProfileClicked);
+            },
           ),
           _ProfileTile(
             title: 'Log out',
             icon: Assets.icons.logOut24,
             color: AppColors.iconNegative,
-            onTap: context.read<AuthCubit>().logOut,
+            onTap: () {
+              getIt
+                  .get<TrackUseActivityUseCase>()
+                  .execute(AppEvents.profile.logoutClicked);
+              context.read<AuthCubit>().logOut();
+            },
           ),
           const Spacer(),
           const _GiftButton(),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nested/nested.dart';
 
+import '../../../../application/application.dart';
 import '../../../presentation.dart';
 import '../../../router/app_router.gr.dart';
 import '../cubit/otp_cubit.dart';
@@ -29,6 +30,14 @@ class _OtpSubmissionPageState extends State<OtpSubmissionPage> {
       }
       _lastEmailValue = _controller.text;
     });
+
+  @override
+  void initState() {
+    super.initState();
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.emailLogin.screenOpened);
+  }
 
   @override
   void dispose() {
@@ -197,7 +206,12 @@ class _ContinueButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 minSize: 0,
                 onPressed: !isSendingOtp && EmailValidator.validate(value.text)
-                    ? () => context.read<OtpCubit>().submitEmail(value.text)
+                    ? () {
+                        getIt.get<TrackUseActivityUseCase>().execute(AppEvents
+                            .emailLogin
+                            .continuePressed(email: value.text));
+                        context.read<OtpCubit>().submitEmail(value.text);
+                      }
                     : null,
                 child: Container(
                   padding: const EdgeInsets.all(16),

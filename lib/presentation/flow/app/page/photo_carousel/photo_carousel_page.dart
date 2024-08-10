@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
+import '../../../../../application/application.dart';
 import '../../../../../domain/domain.dart';
 import '../../../../presentation.dart';
 
@@ -35,9 +36,31 @@ class _PhotoCarouselPageState extends State<PhotoCarouselPage>
   @override
   void initState() {
     super.initState();
+    getIt.get<TrackUseActivityUseCase>().execute(
+          AppEvents.photoView.screenOpened(
+            messageId: widget.message.id,
+            type: widget.message.appEventMessageType,
+          ),
+        );
+
     _pageController.addListener(() {
       final int newSelectedIndex = _pageController.page?.round() ?? 0;
       if (newSelectedIndex != _selectedIndexNotifier.value) {
+        if (newSelectedIndex > _selectedIndexNotifier.value) {
+          getIt.get<TrackUseActivityUseCase>().execute(
+                AppEvents.photoView.swipeRight(
+                  messageId: widget.message.id,
+                  type: widget.message.appEventMessageType,
+                ),
+              );
+        } else {
+          getIt.get<TrackUseActivityUseCase>().execute(
+                AppEvents.photoView.swipeLeft(
+                  messageId: widget.message.id,
+                  type: widget.message.appEventMessageType,
+                ),
+              );
+        }
         _selectedIndexNotifier.value = newSelectedIndex;
       }
     });

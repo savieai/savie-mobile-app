@@ -11,7 +11,7 @@ enum _OnboardingKeys {
   final String key;
 }
 
-@Singleton(as: OnboardingRepository)
+@Injectable(as: OnboardingRepository)
 class OnboardingRepositoryImpl implements OnboardingRepository {
   OnboardingRepositoryImpl(this._sharedPreferences);
   final SharedPreferences _sharedPreferences;

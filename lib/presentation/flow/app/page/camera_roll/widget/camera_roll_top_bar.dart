@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:photo_manager/photo_manager.dart';
 
+import '../../../../../../application/application.dart';
 import '../../../../../presentation.dart';
 
 class CameraRollTopBar extends StatefulWidget implements PreferredSizeWidget {
@@ -108,6 +109,9 @@ class _AlbumsOverlayButtonState extends State<_AlbumsOverlayButton>
       child: GestureDetector(
         onTap: widget.canTap
             ? () {
+                getIt
+                    .get<TrackUseActivityUseCase>()
+                    .execute(AppEvents.mediaSelection.recentClicked);
                 if (widget.albums != null) {
                   _showAlbumsOverlay(widget.albums!);
                 }

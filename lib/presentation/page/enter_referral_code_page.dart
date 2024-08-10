@@ -4,12 +4,24 @@ import 'package:flutter/material.dart';
 import 'package:gradient_borders/box_borders/gradient_box_border.dart';
 
 import '../../application/application.dart';
-import '../../application/use_case/invites/apply_invite_use_case.dart';
 import '../presentation.dart';
 
 @RoutePage()
-class EnterReferralCodePage extends StatelessWidget {
+class EnterReferralCodePage extends StatefulWidget {
   const EnterReferralCodePage({super.key});
+
+  @override
+  State<EnterReferralCodePage> createState() => _EnterReferralCodePageState();
+}
+
+class _EnterReferralCodePageState extends State<EnterReferralCodePage> {
+  @override
+  void initState() {
+    super.initState();
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.referralCheck.screenOpened);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,6 +158,12 @@ class _EnterReferalCodeFieldState extends State<_EnterReferalCodeField>
                   .get<ApplyInviteUseCase>()
                   .execute(_controller.text);
 
+              if (result) {
+                getIt
+                    .get<TrackUseActivityUseCase>()
+                    .execute(AppEvents.referralCheck.success);
+              }
+
               setState(() => _isRequesting = false);
               if (!result) {
                 _errorController.forward();
@@ -176,6 +194,10 @@ class _JoinWishListButton extends StatelessWidget {
       padding: EdgeInsets.zero,
       minSize: 0,
       onPressed: () {
+        getIt
+            .get<TrackUseActivityUseCase>()
+            .execute(AppEvents.referralCheck.joinWhitelistPressed);
+
         context.router.maybePopTop();
       },
       child: Container(

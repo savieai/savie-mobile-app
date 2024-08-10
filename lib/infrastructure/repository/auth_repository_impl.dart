@@ -10,7 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/domain.dart';
 import '../infrastructure.dart';
 
-@Singleton(as: AuthRepository)
+@Injectable(as: AuthRepository)
 class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._loggingService);
 

@@ -21,6 +21,12 @@ class MediaMessageView extends StatelessWidget {
       onTap: contextMenuShown
           ? null
           : () {
+              getIt.get<TrackUseActivityUseCase>().execute(
+                    AppEvents.chat.attachmentClicked(
+                      messageId: message.id,
+                      type: message.appEventMessageType,
+                    ),
+                  );
               context.router.push(
                 PhotoCarouselRoute(message: message),
               );

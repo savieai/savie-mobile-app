@@ -1,3 +1,4 @@
+export 'app_event.dart';
 export 'app_log.dart';
 export 'attachment.dart';
 export 'invite.dart';

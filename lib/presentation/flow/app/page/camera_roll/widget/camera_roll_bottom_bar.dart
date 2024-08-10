@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../application/application.dart';
 import '../../../../../presentation.dart';
 
 class CameraRollBottomBar extends StatelessWidget {
@@ -34,7 +35,12 @@ class CameraRollBottomBar extends StatelessWidget {
             ),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => _pushFilePicker(context),
+              onTap: () {
+                getIt
+                    .get<TrackUseActivityUseCase>()
+                    .execute(AppEvents.mediaSelection.filesClicked);
+                _pushFilePicker(context);
+              },
               child: _BottomBarButton(
                 svgGenImage: Assets.icons.folder24,
                 caption: 'Files',

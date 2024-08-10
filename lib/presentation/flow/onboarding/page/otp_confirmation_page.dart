@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pinput/pinput.dart';
 
+import '../../../../application/application.dart';
 import '../../../presentation.dart';
 import '../cubit/otp_cubit.dart';
 
@@ -22,7 +23,15 @@ class OtpConfirmationPage extends StatefulWidget {
 }
 
 class _OtpConfirmationPageState extends State<OtpConfirmationPage> {
-  final ValueNotifier<bool> _hasErrorNotifier = ValueNotifier<bool>(false);
+  late final ValueNotifier<bool> _hasErrorNotifier = ValueNotifier<bool>(false)
+    ..addListener(() {
+      if (_hasErrorNotifier.value) {
+        getIt.get<TrackUseActivityUseCase>().execute(
+              AppEvents.enterCode.codeIncorrect(email: widget.email),
+            );
+      }
+    });
+
   String _lastOtpValue = '';
   late final TextEditingController _controller = TextEditingController()
     ..addListener(() {
@@ -33,8 +42,17 @@ class _OtpConfirmationPageState extends State<OtpConfirmationPage> {
     });
 
   @override
+  void initState() {
+    super.initState();
+    getIt.get<TrackUseActivityUseCase>().execute(
+          AppEvents.enterCode.screenOpened(email: widget.email),
+        );
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
+    _hasErrorNotifier.dispose();
     super.dispose();
   }
 
@@ -257,10 +275,15 @@ class _ResendButtonState extends State<_ResendButton> {
 
                   return GestureDetector(
                     onTap: canPress && !isSendingOtp
-                        ? () => context
-                            .read<OtpCubit>()
-                            .resubmitEmail(widget.email)
-                            .then((_) => _initTimer())
+                        ? () {
+                            getIt.get<TrackUseActivityUseCase>().execute(
+                                AppEvents.enterCode
+                                    .resendButtonPressed(email: widget.email));
+                            context
+                                .read<OtpCubit>()
+                                .resubmitEmail(widget.email)
+                                .then((_) => _initTimer());
+                          }
                         : null,
                     child: Text(
                       canPress

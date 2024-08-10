@@ -33,7 +33,7 @@ class _TextWithMediaMessageView extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 3),
             child: TextMessageView(
-              text: message.text ?? '',
+              textMessage: message,
               contextMenuShown: contextMenuShown,
             ),
           )

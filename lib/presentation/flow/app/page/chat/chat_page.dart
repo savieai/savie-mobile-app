@@ -2,6 +2,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../application/application.dart';
 import '../../../../presentation.dart';
 import '../../../../router/app_router.gr.dart';
 import 'widget/chat_horizontal_drag_listener.dart';
@@ -19,6 +20,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+    getIt.get<TrackUseActivityUseCase>().execute(AppEvents.chat.screenOpened);
   }
 
   @override
@@ -72,6 +74,9 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
         color: AppColors.iconSecodary,
         onTap: () {
           context.router.push(const ProfileRoute());
+          getIt
+              .get<TrackUseActivityUseCase>()
+              .execute(AppEvents.chat.profileButtonClicked);
         },
       ),
       trailing: CustomIconButton(
@@ -79,6 +84,9 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
         color: AppColors.iconSecodary,
         onTap: () {
           context.router.push(const SearchRoute());
+          getIt
+              .get<TrackUseActivityUseCase>()
+              .execute(AppEvents.chat.searchButtonPressed);
         },
       ),
       middle: const Text('Today'),

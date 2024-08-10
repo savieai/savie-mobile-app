@@ -4,6 +4,8 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../application/application.dart';
+import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
 import '../../chat/widget/widget.dart';
 
@@ -61,6 +63,12 @@ class _CameraRollMessageViewState extends State<CameraRollMessageView> {
                 onTap: () async {
                   final List<File> files =
                       await context.read<CameraRollCubit>().getSelectedPhotos();
+                  // TODO: get message type
+                  getIt
+                      .get<TrackUseActivityUseCase>()
+                      .execute(AppEvents.mediaSelection.sendClicked(
+                        type: AppEventMessageType.imagesWithCaption,
+                      ));
 
                   if (context.mounted) {
                     context.read<ChatCubit>().sendMessage(

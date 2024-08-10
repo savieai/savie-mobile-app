@@ -21,11 +21,17 @@ class _CameraRollPageState extends State<CameraRollPage> {
   void initState() {
     super.initState();
     _cameraRollCubit = getIt.get<CameraRollCubit>();
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.mediaSelection.screenOpened);
   }
 
   @override
   void dispose() {
     _cameraRollCubit.close();
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.mediaSelection.screenClosed);
     super.dispose();
   }
 

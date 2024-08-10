@@ -11,8 +11,29 @@ import '../../presentation.dart';
 import 'get_invite_cubit.dart';
 
 @RoutePage()
-class GetInvitePage extends StatelessWidget {
+class GetInvitePage extends StatefulWidget {
   const GetInvitePage({super.key});
+
+  @override
+  State<GetInvitePage> createState() => _GetInvitePageState();
+}
+
+class _GetInvitePageState extends State<GetInvitePage> {
+  @override
+  void initState() {
+    super.initState();
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.popupScreenEvents.screenOpened);
+  }
+
+  @override
+  void dispose() {
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.popupScreenEvents.screenClosed);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -215,6 +236,9 @@ class _InviteCodeBox extends StatelessWidget {
                 curve: Curves.linearToEaseOut,
                 context: context,
               );
+              getIt
+                  .get<TrackUseActivityUseCase>()
+                  .execute(AppEvents.popupScreenEvents.copyClicked);
             },
             child: Assets.icons.copy24.svg(),
           ),
@@ -236,6 +260,9 @@ class _ShareButton extends StatelessWidget {
             orElse: () => null,
             fetched: (String? code, int numOfAvailable) => () {
               if (numOfAvailable > 0) {
+                getIt
+                    .get<TrackUseActivityUseCase>()
+                    .execute(AppEvents.popupScreenEvents.shareClicked);
                 Share.share(code ?? '');
               } else {
                 context.router.maybePop();

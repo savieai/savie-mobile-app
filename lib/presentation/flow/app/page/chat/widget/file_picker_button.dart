@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/widgets.dart';
 
+import '../../../../../../application/application.dart';
 import '../../../../../presentation.dart';
 import '../../../../../router/app_router.gr.dart';
 
@@ -18,5 +19,8 @@ class FilePickerButton extends StatelessWidget {
 
   Future<void> _onTap(BuildContext context) async {
     context.router.push(const CameraRollRoute());
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.chat.mediaButtonClicked);
   }
 }
