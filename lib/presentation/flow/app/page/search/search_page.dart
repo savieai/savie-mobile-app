@@ -3,7 +3,9 @@ import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../../application/application.dart';
 import '../../../../presentation.dart';
+import '../../../../router/app_router.gr.dart';
 import 'widget/widget.dart';
 
 @RoutePage()
@@ -15,6 +17,20 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (getIt.get<ShouldDisplaySavieProPopupUseCase>().execute()) {
+        Future<void>.delayed(const Duration(milliseconds: 125), () {
+          if (context.mounted && mounted) {
+            context.router.push(const ProComingSoonRoute());
+          }
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -161,7 +177,9 @@ class _CancelButton extends StatelessWidget {
     return CupertinoButton(
       padding: EdgeInsets.zero,
       minSize: 0,
-      onPressed: () {},
+      onPressed: () {
+        context.router.maybePop();
+      },
       child: Text(
         'Cancel',
         style: AppTextStyles.paragraph.copyWith(

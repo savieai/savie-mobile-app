@@ -4,7 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:rx_shared_preferences/rx_shared_preferences.dart';
 import 'package:rxdart/rxdart.dart';
 
-import '../api/features/user/dto/dto.dart';
+import '../../../api/features/user/dto/dto.dart';
 
 enum _UserKeys {
   user('user');

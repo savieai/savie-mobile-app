@@ -12,6 +12,7 @@ sealed class AppColors {
   static const Color backgroundSecondary = Color(0xFFF2EBE8);
   static const Color backgroundChatInput = Color(0xFFF5F2F0);
   static const Color backgroundChatVoice = Color(0xFF2574EB);
+  static const Color accentTint = Color(0xFFFFE4DA);
 
   static const Color backgroundChatBubble = Color(0xFFFFFFFF);
 

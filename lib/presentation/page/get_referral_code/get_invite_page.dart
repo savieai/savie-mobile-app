@@ -39,34 +39,24 @@ class _GetInvitePageState extends State<GetInvitePage> {
   Widget build(BuildContext context) {
     return BlocProvider<GetInviteCubit>(
       create: (_) => getIt.get<GetInviteCubit>(),
-      child: Material(
-        type: MaterialType.transparency,
-        child: SafeArea(
-          minimum: const EdgeInsets.all(12),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(36),
-            ),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  SizedBox(height: 44),
-                  _GiftWidget(),
-                  SizedBox(height: 20),
-                  Text(
-                    'Gift Savie',
-                    style: AppTextStyles.title2,
-                  ),
-                  _InviteInfoBody(),
-                  SizedBox(height: 24),
-                  _ShareButton(),
-                  SizedBox(height: 24),
-                ],
+      child: const PopupTemplate(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              SizedBox(height: 44),
+              _GiftWidget(),
+              SizedBox(height: 20),
+              Text(
+                'Gift Savie',
+                style: AppTextStyles.title2,
               ),
-            ),
+              _InviteInfoBody(),
+              SizedBox(height: 24),
+              _ShareButton(),
+              SizedBox(height: 24),
+            ],
           ),
         ),
       ),
@@ -255,7 +245,7 @@ class _ShareButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<GetInviteCubit, GetInviteState>(
       builder: (BuildContext context, GetInviteState state) {
-        return CupertinoButton(
+        return CustomButton(
           onPressed: state.maybeWhen(
             orElse: () => null,
             fetched: (String? code, int numOfAvailable) => () {
@@ -269,28 +259,14 @@ class _ShareButton extends StatelessWidget {
               }
             },
           ),
-          minSize: 0,
-          padding: EdgeInsets.zero,
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            height: 54,
-            decoration: BoxDecoration(
-              color: AppColors.iconAccent,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            alignment: Alignment.center,
-            child: state.maybeWhen(
-              fetched: (_, int numOfAvailable) {
-                return Text(
-                  numOfAvailable > 0 ? 'Share' : 'Close',
-                  style: AppTextStyles.paragraph.copyWith(
-                    color: AppColors.textInvert,
-                  ),
-                );
-              },
-              orElse: () => const CircularProgressIndicator.adaptive(
-                backgroundColor: AppColors.textInvert,
-              ),
+          child: state.maybeWhen(
+            fetched: (_, int numOfAvailable) {
+              return Text(
+                numOfAvailable > 0 ? 'Share' : 'Close',
+              );
+            },
+            orElse: () => const CircularProgressIndicator.adaptive(
+              backgroundColor: AppColors.textInvert,
             ),
           ),
         );

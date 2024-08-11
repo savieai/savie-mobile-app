@@ -14,6 +14,10 @@ class GetInviteCubit extends Cubit<GetInviteState> {
     this._getInvitesUseCase,
   ) : super(const GetInviteState.fetching()) {
     _getInvitesUseCase.execute().then((Either<void, List<Invite>> result) {
+      if (isClosed) {
+        return;
+      }
+
       result.either(
         (_) => emit(const GetInviteState.error()),
         (List<Invite> invites) => emit(

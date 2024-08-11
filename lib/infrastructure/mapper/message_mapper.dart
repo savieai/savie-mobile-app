@@ -1,5 +1,5 @@
-import '../../../domain/domain.dart';
-import '../../infrastructure.dart';
+import '../../domain/domain.dart';
+import '../infrastructure.dart';
 
 sealed class MessageMapper {
   static Message toDomain(MessageDTO dto) {

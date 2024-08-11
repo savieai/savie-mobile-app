@@ -30,6 +30,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: CustomAppBar(
         leading: CustomIconButton(
           svgGenImage: Assets.icons.arrowLeft24,
@@ -102,7 +103,7 @@ class _ProfilePageState extends State<ProfilePage> {
               color: AppColors.iconAccent,
             ),
           ),
-          SizedBox(height: 16 + MediaQuery.paddingOf(context).bottom),
+          SizedBox(height: 16 + MediaQuery.viewPaddingOf(context).bottom),
         ],
       ),
     );

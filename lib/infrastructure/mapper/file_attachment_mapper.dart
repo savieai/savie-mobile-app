@@ -1,5 +1,5 @@
-import '../../../domain/domain.dart';
-import '../../infrastructure.dart';
+import '../../domain/domain.dart';
+import '../infrastructure.dart';
 
 sealed class FileAttachmentMapper {
   static Attachment toDomain(FileAttachmentDTO dto) {

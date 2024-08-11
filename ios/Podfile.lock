@@ -7,6 +7,71 @@ PODS:
   - AppAuth/Core (1.7.5)
   - AppAuth/ExternalUserAgent (1.7.5):
     - AppAuth/Core
+  - appmetrica_plugin (2.1.1):
+    - AppMetricaAnalytics (~> 5.3)
+    - Flutter
+  - AppMetricaAdSupport (5.7.0):
+    - AppMetricaCore (= 5.7.0)
+    - AppMetricaCoreExtension (= 5.7.0)
+  - AppMetricaAnalytics (5.7.0):
+    - AppMetricaAdSupport (= 5.7.0)
+    - AppMetricaCore (= 5.7.0)
+    - AppMetricaCrashes (= 5.7.0)
+    - AppMetricaWebKit (= 5.7.0)
+  - AppMetricaCore (5.7.0):
+    - AppMetricaCoreUtils (= 5.7.0)
+    - AppMetricaEncodingUtils (= 5.7.0)
+    - AppMetricaFMDB (= 5.7.0)
+    - AppMetricaHostState (= 5.7.0)
+    - AppMetricaLog (= 5.7.0)
+    - AppMetricaNetwork (= 5.7.0)
+    - AppMetricaPlatform (= 5.7.0)
+    - AppMetricaProtobuf (= 5.7.0)
+    - AppMetricaProtobufUtils (= 5.7.0)
+    - AppMetricaStorageUtils (= 5.7.0)
+  - AppMetricaCoreExtension (5.7.0):
+    - AppMetricaCore (= 5.7.0)
+    - AppMetricaStorageUtils (= 5.7.0)
+  - AppMetricaCoreUtils (5.7.0):
+    - AppMetricaLog (= 5.7.0)
+  - AppMetricaCrashes (5.7.0):
+    - AppMetricaCore (= 5.7.0)
+    - AppMetricaCoreExtension (= 5.7.0)
+    - AppMetricaCoreUtils (= 5.7.0)
+    - AppMetricaEncodingUtils (= 5.7.0)
+    - AppMetricaHostState (= 5.7.0)
+    - AppMetricaLog (= 5.7.0)
+    - AppMetricaPlatform (= 5.7.0)
+    - AppMetricaProtobufUtils (= 5.7.0)
+    - AppMetricaStorageUtils (= 5.7.0)
+    - KSCrash/Recording (~> 1.17.0)
+    - KSCrash/Recording/Tools
+  - AppMetricaEncodingUtils (5.7.0):
+    - AppMetricaCoreUtils (= 5.7.0)
+    - AppMetricaLog (= 5.7.0)
+    - AppMetricaPlatform (= 5.7.0)
+  - AppMetricaFMDB (5.7.0)
+  - AppMetricaHostState (5.7.0):
+    - AppMetricaCoreUtils (= 5.7.0)
+    - AppMetricaLog (= 5.7.0)
+  - AppMetricaLog (5.7.0)
+  - AppMetricaNetwork (5.7.0):
+    - AppMetricaCoreUtils (= 5.7.0)
+    - AppMetricaLog (= 5.7.0)
+    - AppMetricaPlatform (= 5.7.0)
+  - AppMetricaPlatform (5.7.0):
+    - AppMetricaCoreUtils (= 5.7.0)
+    - AppMetricaLog (= 5.7.0)
+  - AppMetricaProtobuf (5.7.0)
+  - AppMetricaProtobufUtils (5.7.0):
+    - AppMetricaProtobuf (= 5.7.0)
+  - AppMetricaStorageUtils (5.7.0):
+    - AppMetricaCoreUtils (= 5.7.0)
+    - AppMetricaLog (= 5.7.0)
+  - AppMetricaWebKit (5.7.0):
+    - AppMetricaCore (= 5.7.0)
+    - AppMetricaCoreUtils (= 5.7.0)
+    - AppMetricaLog (= 5.7.0)
   - audioplayers_darwin (0.0.1):
     - Flutter
   - camera_avfoundation (0.0.1):
@@ -86,6 +151,9 @@ PODS:
     - GTMSessionFetcher/Core
   - image_picker_ios (0.0.1):
     - Flutter
+  - KSCrash/Recording (1.17.4):
+    - KSCrash/Recording/Tools (= 1.17.4)
+  - KSCrash/Recording/Tools (1.17.4)
   - Mixpanel-swift (4.2.5):
     - Mixpanel-swift/Complete (= 4.2.5)
   - Mixpanel-swift/Complete (4.2.5)
@@ -125,6 +193,7 @@ PODS:
 
 DEPENDENCIES:
   - app_links (from `.symlinks/plugins/app_links/ios`)
+  - appmetrica_plugin (from `.symlinks/plugins/appmetrica_plugin/ios`)
   - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/ios`)
   - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
   - file_picker (from `.symlinks/plugins/file_picker/ios`)
@@ -147,6 +216,22 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - AppAuth
+    - AppMetricaAdSupport
+    - AppMetricaAnalytics
+    - AppMetricaCore
+    - AppMetricaCoreExtension
+    - AppMetricaCoreUtils
+    - AppMetricaCrashes
+    - AppMetricaEncodingUtils
+    - AppMetricaFMDB
+    - AppMetricaHostState
+    - AppMetricaLog
+    - AppMetricaNetwork
+    - AppMetricaPlatform
+    - AppMetricaProtobuf
+    - AppMetricaProtobufUtils
+    - AppMetricaStorageUtils
+    - AppMetricaWebKit
     - DKImagePickerController
     - DKPhotoGallery
     - Firebase
@@ -156,6 +241,7 @@ SPEC REPOS:
     - GoogleUtilities
     - GTMAppAuth
     - GTMSessionFetcher
+    - KSCrash
     - Mixpanel-swift
     - PromisesObjC
     - SDWebImage
@@ -164,6 +250,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   app_links:
     :path: ".symlinks/plugins/app_links/ios"
+  appmetrica_plugin:
+    :path: ".symlinks/plugins/appmetrica_plugin/ios"
   audioplayers_darwin:
     :path: ".symlinks/plugins/audioplayers_darwin/ios"
   camera_avfoundation:
@@ -204,6 +292,23 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   app_links: e70ca16b4b0f88253b3b3660200d4a10b4ea9795
   AppAuth: 501c04eda8a8d11f179dbe8637b7a91bb7e5d2fa
+  appmetrica_plugin: d5b67180992259ecfa040189027808915101b893
+  AppMetricaAdSupport: c1888375a6e85bb55d1e36cc8c2a86b1dcc3e88d
+  AppMetricaAnalytics: 3eba443a50eb56085dc69a6efb82aed7ff0fbb8b
+  AppMetricaCore: 2b88e6d5a5aafd9663bbc6056388ac0e95b6e2f1
+  AppMetricaCoreExtension: 1d7924bb168f7238fffeecaeea0a04a0b29037c5
+  AppMetricaCoreUtils: 9ed2396aa229554bd6b7532b5f52c638275bba67
+  AppMetricaCrashes: 1a9d2e68cfa92425d6ce3a997287db051219263d
+  AppMetricaEncodingUtils: b789fa4c1e65291751d2f2ddf71f63e097abfcc8
+  AppMetricaFMDB: adc2ca20358239db4c246113e2d4f0663779839c
+  AppMetricaHostState: 70a575d9226ae3fcf9adc3f948403e45a8199a60
+  AppMetricaLog: 8903049a47249067f01839f392552e91feb72171
+  AppMetricaNetwork: a738841c6987ca81da92ba721edcda3ebced351a
+  AppMetricaPlatform: 456d620ca7816ae57d9b94c19bddc10f36fab7b3
+  AppMetricaProtobuf: 4d9c8e28bc7ee7f2df7bc0b5882b5b8734add7a5
+  AppMetricaProtobufUtils: 69272f30e19e30d814b7f05cbd1130e888764c8d
+  AppMetricaStorageUtils: d72c866868dce22626441349bcd45eeec43b9e86
+  AppMetricaWebKit: bf5a05e7ed13857807522639c8984a1c192e88ef
   audioplayers_darwin: 877d9a4d06331c5c374595e46e16453ac7eafa40
   camera_avfoundation: 759172d1a77ae7be0de08fc104cfb79738b8a59e
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
@@ -220,6 +325,7 @@ SPEC CHECKSUMS:
   GTMAppAuth: f69bd07d68cd3b766125f7e072c45d7340dea0de
   GTMSessionFetcher: 8000756fc1c19d2e5697b90311f7832d2e33f6cd
   image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
+  KSCrash: 158a0998f08ae7d4e54ef8a2da62d6e08b46d03a
   Mixpanel-swift: 1fb0322037fa4db64042ab8eb4430848bc90ea43
   mixpanel_flutter: 36d73b7a2502b5782cd8f1d1f6b1b4aa4f2cfd07
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46

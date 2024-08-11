@@ -47,6 +47,10 @@ class AppRouter extends $AppRouter {
             customRouteBuilder: RouteBuilders.modalPopupSheet,
             page: GetInviteRoute.page,
           ),
+          CustomRoute(
+            customRouteBuilder: RouteBuilders.modalPopupSheet,
+            page: ProComingSoonRoute.page,
+          ),
         ],
       ),
       AutoRoute(page: EnterReferralCodeRoute.page),
