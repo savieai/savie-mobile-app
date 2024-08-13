@@ -42,7 +42,7 @@ class _AudioViewState extends State<AudioView> {
       );
   late Duration _currentDuration;
   bool _isPlaying = false;
-  List<double>? _peeks;
+  List<double>? _peeks = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
   @override
   void didChangeDependencies() {
@@ -53,7 +53,7 @@ class _AudioViewState extends State<AudioView> {
   }
 
   void _updateVariables(PlayerState state) {
-    if (state.audio?.audioPath == widget.audioMessage.url) {
+    if (state.audio?.audioPath == widget.audioMessage.name) {
       _currentDuration = state.audio!.duration;
       _isPlaying = state.audio!.isPlaying;
     } else {
@@ -119,7 +119,7 @@ class _AudioViewState extends State<AudioView> {
         setState(() => _updateVariables(state));
       },
       listenWhen: (_, PlayerState current) =>
-          current.audio?.audioPath == widget.audioMessage.url,
+          current.audio?.audioPath == widget.audioMessage.name,
       child: Row(
         mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
         children: <Widget>[

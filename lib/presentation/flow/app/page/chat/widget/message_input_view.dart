@@ -8,7 +8,6 @@ import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:wave_blob/wave_blob.dart';
 
 import '../../../../../../application/application.dart';
-import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
 import 'widget.dart';
 
@@ -657,14 +656,15 @@ class _ActiveRecordingButton extends StatelessWidget {
   }
 
   Future<void> _onFinish(BuildContext context) async {
-    final AudioMessage? audioMessage =
+    final String? audioPath =
         await context.read<RecordingCubit>().finishRecording();
     // TODO: specify duration
     getIt
         .get<TrackUseActivityUseCase>()
         .execute(AppEvents.chat.voiceButtonReleased(duration: Duration.zero));
+
     if (context.mounted) {
-      context.read<ChatCubit>().sendAudio(audioMessage);
+      context.read<ChatCubit>().sendAudio(audioPath);
     }
   }
 

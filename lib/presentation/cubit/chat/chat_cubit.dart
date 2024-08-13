@@ -32,22 +32,19 @@ class ChatCubit extends Cubit<ChatState> {
     await _createMessageUseCase.execute(
       imagePaths: mediaPaths ?? <String>[],
       text: message ?? '',
+      audioPath: null,
     );
 
     _fetchMessages();
   }
 
-  void sendAudio(AudioMessage? audioMessage) {
-    // _messages.add(
-    //   Message(
-    //     id: const Uuid().v4(),
-    //     audioMessage: audioMessage,
-    //     date: DateTime.now(),
-    //   ),
-    // );
+  Future<void> sendAudio(String? audioPath) async {
+    await _createMessageUseCase.execute(
+      imagePaths: <String>[],
+      text: null,
+      audioPath: audioPath,
+    );
 
-    // emit(state.copyWith(
-    //   messages: _messages.toList(),
-    // ));
+    _fetchMessages();
   }
 }

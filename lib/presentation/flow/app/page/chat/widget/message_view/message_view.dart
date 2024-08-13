@@ -110,7 +110,7 @@ class MessageView extends StatelessWidget {
               audio: (AudioMessage audioMessage) {
                 return AudioMessageView(
                   audioMessage: audioMessage,
-                  key: Key(audioMessage.url),
+                  key: Key(audioMessage.name),
                 );
               },
               // TODO: add file

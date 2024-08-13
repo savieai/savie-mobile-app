@@ -3,17 +3,19 @@ import '../infrastructure.dart';
 
 sealed class MessageMapper {
   static Message toDomain(MessageDTO dto) {
-    if (dto.voiceMessageUrl != null) {
+    if (dto.voiceMessageUrlSigned.isNotEmpty &&
+        dto.voiceMessageUrl.isNotEmpty) {
       return Message.audio(
         id: dto.id,
         date: dto.createdAt,
-        url: dto.voiceMessageUrl!,
+        fullUrl: dto.voiceMessageUrlSigned,
+        name: dto.voiceMessageUrl,
       );
     }
 
     if (dto.textContent != null) {
-      final List<FileAttachmentDTO> imageDtos = dto.attachments.where(
-        (FileAttachmentDTO f) {
+      final List<FileAttachmentResponseDTO> imageDtos = dto.attachments.where(
+        (FileAttachmentResponseDTO f) {
           return f.attachmentType == FileAttachmentTypeDTO.image;
         },
       ).toList();

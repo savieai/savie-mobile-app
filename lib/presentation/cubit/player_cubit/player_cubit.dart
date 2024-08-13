@@ -1,11 +1,14 @@
 // ignore_for_file: unused_field
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart' as audio;
+import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../application/use_case/metrcis/metrics.dart';
 import '../../../domain/domain.dart';
@@ -49,34 +52,53 @@ class PlayerCubit extends Cubit<PlayerState> {
   final TrackUseActivityUseCase _trackUseActivityUseCase;
 
   Future<void> toggleAudio(AudioMessage audioMessage) async {
-    // TODO: track user activity
-    // TODO: toggle audio
-    // if (audioMessage.path != state.audio?.audioPath) {
-    //   await _player.stop();
-    //   _player.play(DeviceFileSource(audioMessage.path));
-    // } else {
-    //   switch (_nativeState) {
-    //     case audio.PlayerState.stopped:
-    //       _player.play(DeviceFileSource(audioMessage.path));
-    //     case audio.PlayerState.completed:
-    //     case audio.PlayerState.paused:
-    //       _player.resume();
-    //     case audio.PlayerState.playing:
-    //       _player.pause();
-    //     case audio.PlayerState.disposed:
-    //       break;
-    //   }
-    // }
+    //  TODO: track user activity
 
-    // emit(
-    //   state.copyWith(
-    //     audio: PlayingAudio(
-    //       audioPath: audioMessage.path,
-    //       duration: _position,
-    //       isPlaying: _nativeState == audio.PlayerState.playing,
-    //     ),
-    //   ),
-    // );
+    if (audioMessage.name != state.audio?.audioPath) {
+      await _player.stop();
+      // TODO: create aduio repo
+      await _playAudio(audioMessage);
+    } else {
+      switch (_nativeState) {
+        case audio.PlayerState.stopped:
+          _playAudio(audioMessage);
+        case audio.PlayerState.completed:
+        case audio.PlayerState.paused:
+          _player.resume();
+        case audio.PlayerState.playing:
+          _player.pause();
+        case audio.PlayerState.disposed:
+          break;
+      }
+    }
+
+    emit(
+      state.copyWith(
+        audio: PlayingAudio(
+          audioPath: audioMessage.name,
+          duration: _position,
+          isPlaying: _nativeState == audio.PlayerState.playing,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _playAudio(AudioMessage audioMessage) async {
+    final Directory cacheDir = await getApplicationCacheDirectory();
+    final String fileName = '${cacheDir.path}/${audioMessage.name}';
+
+    if (!File(fileName).existsSync()) {
+      final Response<List<int>> audioBytes = await Dio().get(
+        audioMessage.fullUrl,
+        options: Options(
+          responseType: ResponseType.bytes,
+        ),
+      );
+      File(fileName).writeAsBytesSync(audioBytes.data!);
+    }
+
+    await _player.setSourceDeviceFile(fileName);
+    _player.resume();
   }
 
   @override

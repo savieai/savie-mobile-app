@@ -16,7 +16,8 @@ class Message with _$Message {
   const factory Message.audio({
     required String id,
     required DateTime date,
-    required String url,
+    required String name,
+    required String fullUrl,
   }) = AudioMessage;
 
   const factory Message.file({

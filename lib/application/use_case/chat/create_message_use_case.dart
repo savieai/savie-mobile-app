@@ -14,7 +14,8 @@ class CreateMessageUseCase {
 
   Future<void> execute({
     required List<String> imagePaths,
-    required String text,
+    required String? audioPath,
+    required String? text,
   }) async {
     final List<String> fileNames = await Future.wait(
       imagePaths.map(
@@ -30,6 +31,19 @@ class CreateMessageUseCase {
       ),
     );
 
+    late final String? audioName;
+
+    if (audioPath == null) {
+      audioName = null;
+    } else {
+      final String extension = audioPath.split('.').last;
+      audioName = '${const Uuid().v4()}.$extension';
+
+      await Supabase.instance.client.storage
+          .from('voice_messages')
+          .upload(audioName, File(audioPath));
+    }
+
     await _chatRepository.createMessage(
       text: text,
       images: fileNames.map(
@@ -37,6 +51,7 @@ class CreateMessageUseCase {
           return Attachment(name: fileName, url: fileName);
         },
       ).toList(),
+      voiceMessageUrl: audioName,
     );
   }
 }

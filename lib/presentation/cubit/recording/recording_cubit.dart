@@ -11,8 +11,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../domain/domain.dart';
-
 part 'recording_state.dart';
 part 'recording_cubit.freezed.dart';
 
@@ -77,11 +75,10 @@ class RecordingCubit extends Cubit<RecordingState> {
     }
   }
 
-  Future<AudioMessage?> finishRecording() async {
-    // TODO: finish recording
-    // _cancelEverything();
+  Future<String?> finishRecording() async {
+    _cancelEverything();
 
-    // final String? path = await _recorder.stop();
+    final String? path = await _recorder.stop();
     // AudioMessage? audioMessage;
 
     // if (path != null) {
@@ -92,14 +89,14 @@ class RecordingCubit extends Cubit<RecordingState> {
     //   );
     // }
 
-    // _peeks.clear();
-    // _seconds = 0;
+    _peeks.clear();
+    _seconds = 0;
 
-    // emit(RecordingState.idle(
-    //   lastRecordingResult: RecordingResult.finish,
-    // ));
+    emit(RecordingState.idle(
+      lastRecordingResult: RecordingResult.finish,
+    ));
 
-    // return audioMessage;
+    return path;
   }
 
   Future<void> cancelRecording() async {

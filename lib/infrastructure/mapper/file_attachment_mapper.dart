@@ -2,18 +2,14 @@ import '../../domain/domain.dart';
 import '../infrastructure.dart';
 
 sealed class FileAttachmentMapper {
-  static Attachment toDomain(FileAttachmentDTO dto) {
-    return Attachment(name: dto.name, url: dto.url);
+  static Attachment toDomain(FileAttachmentResponseDTO dto) {
+    return Attachment(name: dto.name, url: dto.signedUrl);
   }
 
-  static FileAttachmentDTO toDto(
-    Attachment attachment, {
-    required FileAttachmentTypeDTO type,
-  }) {
-    return FileAttachmentDTO(
+  static FileAttachmentRequestDTO toDto(Attachment attachment) {
+    return FileAttachmentRequestDTO(
       name: attachment.name,
       url: attachment.url,
-      attachmentType: type,
     );
   }
 }

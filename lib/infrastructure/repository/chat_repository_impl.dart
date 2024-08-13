@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -15,6 +18,8 @@ class ChatRepositoryImpl implements ChatRepository {
     final HttpResponse<GetMessagesResponse> response =
         await _chatApi.getMessages();
 
+    Clipboard.setData(ClipboardData(text: jsonEncode(response.response.data)));
+
     return response.data.map(MessageMapper.toDomain).toList();
   }
 
@@ -22,19 +27,16 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<void> createMessage({
     required String? text,
     required List<Attachment> images,
+    required String? voiceMessageUrl,
   }) async {
-    await _chatApi.createMessage(
-      CreateMessageRequest(
-        fileAttachments: <FileAttachmentDTO>[],
-        images: images
-            .map((Attachment a) => FileAttachmentMapper.toDto(
-                  a,
-                  type: FileAttachmentTypeDTO.image,
-                ))
-            .toList(),
-        textContent: text ?? '',
-        voiceMessageUrl: null,
-      ),
+    final CreateMessageRequest request = CreateMessageRequest(
+      fileAttachments: null,
+      images: images.isEmpty
+          ? null
+          : images.map(FileAttachmentMapper.toDto).toList(),
+      textContent: text ?? '',
+      voiceMessageUrl: voiceMessageUrl,
     );
+    await _chatApi.createMessage(jsonEncode(request));
   }
 }

@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../dto/file_attachment_dto.dart';
+import '../../../../infrastructure.dart';
 
 part 'create_message_request.freezed.dart';
 part 'create_message_request.g.dart';
@@ -10,10 +10,11 @@ class CreateMessageRequest with _$CreateMessageRequest {
   @JsonSerializable(
     fieldRename: FieldRename.snake,
     explicitToJson: true,
+    includeIfNull: false,
   )
   const factory CreateMessageRequest({
-    required List<FileAttachmentDTO> fileAttachments,
-    required List<FileAttachmentDTO> images,
+    required List<FileAttachmentRequestDTO>? fileAttachments,
+    required List<FileAttachmentRequestDTO>? images,
     required String? textContent,
     required String? voiceMessageUrl,
   }) = _CreateMessageRequest;

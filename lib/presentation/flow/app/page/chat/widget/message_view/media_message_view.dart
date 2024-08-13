@@ -75,7 +75,7 @@ class _ImageStack extends StatelessWidget {
         ...shownMediaPaths.mapIndexed(
           (int index, Attachment attachment) {
             final Widget image = CachedNetworkImage(
-              imageUrl: attachment.name,
+              imageUrl: attachment.url,
               key: ValueKey<String>(attachment.url),
               fit: BoxFit.cover,
             );

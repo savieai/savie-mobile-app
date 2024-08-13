@@ -25,6 +25,6 @@ abstract class ChatApi {
 
   @POST('/messages')
   Future<HttpResponse<void>> createMessage(
-    @Body() CreateMessageRequest request,
+    @Body() String request,
   );
 }

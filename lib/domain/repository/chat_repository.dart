@@ -5,5 +5,6 @@ abstract class ChatRepository {
   Future<void> createMessage({
     required String? text,
     required List<Attachment> images,
+    required String? voiceMessageUrl,
   });
 }
