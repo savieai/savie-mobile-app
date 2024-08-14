@@ -46,7 +46,9 @@ class SearchAudioFiles extends StatelessWidget {
               // seconds: 44,
               id: '',
               date: DateTime.now(),
-              name: '', fullUrl: '',
+              name: '', localUrl: '',
+              remoteUrl: null,
+              isPending: false,
             ),
           ),
         );

@@ -10,7 +10,7 @@ class MediaMessageView extends StatelessWidget {
   final TextMessage message;
   final bool contextMenuShown;
 
-  String get heroTag => shownMediaPaths.first.url + message.id;
+  String get heroTag => shownMediaPaths.first.name;
 
   List<Attachment> get shownMediaPaths =>
       message.images.take(4).toList().reversed.toList();
@@ -41,9 +41,12 @@ class MediaMessageView extends StatelessWidget {
           ],
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
-            child: _ImageStack(
-              contextMenuShown: contextMenuShown,
-              message: message,
+            child: MessagePendingWrapper(
+              isPending: message.isPending,
+              child: _ImageStack(
+                contextMenuShown: contextMenuShown,
+                message: message,
+              ),
             ),
           ),
         ],
@@ -74,9 +77,8 @@ class _ImageStack extends StatelessWidget {
       children: <Widget>[
         ...shownMediaPaths.mapIndexed(
           (int index, Attachment attachment) {
-            final Widget image = CachedNetworkImage(
-              imageUrl: attachment.url,
-              key: ValueKey<String>(attachment.url),
+            final Widget image = CustomImage(
+              attachment: attachment,
               fit: BoxFit.cover,
             );
 
@@ -109,7 +111,7 @@ class _ImageStack extends StatelessWidget {
                   child: contextMenuShown
                       ? child
                       : Hero(
-                          tag: attachment.url + message.id,
+                          tag: attachment.name,
                           flightShuttleBuilder: isMain
                               // ignore: always_specify_types
                               ? (p1, p2, p3, p4, p5) {
@@ -141,7 +143,7 @@ class _ImageStack extends StatelessWidget {
         if (!contextMenuShown)
           ...leftMediaPaths.map((Attachment attachment) {
             return Hero(
-              tag: attachment.url + message.id,
+              tag: attachment.name,
               child: const SizedBox(),
             );
           }),

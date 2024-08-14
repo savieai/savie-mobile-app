@@ -165,7 +165,7 @@ class _TextInputViewState extends State<_TextInputView> {
                     onTap: () {
                       context
                           .read<ChatCubit>()
-                          .sendMessage(message: _controller.text);
+                          .sendMessage(text: _controller.text);
                       getIt
                           .get<TrackUseActivityUseCase>()
                           .execute(AppEvents.chat.sendButtonClicked);

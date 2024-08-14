@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_memory_image/cached_memory_image.dart';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -26,6 +27,11 @@ class CreateMessageUseCase {
               .from('message_attachments')
               .upload(fileName, File(localPath));
 
+          await CachedImageBase64Manager.instance().cacheBytes(
+            fileName,
+            File(localPath).readAsBytesSync(),
+          );
+
           return fileName;
         },
       ),
@@ -48,7 +54,11 @@ class CreateMessageUseCase {
       text: text,
       images: fileNames.map(
         (String fileName) {
-          return Attachment(name: fileName, url: fileName);
+          return Attachment(
+            name: fileName,
+            remoteUrl: fileName,
+            localUrl: null,
+          );
         },
       ).toList(),
       voiceMessageUrl: audioName,

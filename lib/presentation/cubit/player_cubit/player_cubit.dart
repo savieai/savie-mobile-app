@@ -88,16 +88,22 @@ class PlayerCubit extends Cubit<PlayerState> {
     final String fileName = '${cacheDir.path}/${audioMessage.name}';
 
     if (!File(fileName).existsSync()) {
-      final Response<List<int>> audioBytes = await Dio().get(
-        audioMessage.fullUrl,
-        options: Options(
-          responseType: ResponseType.bytes,
-        ),
-      );
-      File(fileName).writeAsBytesSync(audioBytes.data!);
+      if (audioMessage.localUrl != null) {
+        await _player.setSourceDeviceFile(audioMessage.localUrl!);
+      } else if (audioMessage.remoteUrl != null) {
+        final Response<List<int>> audioBytes = await Dio().get(
+          audioMessage.remoteUrl!,
+          options: Options(
+            responseType: ResponseType.bytes,
+          ),
+        );
+        File(fileName).writeAsBytesSync(audioBytes.data!);
+        await _player.setSourceDeviceFile(fileName);
+      }
+    } else {
+      await _player.setSourceDeviceFile(fileName);
     }
 
-    await _player.setSourceDeviceFile(fileName);
     _player.resume();
   }
 

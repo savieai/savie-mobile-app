@@ -6,6 +6,7 @@ part 'attachment.freezed.dart';
 class Attachment with _$Attachment {
   const factory Attachment({
     required String name,
-    required String url,
+    required String? remoteUrl,
+    required String? localUrl,
   }) = _Attachment;
 }

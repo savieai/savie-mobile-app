@@ -7,8 +7,10 @@ sealed class MessageMapper {
         dto.voiceMessageUrl.isNotEmpty) {
       return Message.audio(
         id: dto.id,
-        date: dto.createdAt,
-        fullUrl: dto.voiceMessageUrlSigned,
+        date: dto.createdAt.toLocal(),
+        remoteUrl: dto.voiceMessageUrlSigned,
+        localUrl: null,
+        isPending: false,
         name: dto.voiceMessageUrl,
       );
     }
@@ -25,9 +27,10 @@ sealed class MessageMapper {
 
       return Message.text(
         id: dto.id,
-        date: dto.createdAt,
+        date: dto.createdAt.toLocal(),
         text: dto.textContent,
         images: images,
+        isPending: false,
       );
     }
 

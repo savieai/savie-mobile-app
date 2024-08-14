@@ -7,6 +7,7 @@ part 'message.freezed.dart';
 @freezed
 class Message with _$Message {
   const factory Message.text({
+    required bool isPending,
     required String id,
     required DateTime date,
     required String? text,
@@ -14,13 +15,16 @@ class Message with _$Message {
   }) = TextMessage;
 
   const factory Message.audio({
+    required bool isPending,
     required String id,
     required DateTime date,
     required String name,
-    required String fullUrl,
+    required String? remoteUrl,
+    required String? localUrl,
   }) = AudioMessage;
 
   const factory Message.file({
+    required bool isPending,
     required String id,
     required DateTime date,
     required List<Attachment> files,

@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:auto_route/auto_route.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
@@ -226,11 +225,11 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
 
         return PhotoViewGalleryPageOptions(
           controller: photoViewController,
-          imageProvider: CachedNetworkImageProvider(attachment.url),
+          imageProvider: getCustomImageProvider(attachment),
           disableGestures: true,
           heroAttributes: widget.selectedIndex == index
               ? PhotoViewHeroAttributes(
-                  tag: attachment.url + widget.message.id,
+                  tag: attachment.name,
                   createRectTween: (Rect? begin, Rect? end) {
                     return RectTween(begin: begin, end: end);
                   },
@@ -256,8 +255,8 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
                           ),
                         );
                       },
-                      child: CachedNetworkImage(
-                        imageUrl: attachment.url,
+                      child: CustomImage(
+                        attachment: attachment,
                         fit: BoxFit.cover,
                       ),
                     );
@@ -401,8 +400,8 @@ class _ImagePreviewState extends State<_ImagePreview>
       builder: (BuildContext context, _) {
         return Align(
           alignment: Alignment.bottomCenter,
-          child: CachedNetworkImage(
-            imageUrl: widget.attachment.url,
+          child: CustomImage(
+            attachment: widget.attachment,
             height: 28 + _animation.value * 8,
             width: 28 + _animation.value * 8,
             filterQuality: FilterQuality.none,

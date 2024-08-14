@@ -72,7 +72,7 @@ class _CameraRollMessageViewState extends State<CameraRollMessageView> {
 
                   if (context.mounted) {
                     context.read<ChatCubit>().sendMessage(
-                          message: _controller.text,
+                          text: _controller.text,
                           mediaPaths: files.map((File f) => f.path).toList(),
                         );
                     _controller.value = TextEditingValue.empty;

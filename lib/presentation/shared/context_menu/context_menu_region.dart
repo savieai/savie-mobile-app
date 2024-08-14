@@ -44,12 +44,15 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   final ValueNotifier<double> _scrollPositionNotifier =
       ValueNotifier<double>(0);
   late ScrollController _scrollController;
+  late final ContextMenuCubit _contextMenuCubit;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _sizeNotifier.value = context.size;
+      if (mounted) {
+        _sizeNotifier.value = context.size;
+      }
     });
   }
 
@@ -59,6 +62,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   void initState() {
     super.initState();
 
+    _contextMenuCubit = context.read<ContextMenuCubit>();
     _overlayAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
@@ -283,9 +287,8 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   }
 
   void _hideOverlay() {
-    final ContextMenuCubit cubit = context.read<ContextMenuCubit>();
     Future<void>.delayed(const Duration(milliseconds: 600), () {
-      cubit.setNotShown();
+      _contextMenuCubit.setNotShown();
       _contextMenuShownNotifier.value = false;
       _scrollController.dispose();
     });
