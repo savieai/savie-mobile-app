@@ -27,6 +27,10 @@ class _SearchImagesState extends State<SearchImages> {
             child: CircularProgressIndicator.adaptive(),
           ),
           fetched: (List<SearchResult> data) {
+            if (data.isEmpty) {
+              return const SizedBox();
+            }
+
             return ImagesScrollbar(
               controller: _scrollController,
               heightScrollThumb: 40,
