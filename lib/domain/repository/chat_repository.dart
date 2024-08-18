@@ -8,5 +8,8 @@ abstract class ChatRepository {
   });
   Future<void> createFileMessage(Attachment file);
   Future<void> createAudioMessage(String voiceMessageUrl);
-  // Future<List<Message>> searchMessages(String query);
+  Future<List<SearchResult>> searchMessages({
+    required String query,
+    required SearchResultType type,
+  });
 }

@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../domain.dart';
+
 part 'search_result.freezed.dart';
 
 @freezed
@@ -8,8 +10,7 @@ class SearchResult with _$SearchResult {
     required String id,
     required String messageId,
     required DateTime date,
-    required String name,
-    required String remoteUrl,
+    required Attachment image,
   }) = ImageSearchResult;
 
   const factory SearchResult.link({
@@ -19,12 +20,12 @@ class SearchResult with _$SearchResult {
     required String url,
   }) = LinkSearchResult;
 
-  // const factory SearchResult.file({
-  //   required bool isPending,
-  //   required String id,
-  //   required DateTime date,
-  //   required Attachment file,
-  // }) = FileMessage;
+  const factory SearchResult.file({
+    required String id,
+    required String messageId,
+    required DateTime date,
+    required Attachment file,
+  }) = FileSearchResult;
 
   const SearchResult._();
 }

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../domain/domain.dart';
+import '../../../../../presentation.dart';
+import '../cubit/search_cubit.dart';
 import 'images_scrollbar.dart';
 
 class SearchImages extends StatefulWidget {
@@ -14,31 +18,45 @@ class _SearchImagesState extends State<SearchImages> {
 
   @override
   Widget build(BuildContext context) {
-    return ImagesScrollbar(
-      controller: _scrollController,
-      heightScrollThumb: 40,
-      child: CustomScrollView(
-        controller: _scrollController,
-        slivers: <Widget>[
-          // SliverGrid.builder(
-          //   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          //     crossAxisCount: 3,
-          //     mainAxisSpacing: 2,
-          //     crossAxisSpacing: 2,
-          //   ),
-          //   itemCount: 100,
-          //   itemBuilder: (BuildContext context, int i) => CachedNetworkImage(
-          //     imageUrl:
-          //         'https://s.cafebazaar.ir/images/icons/com.Nature.WallappersQuick-f4c4352a-467d-4ffb-85e9-f4fa7645f1e2_512x512.png?x-img=v1/resize,h_256,w_256,lossless_false/optimize',
-          //   ),
-          // ),
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: MediaQuery.paddingOf(context).bottom,
-            ),
+    return BlocSelector<SearchCubit, SearchState, TabSearchState>(
+      selector: (SearchState state) => state.images,
+      builder: (BuildContext context, TabSearchState state) {
+        return state.when(
+          initial: () => const SizedBox(),
+          fetching: () => const Center(
+            child: CircularProgressIndicator.adaptive(),
           ),
-        ],
-      ),
+          fetched: (List<SearchResult> data) {
+            return ImagesScrollbar(
+              controller: _scrollController,
+              heightScrollThumb: 40,
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: <Widget>[
+                  SliverGrid.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      mainAxisSpacing: 2,
+                      crossAxisSpacing: 2,
+                    ),
+                    itemCount: data.length,
+                    itemBuilder: (BuildContext context, int i) => CustomImage(
+                      attachment: (data[i] as ImageSearchResult).image,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: MediaQuery.paddingOf(context).bottom,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

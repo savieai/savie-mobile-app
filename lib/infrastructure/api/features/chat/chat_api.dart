@@ -27,4 +27,10 @@ abstract class ChatApi {
   Future<HttpResponse<void>> createMessage(
     @Body() String request,
   );
+
+  @GET('/messages/search')
+  Future<HttpResponse<void>> searchMessages(
+    @Query('q') String query,
+    @Query('type') String type,
+  );
 }

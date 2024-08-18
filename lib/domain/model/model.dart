@@ -6,3 +6,4 @@ export 'link.dart';
 export 'local_settings.dart';
 export 'message.dart';
 export 'savie_user.dart';
+export 'search_result.dart';

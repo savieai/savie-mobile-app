@@ -83,7 +83,7 @@ class TextMessageView extends StatelessWidget {
               WidgetSpan(
                 child: Padding(
                   padding: const EdgeInsets.only(right: 6),
-                  child: _FavIcon(
+                  child: FavIcon(
                     key: Key('Favicon$_completeLink(url)'),
                     completeLink: _completeLink(url),
                   ),
@@ -123,8 +123,8 @@ final Map<String, Uint8List?> _faviconCache = <String, Uint8List?>{};
 final Map<String, bool> _isSvgMap = <String, bool>{};
 final Map<String, String> _faviconUrls = <String, String>{};
 
-class _FavIcon extends StatefulWidget {
-  const _FavIcon({
+class FavIcon extends StatefulWidget {
+  const FavIcon({
     super.key,
     required this.completeLink,
   });
@@ -132,10 +132,10 @@ class _FavIcon extends StatefulWidget {
   final String completeLink;
 
   @override
-  _FavIconState createState() => _FavIconState();
+  State<FavIcon> createState() => _FavIconState();
 }
 
-class _FavIconState extends State<_FavIcon> {
+class _FavIconState extends State<FavIcon> {
   Uint8List? _imageBytes;
   bool _isSvg = false;
   bool _isLoading = true;

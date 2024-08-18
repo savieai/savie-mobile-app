@@ -16,7 +16,7 @@ class SearchAudioFiles extends StatelessWidget {
         20,
         MediaQuery.paddingOf(context).bottom,
       ),
-      itemCount: 100,
+      itemCount: 0,
       itemBuilder: (BuildContext context, int index) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),

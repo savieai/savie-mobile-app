@@ -18,7 +18,7 @@ class FileMessageView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               FilePreview(
-                message: fileMessage,
+                file: fileMessage.file,
               ),
               const SizedBox(width: 12),
               ConstrainedBox(
@@ -42,10 +42,10 @@ class FileMessageView extends StatelessWidget {
 class FilePreview extends StatelessWidget {
   const FilePreview({
     super.key,
-    required this.message,
+    required this.file,
   });
 
-  final FileMessage message;
+  final Attachment file;
 
   @override
   Widget build(BuildContext context) {
@@ -62,10 +62,10 @@ class FilePreview extends StatelessWidget {
       clipBehavior: Clip.hardEdge,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10),
-        child: switch (message.file.fileType) {
-          FileType.image => _ImageFilePreview(image: message.file),
-          FileType.pdf => _PdfFilePreview(pdf: message.file),
-          FileType.other => _DefaultFilePreview(file: message.file),
+        child: switch (file.fileType) {
+          FileType.image => _ImageFilePreview(image: file),
+          FileType.pdf => _PdfFilePreview(pdf: file),
+          FileType.other => _DefaultFilePreview(file: file),
         },
       ),
     );

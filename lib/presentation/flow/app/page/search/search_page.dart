@@ -2,10 +2,13 @@ import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../application/application.dart';
+import '../../../../../domain/enum/enum.dart';
 import '../../../../presentation.dart';
 import '../../../../router/app_router.gr.dart';
+import 'cubit/search_cubit.dart';
 import 'widget/widget.dart';
 
 @RoutePage()
@@ -17,6 +20,8 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
+  final SearchCubit _searchCubit = getIt.get<SearchCubit>();
+
   @override
   void initState() {
     super.initState();
@@ -32,27 +37,36 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   @override
+  void dispose() {
+    _searchCubit.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
-      body: Column(
-        children: <Widget>[
-          SizedBox(
-            height: MediaQuery.paddingOf(context).top,
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: const Row(
-              children: <Widget>[
-                Expanded(child: _SearchField()),
-                SizedBox(width: 16),
-                _CancelButton(),
-              ],
+    return BlocProvider<SearchCubit>.value(
+      value: _searchCubit,
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundPrimary,
+        body: Column(
+          children: <Widget>[
+            SizedBox(
+              height: MediaQuery.paddingOf(context).top,
             ),
-          ),
-          const SizedBox(height: 8),
-          const Expanded(child: _TabView()),
-        ],
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: const Row(
+                children: <Widget>[
+                  Expanded(child: _SearchField()),
+                  SizedBox(width: 16),
+                  _CancelButton(),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Expanded(child: _TabView()),
+          ],
+        ),
       ),
     );
   }
@@ -69,6 +83,29 @@ class _TabViewState extends State<_TabView>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController =
       TabController(length: 4, vsync: this);
+
+  @override
+  void initState() {
+    super.initState();
+    final SearchCubit cubit = context.read<SearchCubit>();
+    _tabController.addListener(() {
+      final int index = _tabController.index;
+      switch (index) {
+        case 0:
+          cubit.updateSearchResultType(SearchResultType.image);
+        case 1:
+          cubit.updateSearchResultType(SearchResultType.link);
+        case 2:
+          cubit.updateSearchResultType(SearchResultType.file);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +184,7 @@ class _SearchField extends StatelessWidget {
       placeholderStyle: AppTextStyles.paragraph.copyWith(
         color: AppColors.textSecondary,
       ),
+      onChanged: context.read<SearchCubit>().updateQuery,
       prefix: Padding(
         padding: const EdgeInsets.only(left: 8),
         child: Assets.icons.search24.svg(

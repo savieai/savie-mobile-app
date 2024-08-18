@@ -60,4 +60,35 @@ class ChatRepositoryImpl implements ChatRepository {
     );
     await _chatApi.createMessage(jsonEncode(request));
   }
+
+  @override
+  Future<List<SearchResult>> searchMessages({
+    required String query,
+    required SearchResultType type,
+  }) async {
+    // TODO: dont use enum name
+    final HttpResponse<void> response =
+        await _chatApi.searchMessages(query, type.name);
+
+    final List<dynamic> data =
+        response.response.data as List<dynamic>? ?? <dynamic>[];
+
+    return switch (type) {
+      SearchResultType.image => data
+          .map((dynamic data) =>
+              ImageSearchResultDTO.fromJson(data as Map<String, dynamic>))
+          .map(SearchResultMapper.imageToDomain)
+          .toList(),
+      SearchResultType.file => data
+          .map((dynamic data) =>
+              FileSearchResultDTO.fromJson(data as Map<String, dynamic>))
+          .map(SearchResultMapper.fileToDomain)
+          .toList(),
+      SearchResultType.link => data
+          .map((dynamic data) =>
+              LinkSearchResultDTO.fromJson(data as Map<String, dynamic>))
+          .map(SearchResultMapper.linkToDomain)
+          .toList(),
+    };
+  }
 }
