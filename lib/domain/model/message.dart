@@ -12,6 +12,7 @@ class Message with _$Message {
     required DateTime date,
     required String? text,
     @Default(<Attachment>[]) List<Attachment> images,
+    @Default(<Link>[]) List<Link> links,
   }) = TextMessage;
 
   const factory Message.audio({
@@ -27,7 +28,7 @@ class Message with _$Message {
     required bool isPending,
     required String id,
     required DateTime date,
-    required List<Attachment> files,
+    required Attachment file,
   }) = FileMessage;
 
   const Message._();
@@ -52,3 +53,4 @@ class Message with _$Message {
     );
   }
 }
+

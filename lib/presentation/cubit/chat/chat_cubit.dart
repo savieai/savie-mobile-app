@@ -14,12 +14,14 @@ class ChatCubit extends Cubit<ChatState> {
   ChatCubit(
     this._createMessageUseCase,
     this._getMessageUseCase,
+    this._createPdfThumbnailUseCase,
   ) : super(const ChatState(messages: <Message>[])) {
     _fetchMessages();
   }
 
   final CreateMessageUseCase _createMessageUseCase;
   final GetMessageUseCase _getMessageUseCase;
+  final CreatePdfThumbnailUseCase _createPdfThumbnailUseCase;
 
   Future<void> _fetchMessages({String? pendingIdToRemove}) async {
     final List<Message> messages = await _getMessageUseCase.execute();
@@ -46,28 +48,25 @@ class ChatCubit extends Cubit<ChatState> {
       id: pendingUuid,
       date: DateTime.now(),
       text: text,
-      images: (mediaPaths ?? <String>[])
-          .map(
-            (String mediaPath) => Attachment(
-              name: mediaPath.split('/').last,
-              remoteUrl: null,
-              localUrl: mediaPath,
-            ),
-          )
-          .toList(),
+      images: (mediaPaths ?? <String>[]).map(
+        (String mediaPath) {
+          final String ext = mediaPath.split('.').last;
+          return Attachment(
+            name: '${const Uuid().v4()}.$ext',
+            remoteUrl: null,
+            localUrl: mediaPath,
+          );
+        },
+      ).toList(),
     );
+
     _pendingMessages[pendingUuid] = message;
     emit(ChatState(messages: <Message>[
       ..._sentMessages.values,
       ..._pendingMessages.values,
     ]));
 
-    await _createMessageUseCase.execute(
-      imagePaths: mediaPaths ?? <String>[],
-      text: text,
-      audioPath: null,
-    );
-
+    await _createMessageUseCase.execute(message);
     _fetchMessages(pendingIdToRemove: pendingUuid);
   }
 
@@ -77,26 +76,57 @@ class ChatCubit extends Cubit<ChatState> {
     }
 
     final String pendingUuid = const Uuid().v4();
+    final String ext = audioPath.split('.').last;
+
     final Message message = AudioMessage(
       isPending: true,
       id: pendingUuid,
       date: DateTime.now(),
-      name: audioPath.split('/').last,
+      name: '${const Uuid().v4()}.$ext',
       remoteUrl: null,
       localUrl: audioPath,
     );
+
     _pendingMessages[pendingUuid] = message;
     emit(ChatState(messages: <Message>[
       ..._sentMessages.values,
       ..._pendingMessages.values,
     ]));
 
-    await _createMessageUseCase.execute(
-      imagePaths: <String>[],
-      text: null,
-      audioPath: audioPath,
+    await _createMessageUseCase.execute(message);
+    _fetchMessages(pendingIdToRemove: pendingUuid);
+  }
+
+  Future<void> sendFile(String? filePath) async {
+    if (filePath == null) {
+      return;
+    }
+
+    final String pendingUuid = const Uuid().v4();
+    final String ext = filePath.split('.').last;
+
+    final Attachment pdf = Attachment(
+      name: '${const Uuid().v4()}.$ext',
+      remoteUrl: null,
+      localUrl: filePath,
     );
 
+    final Message message = FileMessage(
+      isPending: true,
+      id: pendingUuid,
+      date: DateTime.now(),
+      file: pdf,
+    );
+
+    await _createPdfThumbnailUseCase.execute(pdf);
+
+    _pendingMessages[pendingUuid] = message;
+    emit(ChatState(messages: <Message>[
+      ..._sentMessages.values,
+      ..._pendingMessages.values,
+    ]));
+
+    await _createMessageUseCase.execute(message);
     _fetchMessages(pendingIdToRemove: pendingUuid);
   }
 }

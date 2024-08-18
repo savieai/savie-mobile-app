@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -18,16 +17,38 @@ class ChatRepositoryImpl implements ChatRepository {
     final HttpResponse<GetMessagesResponse> response =
         await _chatApi.getMessages();
 
-    Clipboard.setData(ClipboardData(text: jsonEncode(response.response.data)));
-
     return response.data.map(MessageMapper.toDomain).toList();
   }
 
   @override
-  Future<void> createMessage({
+  Future<void> createAudioMessage(String voiceMessageUrl) async {
+    final CreateMessageRequest request = CreateMessageRequest(
+      fileAttachments: null,
+      images: null,
+      textContent: null,
+      voiceMessageUrl: voiceMessageUrl,
+    );
+
+    await _chatApi.createMessage(jsonEncode(request));
+  }
+
+  @override
+  Future<void> createFileMessage(Attachment file) async {
+    final CreateMessageRequest request = CreateMessageRequest(
+      fileAttachments: <FileAttachmentRequestDTO>[
+        FileAttachmentMapper.toDto(file),
+      ],
+      images: null,
+      textContent: '',
+      voiceMessageUrl: null,
+    );
+    await _chatApi.createMessage(jsonEncode(request));
+  }
+
+  @override
+  Future<void> createTextMessage({
     required String? text,
     required List<Attachment> images,
-    required String? voiceMessageUrl,
   }) async {
     final CreateMessageRequest request = CreateMessageRequest(
       fileAttachments: null,
@@ -35,7 +56,7 @@ class ChatRepositoryImpl implements ChatRepository {
           ? null
           : images.map(FileAttachmentMapper.toDto).toList(),
       textContent: text ?? '',
-      voiceMessageUrl: voiceMessageUrl,
+      voiceMessageUrl: null,
     );
     await _chatApi.createMessage(jsonEncode(request));
   }

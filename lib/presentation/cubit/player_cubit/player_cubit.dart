@@ -4,13 +4,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:audioplayers/audioplayers.dart' as audio;
-import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
-import 'package:path_provider/path_provider.dart';
 
-import '../../../application/use_case/metrcis/metrics.dart';
+import '../../../application/application.dart';
 import '../../../domain/domain.dart';
 
 part 'player_state.dart';
@@ -84,26 +82,15 @@ class PlayerCubit extends Cubit<PlayerState> {
   }
 
   Future<void> _playAudio(AudioMessage audioMessage) async {
-    final Directory cacheDir = await getApplicationCacheDirectory();
-    final String fileName = '${cacheDir.path}/${audioMessage.name}';
-
-    if (!File(fileName).existsSync()) {
-      if (audioMessage.localUrl != null) {
-        await _player.setSourceDeviceFile(audioMessage.localUrl!);
-      } else if (audioMessage.remoteUrl != null) {
-        final Response<List<int>> audioBytes = await Dio().get(
-          audioMessage.remoteUrl!,
-          options: Options(
-            responseType: ResponseType.bytes,
+    final File file = await getIt.get<GetFileUseCase>().execute(
+          attachment: Attachment(
+            name: audioMessage.name,
+            remoteUrl: audioMessage.remoteUrl,
+            localUrl: audioMessage.localUrl,
           ),
         );
-        File(fileName).writeAsBytesSync(audioBytes.data!);
-        await _player.setSourceDeviceFile(fileName);
-      }
-    } else {
-      await _player.setSourceDeviceFile(fileName);
-    }
 
+    await _player.setSourceDeviceFile(file.path);
     _player.resume();
   }
 

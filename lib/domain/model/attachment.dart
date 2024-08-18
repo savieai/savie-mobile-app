@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../domain.dart';
+
 part 'attachment.freezed.dart';
 
 @freezed
@@ -9,4 +11,26 @@ class Attachment with _$Attachment {
     required String? remoteUrl,
     required String? localUrl,
   }) = _Attachment;
+}
+
+extension AttachmentExtension on Attachment {
+  FileType get fileType {
+    final String extension = name.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'png' || 'jpeg' || 'jpg' || 'heic':
+        return FileType.image;
+      case 'pdf':
+        return FileType.pdf;
+      default:
+        return FileType.other;
+    }
+  }
+
+  String? get pdfThumbnailName {
+    if (fileType != FileType.pdf) {
+      return null;
+    }
+
+    return '${name.split('.').first}_thumbnail.png';
+  }
 }

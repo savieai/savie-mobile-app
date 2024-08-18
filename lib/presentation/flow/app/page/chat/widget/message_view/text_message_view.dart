@@ -14,10 +14,10 @@ class TextMessageView extends StatelessWidget {
   Widget build(BuildContext context) {
     final String text = textMessage.text ?? '';
 
-    final List<String> links = _extractLinks(text);
+    final List<Link> links = textMessage.links;
     final List<InlineSpan> spans = _convertToSpans(text, false);
 
-    final bool linkOnly = text == links.firstOrNull;
+    final bool linkOnly = text == links.firstOrNull?.url;
 
     return _MessageContainer(
       child: Column(
@@ -39,16 +39,14 @@ class TextMessageView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 if (!linkOnly) const SizedBox(height: 6),
-                ...links.map(
-                  (String link) => SelectableText.rich(
-                    TextSpan(children: _convertToSpans(link, true)),
-                    enableInteractiveSelection: contextMenuShown,
-                    cursorWidth: 0,
-                    style: AppTextStyles.paragraph.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
+                SelectableText.rich(
+                  TextSpan(children: _convertToSpans(links.first.url, true)),
+                  enableInteractiveSelection: contextMenuShown,
+                  cursorWidth: 0,
+                  style: AppTextStyles.paragraph.copyWith(
+                    color: AppColors.textPrimary,
                   ),
-                ),
+                )
               ],
             ),
         ],
@@ -60,11 +58,6 @@ class TextMessageView extends StatelessWidget {
     r'\b(?:(?:https?)://)?(?:www\.)?(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(?:/[^\s]*)?\b',
     caseSensitive: false,
   );
-
-  List<String> _extractLinks(String text) {
-    final Iterable<RegExpMatch> matches = _linkRegExp.allMatches(text);
-    return matches.map((RegExpMatch match) => match.group(0)!).toList();
-  }
 
   static String _completeLink(String url) {
     if (!url.startsWith(RegExp(r'https?://'))) {

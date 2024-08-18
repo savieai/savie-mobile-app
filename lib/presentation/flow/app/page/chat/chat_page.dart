@@ -1,6 +1,8 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../../application/application.dart';
 import '../../../../presentation.dart';
@@ -37,6 +39,8 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    Clipboard.setData(ClipboardData(
+        text: Supabase.instance.client.auth.currentSession?.accessToken ?? ''));
     return Scaffold(
       appBar: const _ChatAppBar(),
       backgroundColor: AppColors.backgroundChatInput,

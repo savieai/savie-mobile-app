@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'application/application.dart';
 import 'domain/model/app_log.dart';
@@ -14,6 +16,7 @@ void main() async {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      Hive.init((await getApplicationDocumentsDirectory()).path);
 
       await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform);

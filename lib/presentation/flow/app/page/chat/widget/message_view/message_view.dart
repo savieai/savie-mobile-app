@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
@@ -10,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../../../../../../application/application.dart';
@@ -23,6 +25,7 @@ part 'audio_message_view.dart';
 part 'text_message_view.dart';
 part 'message_container.dart';
 part 'text_with_media_message_view.dart';
+part 'file_message_view.dart';
 
 class MessageView extends StatelessWidget {
   const MessageView({
@@ -118,8 +121,12 @@ class MessageView extends StatelessWidget {
                   ),
                 );
               },
-              // TODO: add file
-              file: (_) => const SizedBox(),
+              file: (FileMessage fileMessage) => MessagePendingWrapper(
+                isPending: message.isPending,
+                child: FileMessageView(
+                  fileMessage: fileMessage,
+                ),
+              ),
             );
           },
         ),

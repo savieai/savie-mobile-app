@@ -163,6 +163,8 @@ PODS:
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - pdf_render (0.0.1):
+    - Flutter
   - permission_handler_apple (9.3.0):
     - Flutter
   - photo_manager (2.0.0):
@@ -203,6 +205,7 @@ DEPENDENCIES:
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - mixpanel_flutter (from `.symlinks/plugins/mixpanel_flutter/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
+  - pdf_render (from `.symlinks/plugins/pdf_render/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - photo_manager (from `.symlinks/plugins/photo_manager/ios`)
   - record_darwin (from `.symlinks/plugins/record_darwin/ios`)
@@ -270,6 +273,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/mixpanel_flutter/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
+  pdf_render:
+    :path: ".symlinks/plugins/pdf_render/ios"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
   photo_manager:
@@ -329,6 +334,7 @@ SPEC CHECKSUMS:
   Mixpanel-swift: 1fb0322037fa4db64042ab8eb4430848bc90ea43
   mixpanel_flutter: 36d73b7a2502b5782cd8f1d1f6b1b4aa4f2cfd07
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+  pdf_render: 0b4e1a615aab83ce88b26c57753049424908a755
   permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
   photo_manager: ff695c7a1dd5bc379974953a2b5c0a293f7c4c8a
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47

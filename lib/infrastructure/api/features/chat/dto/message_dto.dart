@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'file_attachment_response_dto.dart';
+import '../../../../infrastructure.dart';
 
 part 'message_dto.freezed.dart';
 part 'message_dto.g.dart';
@@ -18,7 +18,7 @@ class MessageDTO with _$MessageDTO {
     required String userId,
     @Default('') String voiceMessageUrl,
     @Default('') String voiceMessageUrlSigned,
-    @Default(<String>[]) List<String> links,
+    @Default(<LinkDTO>[]) List<LinkDTO> links,
     required List<FileAttachmentResponseDTO> attachments,
   }) = _MessageDTO;
 

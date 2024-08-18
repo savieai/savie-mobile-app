@@ -54,23 +54,16 @@ class CameraRollBottomBar extends StatelessWidget {
   }
 
   Future<void> _pushFilePicker(BuildContext context) async {
+    final ChatCubit chatCubit = context.read<ChatCubit>();
     context.router.maybePop();
 
-    final FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-      allowMultiple: true,
-    );
+    final FilePickerResult? result = await FilePicker.platform.pickFiles();
 
     if (result == null || result.files.isEmpty) {
       return;
     }
 
-    if (context.mounted) {
-      context.read<ChatCubit>().sendMessage(
-            mediaPaths:
-                result.files.map((PlatformFile e) => e.path).nonNulls.toList(),
-          );
-    }
+    chatCubit.sendFile(result.files.firstOrNull?.path);
   }
 }
 

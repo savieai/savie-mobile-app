@@ -13,7 +13,7 @@ sealed class FileAttachmentMapper {
   static FileAttachmentRequestDTO toDto(Attachment attachment) {
     return FileAttachmentRequestDTO(
       name: attachment.name,
-      url: attachment.remoteUrl!,
+      url: attachment.name,
     );
   }
 }
