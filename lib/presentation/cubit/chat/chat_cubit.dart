@@ -105,7 +105,7 @@ class ChatCubit extends Cubit<ChatState> {
     final String pendingUuid = const Uuid().v4();
     final String ext = filePath.split('.').last;
 
-    final Attachment pdf = Attachment(
+    final Attachment file = Attachment(
       name: '${const Uuid().v4()}.$ext',
       remoteUrl: null,
       localUrl: filePath,
@@ -115,10 +115,12 @@ class ChatCubit extends Cubit<ChatState> {
       isPending: true,
       id: pendingUuid,
       date: DateTime.now(),
-      file: pdf,
+      file: file,
     );
 
-    await _createPdfThumbnailUseCase.execute(pdf);
+    if (file.fileType == FileType.pdf) {
+      await _createPdfThumbnailUseCase.execute(file);
+    }
 
     _pendingMessages[pendingUuid] = message;
     emit(ChatState(messages: <Message>[
