@@ -10,9 +10,7 @@ class ImageSearchResultDTO with _$ImageSearchResultDTO {
     required String id,
     required DateTime createdAt,
     required String name,
-    required String url,
     required String messageId,
-    required String signedUrl,
   }) = _ImageSearchResultDTO;
 
   factory ImageSearchResultDTO.fromJson(Map<String, Object?> json) =>

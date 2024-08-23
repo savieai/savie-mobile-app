@@ -100,7 +100,7 @@ class _MessageListViewState extends State<MessageListView> {
                             parent: animation,
                             curve: Curves.linearToEaseOut,
                           ),
-                          axisAlignment: 1,
+                          axisAlignment: -1,
                           child: Padding(
                             padding:
                                 EdgeInsets.only(top: isFirstInGroup ? 58 : 0) +

@@ -1,3 +1,6 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../application/application.dart';
 import '../../domain/domain.dart';
 
 import '../infrastructure.dart';
@@ -9,7 +12,9 @@ sealed class SearchResultMapper {
       messageId: dto.messageId,
       date: dto.createdAt.toLocal(),
       image: Attachment(
-        signedUrl: dto.signedUrl,
+        signedUrl: Supabase.instance.client.storage
+            .from('message_attachments')
+            .getAuthenticatedUrl(dto.name),
         name: dto.name,
         remoteStorageName: null,
         localFullPath: null,
@@ -23,7 +28,9 @@ sealed class SearchResultMapper {
       messageId: dto.messageId,
       date: dto.createdAt.toLocal(),
       file: Attachment(
-        signedUrl: dto.signedUrl,
+        signedUrl: Supabase.instance.client.storage
+            .from('message_attachments')
+            .getAuthenticatedUrl(dto.name),
         name: dto.name,
         remoteStorageName: null,
         localFullPath: null,
