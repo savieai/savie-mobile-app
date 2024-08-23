@@ -218,7 +218,6 @@ class _InviteCodeBox extends StatelessWidget {
           const SizedBox(width: 20),
           GestureDetector(
             onTap: () {
-              Clipboard.setData(ClipboardData(text: code));
               InAppNotification.show(
                 child: const _CopiedNotification(),
                 duration: const Duration(seconds: 3),

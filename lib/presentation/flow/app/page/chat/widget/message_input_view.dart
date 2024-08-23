@@ -8,7 +8,10 @@ import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:wave_blob/wave_blob.dart';
 
 import '../../../../../../application/application.dart';
+import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
+import '../chat_page_provider.dart';
+import 'message_view/sent_animation_text.dart';
 import 'widget.dart';
 
 class MessageInputView extends StatefulWidget {
@@ -107,6 +110,7 @@ class _TextInputView extends StatefulWidget {
 
 class _TextInputViewState extends State<_TextInputView> {
   final TextEditingController _controller = TextEditingController();
+  ChatPagePorvider get _chatPagePorvider => ChatPagePorvider.of(context);
 
   @override
   void initState() {
@@ -124,70 +128,127 @@ class _TextInputViewState extends State<_TextInputView> {
     super.dispose();
   }
 
+  String _textForAnimation = '';
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      child: DefaultTextHeightBehavior(
-        textHeightBehavior: const TextHeightBehavior(
-          applyHeightToFirstAscent: false,
-          applyHeightToLastDescent: false,
-        ),
-        child: CupertinoTextField(
-          focusNode: widget.focusNode,
-          controller: _controller,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
-          autofocus: true,
-          minLines: 1,
-          maxLines: 5,
-          cursorColor: AppColors.iconAccent,
-          prefix: const Padding(
-            padding: EdgeInsets.fromLTRB(12, 12, 0, 12),
-            child: FilePickerButton(),
-          ),
-          decoration: const BoxDecoration(),
-          style: AppTextStyles.paragraph,
-          placeholderStyle: AppTextStyles.paragraph.copyWith(
-            color: AppColors.textSecondary,
-          ),
-          placeholder: 'Share anything...',
-          textInputAction: TextInputAction.newline,
-          suffix: Padding(
-            padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
-            child: ValueListenableBuilder<bool>(
-              valueListenable: widget.canRecordNotifier,
-              builder: (BuildContext context, bool canRecord, _) {
-                return AnimatedCrossFade(
-                  duration: const Duration(milliseconds: 200),
-                  crossFadeState: canRecord
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-                  firstChild: SendButton(
-                    onTap: () {
-                      context
-                          .read<ChatCubit>()
-                          .sendMessage(text: _controller.text);
-                      getIt
-                          .get<TrackUseActivityUseCase>()
-                          .execute(AppEvents.chat.sendButtonClicked);
-                      _controller.value = TextEditingValue.empty;
+    return ValueListenableBuilder<AnimationStatus>(
+      valueListenable: _chatPagePorvider.sentMessageAnimationStatusNotifier,
+      builder: (BuildContext context, AnimationStatus value, Widget? child) {
+        return AnimatedSize(
+          duration: value == AnimationStatus.forward
+              ? ChatPagePorvider.sentMessageAnimationDuration
+              : const Duration(milliseconds: 1),
+          curve: Curves.linearToEaseOut,
+          child: child,
+        );
+      },
+      child: SizedBox(
+        child: Row(
+          children: <Widget>[
+            const Padding(
+              padding: EdgeInsets.fromLTRB(12, 12, 0, 12),
+              child: FilePickerButton(),
+            ),
+            Expanded(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: <Widget>[
+                  AnimatedBuilder(
+                    animation: _chatPagePorvider.sentMessageAnimation,
+                    builder: (BuildContext context, Widget? child) {
+                      final double animationValue =
+                          _chatPagePorvider.sentMessageAnimation.value;
+                      return Positioned(
+                        bottom: animationValue * 89 - 14,
+                        left: -17,
+                        right: -44,
+                        child: Opacity(
+                          opacity: animationValue == 0 ? 0 : 1,
+                          child: Container(
+                            alignment: Alignment(-1 + 2 * animationValue, -1),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 20,
+                            ),
+                            child: SentAnimationText(
+                              text: _textForAnimation,
+                            ),
+                          ),
+                        ),
+                      );
                     },
                   ),
-                  secondChild: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Assets.icons.mic24.svg(
-                      colorFilter: const ColorFilter.mode(
-                        AppColors.iconSecodary,
-                        BlendMode.srcIn,
+                  DefaultTextHeightBehavior(
+                    textHeightBehavior: const TextHeightBehavior(
+                      applyHeightToFirstAscent: false,
+                      applyHeightToLastDescent: false,
+                    ),
+                    child: CupertinoTextField(
+                      focusNode: widget.focusNode,
+                      controller: _controller,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 20),
+                      autofocus: true,
+                      minLines: 1,
+                      maxLines: 5,
+                      cursorColor: AppColors.iconAccent,
+                      decoration: const BoxDecoration(),
+                      style: AppTextStyles.paragraph,
+                      placeholderStyle: AppTextStyles.paragraph.copyWith(
+                        color: AppColors.textSecondary,
                       ),
+                      placeholder: 'Share anything...',
+                      textInputAction: TextInputAction.newline,
                     ),
                   ),
-                );
-              },
+                ],
+              ),
             ),
-          ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+              child: ValueListenableBuilder<bool>(
+                valueListenable: widget.canRecordNotifier,
+                builder: (BuildContext context, bool canRecord, _) {
+                  return AnimatedCrossFade(
+                    duration: const Duration(milliseconds: 200),
+                    crossFadeState: canRecord
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    firstChild: SendButton(
+                      onTap: _onSend,
+                    ),
+                    secondChild: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Assets.icons.mic24.svg(
+                        colorFilter: const ColorFilter.mode(
+                          AppColors.iconSecodary,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            )
+          ],
         ),
       ),
     );
+  }
+
+  void _onSend() {
+    context.read<ChatCubit>().sendMessage(text: _controller.text);
+    _textForAnimation = _controller.text;
+
+    if (ChatPagePorvider.of(context).canRunSentMessageAnimation) {
+      ChatPagePorvider.of(context).runSentMessageAnimation();
+    }
+    getIt
+        .get<TrackUseActivityUseCase>()
+        .execute(AppEvents.chat.sendButtonClicked);
+
+    _controller.value = TextEditingValue.empty;
   }
 }
 
@@ -656,7 +717,7 @@ class _ActiveRecordingButton extends StatelessWidget {
   }
 
   Future<void> _onFinish(BuildContext context) async {
-    final String? audioPath =
+    final AudioInfo? audioInfo =
         await context.read<RecordingCubit>().finishRecording();
     // TODO: specify duration
     getIt
@@ -664,7 +725,7 @@ class _ActiveRecordingButton extends StatelessWidget {
         .execute(AppEvents.chat.voiceButtonReleased(duration: Duration.zero));
 
     if (context.mounted) {
-      context.read<ChatCubit>().sendAudio(audioPath);
+      context.read<ChatCubit>().sendAudio(audioInfo);
     }
   }
 

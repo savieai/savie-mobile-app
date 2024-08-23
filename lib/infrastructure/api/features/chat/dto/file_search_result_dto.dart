@@ -10,9 +10,9 @@ class FileSearchResultDTO with _$FileSearchResultDTO {
     required String id,
     required DateTime createdAt,
     required String name,
+    required String signedUrl,
     required String url,
     required String messageId,
-    required String signedUrl,
   }) = _FileSearchResultDTO;
 
   factory FileSearchResultDTO.fromJson(Map<String, Object?> json) =>

@@ -21,42 +21,57 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<void> createAudioMessage(String voiceMessageUrl) async {
+  Future<void> createAudioMessage({
+    required String tempId,
+    required AudioInfo audioInfo,
+  }) async {
     final CreateMessageRequest request = CreateMessageRequest(
+      tempId: tempId,
       fileAttachments: null,
       images: null,
       textContent: null,
-      voiceMessageUrl: voiceMessageUrl,
+      voiceMessage: VoiceMessageRequestDTO(
+        url: audioInfo.name,
+        name: audioInfo.name,
+        duration: audioInfo.duration.inSeconds,
+        peaks: audioInfo.peaks,
+      ),
     );
 
     await _chatApi.createMessage(jsonEncode(request));
   }
 
   @override
-  Future<void> createFileMessage(Attachment file) async {
+  Future<void> createFileMessage({
+    required String tempId,
+    required Attachment file,
+  }) async {
     final CreateMessageRequest request = CreateMessageRequest(
+      tempId: tempId,
       fileAttachments: <FileAttachmentRequestDTO>[
         FileAttachmentMapper.toDto(file),
       ],
       images: null,
       textContent: '',
-      voiceMessageUrl: null,
+      voiceMessage: null,
     );
     await _chatApi.createMessage(jsonEncode(request));
   }
 
   @override
   Future<void> createTextMessage({
+    required String tempId,
     required String? text,
     required List<Attachment> images,
   }) async {
     final CreateMessageRequest request = CreateMessageRequest(
+      tempId: tempId,
       fileAttachments: null,
       images: images.isEmpty
           ? null
           : images.map(FileAttachmentMapper.toDto).toList(),
       textContent: text ?? '',
-      voiceMessageUrl: null,
+      voiceMessage: null,
     );
     await _chatApi.createMessage(jsonEncode(request));
   }

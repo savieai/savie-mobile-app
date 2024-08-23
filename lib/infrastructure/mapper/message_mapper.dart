@@ -4,15 +4,20 @@ import 'link_mapper.dart';
 
 sealed class MessageMapper {
   static Message toDomain(MessageDTO dto) {
-    if (dto.voiceMessageUrlSigned.isNotEmpty &&
-        dto.voiceMessageUrl.isNotEmpty) {
+    if (dto.voiceMessage?.firstOrNull != null) {
       return Message.audio(
+        tempId: dto.tempId,
         id: dto.id,
         date: dto.createdAt.toLocal(),
-        remoteUrl: dto.voiceMessageUrlSigned,
-        localUrl: null,
         isPending: false,
-        name: dto.voiceMessageUrl,
+        audioInfo: AudioInfo(
+          name: dto.voiceMessage!.first.name,
+          signedUrl: dto.voiceMessage!.first.signedUrl,
+          localFullPath: null,
+          messageId: dto.voiceMessage!.first.messageId,
+          duration: Duration(seconds: dto.voiceMessage!.first.duration),
+          peaks: dto.voiceMessage!.first.peaks,
+        ),
       );
     }
 
@@ -27,6 +32,7 @@ sealed class MessageMapper {
 
     if (files.isNotEmpty) {
       return FileMessage(
+        tempId: dto.tempId,
         isPending: false,
         id: dto.id,
         date: dto.createdAt.toLocal(),
@@ -47,6 +53,7 @@ sealed class MessageMapper {
 
       return Message.text(
         id: dto.id,
+        tempId: dto.tempId,
         date: dto.createdAt.toLocal(),
         text: dto.textContent,
         images: images,
@@ -55,6 +62,12 @@ sealed class MessageMapper {
       );
     }
 
-    throw Exception('Unknown message type');
+    return Message.text(
+      isPending: false,
+      id: dto.id,
+      tempId: dto.tempId,
+      date: dto.createdAt,
+      text: dto.textContent ?? '',
+    );
   }
 }

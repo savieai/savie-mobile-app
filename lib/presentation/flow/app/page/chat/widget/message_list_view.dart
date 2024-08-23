@@ -1,3 +1,4 @@
+import 'package:animated_list_plus/animated_list_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import '../../../../../../application/application.dart';
 import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
+import '../chat_page_provider.dart';
 import 'widget.dart';
 
 class MessageListView extends StatefulWidget {
@@ -17,7 +19,6 @@ class MessageListView extends StatefulWidget {
 }
 
 class _MessageListViewState extends State<MessageListView> {
-  final ScrollController _scrollController = ScrollController();
   double _topPoint = 0;
 
   @override
@@ -33,30 +34,30 @@ class _MessageListViewState extends State<MessageListView> {
   }
 
   @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final List<Message> messages = context.select<ChatCubit, List<Message>>(
       (ChatCubit cubit) => cubit.state.messages,
     );
     final int length = messages.length;
-    final Map<DateTime, List<Message>> groupedMessages =
+    final Map<DateTime, Map<String, Message>> groupedMessages =
         _groupMessages(messages);
+
+    final ScrollController scrollController =
+        ChatPagePorvider.of(context).scrollController;
 
     return Container(
       color: AppColors.backgroundPrimary,
       child: CustomScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        controller: _scrollController,
+        controller: scrollController,
         reverse: true,
         slivers: <Widget>[
           ...<Widget>[
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            const WelcomeMessageListView(),
+            const SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              sliver: WelcomeMessageListView(),
+            ),
             if (length != 0)
               ...groupedMessages.keys.map((DateTime date) {
                 return SliverStickyHeader.builder(
@@ -64,43 +65,67 @@ class _MessageListViewState extends State<MessageListView> {
                   overlapsContent: true,
                   builder: (_, __) => _MessageDateStickyHeader(
                     isScrollingNotifier:
-                        _scrollController.position.isScrollingNotifier,
+                        scrollController.position.isScrollingNotifier,
                     topPoint: _topPoint,
                     date: date,
                   ),
-                  sliver: SliverList.separated(
-                    itemBuilder: (_, int index) {
+                  sliver: SliverImplicitlyAnimatedList<String>(
+                    items: groupedMessages[date]!
+                        .values
+                        .map((Message m) => m.currentId)
+                        .toList()
+                        .reversed
+                        .toList(),
+                    areItemsTheSame: (String a, String b) => a == b,
+                    insertDuration:
+                        ChatPagePorvider.sentMessageAnimationDuration,
+                    itemBuilder: (
+                      _,
+                      Animation<double> animation,
+                      String currentId,
+                      int index,
+                    ) {
                       final int length = groupedMessages[date]!.length;
                       final bool isFirstInGroup = index == length - 1;
                       final Message message =
-                          groupedMessages[date]![length - index - 1];
-                      return Padding(
-                        padding: EdgeInsets.only(top: isFirstInGroup ? 58 : 0),
-                        child: MessageView(
-                          key: Key('MessageView${message.id}'),
-                          message: message,
+                          groupedMessages[date]![currentId]!;
+
+                      return FadeTransition(
+                        opacity: CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.linearToEaseOut,
+                        ),
+                        child: SizeTransition(
+                          sizeFactor: CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.linearToEaseOut,
+                          ),
+                          axisAlignment: 1,
+                          child: Padding(
+                            padding:
+                                EdgeInsets.only(top: isFirstInGroup ? 58 : 0) +
+                                    const EdgeInsets.only(bottom: 12) +
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                            child: MessageView(
+                              key: Key('MessageView${message.currentId}'),
+                              message: message,
+                            ),
+                          ),
                         ),
                       );
                     },
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemCount: groupedMessages[date]!.length,
                   ),
                 );
               }),
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
-          ].reversed.map(
-                (Widget w) => SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: w,
-                ),
-              ),
+            SliverToBoxAdapter(child: SizedBox(height: length == 0 ? 32 : 20)),
+          ].reversed,
         ],
       ),
     );
   }
 }
 
-Map<DateTime, List<Message>> _groupMessages(List<Message> messages) {
+Map<DateTime, Map<String, Message>> _groupMessages(List<Message> messages) {
   final Map<DateTime, List<Message>> groupedItems = <DateTime, List<Message>>{};
 
   // Group messages by date
@@ -124,7 +149,12 @@ Map<DateTime, List<Message>> _groupMessages(List<Message> messages) {
   final Map<DateTime, List<Message>> sortedGroupedItems =
       Map<DateTime, List<Message>>.fromEntries(sortedEntries);
 
-  return sortedGroupedItems;
+  return sortedGroupedItems.map((DateTime key, List<Message> value) => MapEntry(
+        key,
+        <String, Message>{
+          for (final Message m in value) m.currentId: m,
+        },
+      ));
 }
 
 class _MessageDateStickyHeader extends StatelessWidget {

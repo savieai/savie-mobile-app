@@ -116,10 +116,11 @@ class _PdfFilePreview extends StatelessWidget {
         CustomImage(
           attachment: Attachment(
             name: pdf.pdfThumbnailName!,
-            remoteUrl: Supabase.instance.client.storage
+            remoteStorageName: pdf.pdfThumbnailName!,
+            signedUrl: Supabase.instance.client.storage
                 .from('message_attachments')
                 .getAuthenticatedUrl(pdf.pdfThumbnailName!),
-            localUrl: null,
+            localFullPath: null,
           ),
           height: 60,
           width: 60,

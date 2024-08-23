@@ -16,7 +16,7 @@ class CreateFileMessageUseCase {
   final CacheRepository _cacheRepository;
 
   Future<void> execute(FileMessage message) async {
-    final String? filePath = message.file.localUrl;
+    final String? filePath = message.file.localFullPath;
 
     if (filePath == null) {
       return;
@@ -25,8 +25,9 @@ class CreateFileMessageUseCase {
     final String fileName = message.file.name;
 
     await _cacheRepository.cacheFile(
-      url: File(filePath).uri.toFilePath(),
-      key: fileName,
+      url: filePath,
+      // TODO: create unique keys for files
+      key: message.file.name,
       file: File(filePath),
     );
 
@@ -35,11 +36,8 @@ class CreateFileMessageUseCase {
         .upload(fileName, File(filePath));
 
     await _chatRepository.createFileMessage(
-      Attachment(
-        name: fileName,
-        remoteUrl: null,
-        localUrl: null,
-      ),
+      tempId: message.tempId!,
+      file: message.file,
     );
   }
 }

@@ -10,7 +10,7 @@ class PlayerState with _$PlayerState {
 @freezed
 class PlayingAudio with _$PlayingAudio {
   factory PlayingAudio({
-    required String audioPath,
+    required AudioInfo audioInfo,
     required Duration duration,
     required bool isPlaying,
   }) = _PlayingAudio;

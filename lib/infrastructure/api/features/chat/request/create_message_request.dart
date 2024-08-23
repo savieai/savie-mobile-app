@@ -13,10 +13,11 @@ class CreateMessageRequest with _$CreateMessageRequest {
     includeIfNull: false,
   )
   const factory CreateMessageRequest({
+    required String tempId,
     required List<FileAttachmentRequestDTO>? fileAttachments,
     required List<FileAttachmentRequestDTO>? images,
     required String? textContent,
-    required String? voiceMessageUrl,
+    required VoiceMessageRequestDTO? voiceMessage,
   }) = _CreateMessageRequest;
 
   factory CreateMessageRequest.fromJson(Map<String, Object?> json) =>

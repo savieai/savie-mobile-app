@@ -18,6 +18,7 @@ import '../../../../../../../application/application.dart';
 import '../../../../../../../domain/domain.dart';
 import '../../../../../../presentation.dart';
 import '../../../../../../router/app_router.gr.dart';
+import '../../chat_page_provider.dart';
 import '../widget.dart';
 
 part 'media_message_view.dart';
@@ -41,7 +42,7 @@ class MessageView extends StatelessWidget {
       time: message.date,
       child: _MessageAligner(
         child: ContextMenuRegion(
-          heroTag: '${message.id}_context_menu',
+          heroTag: '${message.currentId}_context_menu',
           data: <ContextMenuItemData>[
             ContextMenuItemData(
               title: 'Edit',
@@ -104,8 +105,8 @@ class MessageView extends StatelessWidget {
                 } else {
                   return MessagePendingWrapper(
                     isPending: message.isPending,
+                    isNew: message.isNew,
                     child: TextMessageView(
-                      key: Key('TextMessageView${message.id}'),
                       textMessage: textMessage,
                       contextMenuShown: contextMenuShown,
                     ),
@@ -115,14 +116,15 @@ class MessageView extends StatelessWidget {
               audio: (AudioMessage audioMessage) {
                 return MessagePendingWrapper(
                   isPending: message.isPending,
+                  isNew: message.isNew,
                   child: AudioMessageView(
                     audioMessage: audioMessage,
-                    key: Key(audioMessage.name),
                   ),
                 );
               },
               file: (FileMessage fileMessage) => MessagePendingWrapper(
                 isPending: message.isPending,
+                isNew: message.isNew,
                 child: FileMessageView(
                   fileMessage: fileMessage,
                 ),
@@ -147,7 +149,7 @@ class _MessageAligner extends StatelessWidget {
     return Align(
       alignment: Alignment.centerRight,
       child: FractionallySizedBox(
-        widthFactor: 0.8,
+        widthFactor: 0.9,
         child: Align(
           alignment: Alignment.centerRight,
           child: child,
@@ -167,17 +169,20 @@ class MessagePendingWrapper extends StatefulWidget {
   const MessagePendingWrapper({
     super.key,
     required this.isPending,
+    required this.isNew,
     required this.child,
   });
 
   final bool isPending;
+  final bool isNew;
   final Widget child;
 
   @override
   State<MessagePendingWrapper> createState() => _PendingWrapperState();
 }
 
-class _PendingWrapperState extends State<MessagePendingWrapper> {
+class _PendingWrapperState extends State<MessagePendingWrapper>
+    with SingleTickerProviderStateMixin {
   late _MessagePendingWrapperState _state;
 
   @override
@@ -189,6 +194,15 @@ class _PendingWrapperState extends State<MessagePendingWrapper> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (Scrollable.maybeOf(context) == null) {
+      return;
+    }
+  }
+
+  @override
   void didUpdateWidget(covariant MessagePendingWrapper oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.isPending && !widget.isPending) {
@@ -196,7 +210,7 @@ class _PendingWrapperState extends State<MessagePendingWrapper> {
         _state = _MessagePendingWrapperState.success;
       });
 
-      Future<void>.delayed(const Duration(milliseconds: 750), () {
+      Future<void>.delayed(const Duration(milliseconds: 900), () {
         _state = _MessagePendingWrapperState.none;
         if (mounted && context.mounted) {
           setState(() {});
@@ -207,50 +221,75 @@ class _PendingWrapperState extends State<MessagePendingWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.topRight,
-      children: <Widget>[
-        widget.child,
-        AnimatedScale(
-          scale: _state == _MessagePendingWrapperState.none ? 0.25 : 1,
-          duration: const Duration(milliseconds: 250),
-          child: AnimatedOpacity(
-            opacity: _state == _MessagePendingWrapperState.none ? 0 : 1,
-            duration: const Duration(milliseconds: 250),
-            child: Transform.translate(
-              offset: const Offset(4, -4),
-              child: Container(
-                height: 20,
-                width: 20,
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundChatBubble,
-                  border: Border.all(
-                    color: AppColors.strokePrimaryAlpha,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: AnimatedCrossFade(
+    return ValueListenableBuilder<AnimationStatus>(
+      valueListenable: ChatPagePorvider.maybeOf(context)
+              ?.sentMessageAnimationStatusNotifier ??
+          ValueNotifier<AnimationStatus>(AnimationStatus.dismissed),
+      builder: (BuildContext context, AnimationStatus value, Widget? child) {
+        return Stack(
+          alignment: Alignment.topRight,
+          children: <Widget>[
+            Opacity(
+              opacity: widget.isNew && value == AnimationStatus.forward ? 0 : 1,
+              child: widget.child,
+            ),
+            AnimatedOpacity(
+              opacity: widget.isNew && value == AnimationStatus.forward ? 0 : 1,
+              duration: const Duration(milliseconds: 100),
+              child: AnimatedScale(
+                scale: _state == _MessagePendingWrapperState.none ? 0.25 : 1,
+                duration: const Duration(milliseconds: 250),
+                child: AnimatedOpacity(
+                  opacity: _state == _MessagePendingWrapperState.none ? 0 : 1,
                   duration: const Duration(milliseconds: 250),
-                  crossFadeState: _state == _MessagePendingWrapperState.pending
-                      ? CrossFadeState.showFirst
-                      : CrossFadeState.showSecond,
-                  alignment: Alignment.center,
-                  firstChild: const Padding(
-                    padding: EdgeInsets.all(4),
-                    child: CircularProgressIndicator(
-                      color: AppColors.textSecondary,
-                      strokeWidth: 1.5,
-                      strokeCap: StrokeCap.round,
+                  child: Transform.translate(
+                    offset: const Offset(4, -4),
+                    child: Container(
+                      height: 20,
+                      width: 20,
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundChatBubble,
+                        border: Border.all(
+                          color: AppColors.strokePrimaryAlpha,
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: AnimatedCrossFade(
+                        duration: const Duration(milliseconds: 450),
+                        crossFadeState:
+                            _state == _MessagePendingWrapperState.pending
+                                ? CrossFadeState.showFirst
+                                : CrossFadeState.showSecond,
+                        alignment: Alignment.center,
+                        layoutBuilder:
+                            (Widget topChild, _, Widget bottomChild, __) {
+                          return Stack(
+                            alignment: Alignment.center,
+                            children: <Widget>[
+                              bottomChild,
+                              topChild,
+                            ],
+                          );
+                        },
+                        firstChild: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: CircularProgressIndicator(
+                            color: AppColors.textSecondary,
+                            strokeWidth: 1.5,
+                            strokeCap: StrokeCap.round,
+                          ),
+                        ),
+                        secondChild: Assets.icons.done16.svg(),
+                      ),
                     ),
                   ),
-                  secondChild: Assets.icons.done16.svg(),
                 ),
               ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

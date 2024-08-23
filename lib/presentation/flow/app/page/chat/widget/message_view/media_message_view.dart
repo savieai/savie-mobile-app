@@ -43,6 +43,7 @@ class MediaMessageView extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: MessagePendingWrapper(
               isPending: message.isPending,
+              isNew: message.isNew,
               child: _ImageStack(
                 contextMenuShown: contextMenuShown,
                 message: message,

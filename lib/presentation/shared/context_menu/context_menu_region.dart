@@ -303,7 +303,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
 
   Widget get contrainedChild => ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: (MediaQuery.of(context).size.width - 32) * 0.8,
+          maxWidth: (MediaQuery.of(context).size.width - 32) * 0.9,
         ),
         child: Material(
           type: MaterialType.transparency,

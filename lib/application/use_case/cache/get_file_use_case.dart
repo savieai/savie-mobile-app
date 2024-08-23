@@ -11,11 +11,13 @@ class GetFileUseCase {
   final CacheRepository _cacheRepository;
 
   Future<File> execute({
-    required Attachment attachment,
+    required String? localFullPath,
+    required String? signedUrl,
+    required String name,
   }) async {
     return _cacheRepository.getCachedFile(
-      url: attachment.remoteUrl ?? attachment.name,
-      key: attachment.name,
+      url: signedUrl ?? localFullPath!,
+      key: name,
     );
   }
 }

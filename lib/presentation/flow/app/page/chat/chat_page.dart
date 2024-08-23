@@ -1,12 +1,11 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../../application/application.dart';
 import '../../../../presentation.dart';
 import '../../../../router/app_router.gr.dart';
+import 'chat_page_provider.dart';
 import 'widget/chat_horizontal_drag_listener.dart';
 import 'widget/widget.dart';
 
@@ -18,11 +17,24 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage>
+    with SingleTickerProviderStateMixin {
+  final ScrollController _scrollController = ScrollController();
+  late final AnimationController _sentMessageAnimationController;
+  late final Animation<double> _sentMessageAnimation;
+
   @override
   void initState() {
     super.initState();
     getIt.get<TrackUseActivityUseCase>().execute(AppEvents.chat.screenOpened);
+    _sentMessageAnimationController = AnimationController(
+      vsync: this,
+      duration: ChatPagePorvider.sentMessageAnimationDuration,
+    );
+    _sentMessageAnimation = CurvedAnimation(
+      parent: _sentMessageAnimationController,
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -39,29 +51,34 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    Clipboard.setData(ClipboardData(
-        text: Supabase.instance.client.auth.currentSession?.accessToken ?? ''));
-    return Scaffold(
-      appBar: const _ChatAppBar(),
-      backgroundColor: AppColors.backgroundChatInput,
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: LayoutListener(
-              onConstraintsChanged: (BoxConstraints constraints) {
-                final double bottomInset = MediaQuery.sizeOf(context).height -
-                    _getTopInset() -
-                    constraints.maxHeight;
+    return ChatPagePorvider(
+      scrollController: _scrollController,
+      sentMessageAnimation: _sentMessageAnimation,
+      sentMessageAnimationController: _sentMessageAnimationController,
+      child: Scaffold(
+        appBar: const _ChatAppBar(),
+        backgroundColor: AppColors.backgroundChatInput,
+        body: Column(
+          children: <Widget>[
+            Expanded(
+              child: LayoutListener(
+                onConstraintsChanged: (BoxConstraints constraints) {
+                  final double bottomInset = MediaQuery.sizeOf(context).height -
+                      _getTopInset() -
+                      constraints.maxHeight;
 
-                context.read<ChatInsetsCubit>().updateBottomInset(bottomInset);
-              },
-              child: const MessagesHorizontalDragListener(
-                child: MessageListView(),
+                  context
+                      .read<ChatInsetsCubit>()
+                      .updateBottomInset(bottomInset);
+                },
+                child: const MessagesHorizontalDragListener(
+                  child: MessageListView(),
+                ),
               ),
             ),
-          ),
-          const MessageInputView(),
-        ],
+            const MessageInputView(),
+          ],
+        ),
       ),
     );
   }

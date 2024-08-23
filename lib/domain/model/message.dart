@@ -8,7 +8,9 @@ part 'message.freezed.dart';
 class Message with _$Message {
   const factory Message.text({
     required bool isPending,
+    @Default(false) bool isNew,
     required String id,
+    required String? tempId,
     required DateTime date,
     required String? text,
     @Default(<Attachment>[]) List<Attachment> images,
@@ -17,16 +19,18 @@ class Message with _$Message {
 
   const factory Message.audio({
     required bool isPending,
+    @Default(false) bool isNew,
     required String id,
+    required String? tempId,
     required DateTime date,
-    required String name,
-    required String? remoteUrl,
-    required String? localUrl,
+    required AudioInfo audioInfo,
   }) = AudioMessage;
 
   const factory Message.file({
     required bool isPending,
+    @Default(false) bool isNew,
     required String id,
+    required String? tempId,
     required DateTime date,
     required Attachment file,
   }) = FileMessage;
@@ -52,5 +56,6 @@ class Message with _$Message {
       },
     );
   }
-}
 
+  String get currentId => tempId ?? id;
+}

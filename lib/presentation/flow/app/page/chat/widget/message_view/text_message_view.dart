@@ -1,25 +1,45 @@
 part of 'message_view.dart';
 
-class TextMessageView extends StatelessWidget {
+class TextMessageView extends StatefulWidget {
   const TextMessageView({
     super.key,
     required this.textMessage,
     required this.contextMenuShown,
+    this.enableSentMessageAinmation = false,
   });
 
   final TextMessage textMessage;
   final bool contextMenuShown;
+  final bool enableSentMessageAinmation;
 
   @override
-  Widget build(BuildContext context) {
-    final String text = textMessage.text ?? '';
+  State<TextMessageView> createState() => _TextMessageViewState();
+}
 
-    final List<Link> links = textMessage.links;
+class _TextMessageViewState extends State<TextMessageView>
+    with SingleTickerProviderStateMixin {
+  @override
+  Widget build(BuildContext context) {
+    final String text = widget.textMessage.text ?? '';
+
+    final List<Link> links = widget.textMessage.links;
     final List<InlineSpan> spans = _convertToSpans(text, false);
 
     final bool linkOnly = text == links.firstOrNull?.url;
 
-    return _MessageContainer(
+    final Animation<double> sentMessageAnimation =
+        widget.enableSentMessageAinmation
+            ? ChatPagePorvider.of(context).sentMessageAnimation
+            : const AlwaysStoppedAnimation<double>(1);
+
+    return AnimatedBuilder(
+      animation: sentMessageAnimation,
+      builder: (BuildContext context, Widget? child) {
+        return _MessageContainer(
+          decorationOpacity: sentMessageAnimation.value,
+          child: child!,
+        );
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,7 +47,7 @@ class TextMessageView extends StatelessWidget {
           if (!linkOnly)
             SelectableText.rich(
               TextSpan(children: spans),
-              enableInteractiveSelection: contextMenuShown,
+              enableInteractiveSelection: widget.contextMenuShown,
               cursorWidth: 0,
               style: AppTextStyles.paragraph.copyWith(
                 color: AppColors.textPrimary,
@@ -41,7 +61,7 @@ class TextMessageView extends StatelessWidget {
                 if (!linkOnly) const SizedBox(height: 6),
                 SelectableText.rich(
                   TextSpan(children: _convertToSpans(links.first.url, true)),
-                  enableInteractiveSelection: contextMenuShown,
+                  enableInteractiveSelection: widget.contextMenuShown,
                   cursorWidth: 0,
                   style: AppTextStyles.paragraph.copyWith(
                     color: AppColors.textPrimary,
@@ -84,7 +104,7 @@ class TextMessageView extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: FavIcon(
-                    key: Key('Favicon$_completeLink(url)'),
+                    key: Key('Favicon${_completeLink(url)}'),
                     completeLink: _completeLink(url),
                   ),
                 ),
@@ -99,8 +119,8 @@ class TextMessageView extends StatelessWidget {
                 ..onTap = () {
                   getIt.get<TrackUseActivityUseCase>().execute(
                         AppEvents.chat.linkClicked(
-                          messageId: textMessage.id,
-                          type: textMessage.appEventMessageType,
+                          messageId: widget.textMessage.id,
+                          type: widget.textMessage.appEventMessageType,
                         ),
                       );
                   launchUrlString(_completeLink(url));

@@ -9,9 +9,10 @@ sealed class SearchResultMapper {
       messageId: dto.messageId,
       date: dto.createdAt.toLocal(),
       image: Attachment(
+        signedUrl: dto.signedUrl,
         name: dto.name,
-        remoteUrl: dto.signedUrl,
-        localUrl: null,
+        remoteStorageName: null,
+        localFullPath: null,
       ),
     );
   }
@@ -22,9 +23,10 @@ sealed class SearchResultMapper {
       messageId: dto.messageId,
       date: dto.createdAt.toLocal(),
       file: Attachment(
+        signedUrl: dto.signedUrl,
         name: dto.name,
-        remoteUrl: dto.signedUrl,
-        localUrl: null,
+        remoteStorageName: null,
+        localFullPath: null,
       ),
     );
   }

@@ -3,9 +3,11 @@ part of 'message_view.dart';
 class _MessageContainer extends StatelessWidget {
   const _MessageContainer({
     required this.child,
+    this.decorationOpacity = 1,
   });
 
   final Widget child;
+  final double decorationOpacity;
 
   @override
   Widget build(BuildContext context) {
@@ -15,16 +17,18 @@ class _MessageContainer extends StatelessWidget {
         horizontal: 16,
       ),
       decoration: BoxDecoration(
-        color: AppColors.backgroundChatBubble,
+        color: AppColors.backgroundChatBubble.withOpacity(decorationOpacity),
         border: Border.all(
-          color: AppColors.strokeSecondaryAlpha,
+          color: AppColors.strokeSecondaryAlpha
+              .withOpacity(decorationOpacity * 0.06),
         ),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const <BoxShadow>[
+        boxShadow: <BoxShadow>[
           BoxShadow(
             blurRadius: 12,
-            offset: Offset(0, 4),
-            color: AppColors.strokeSecondaryAlpha,
+            offset: const Offset(0, 4),
+            color: AppColors.strokeSecondaryAlpha
+                .withOpacity(decorationOpacity * 0.06),
           ),
         ],
       ),

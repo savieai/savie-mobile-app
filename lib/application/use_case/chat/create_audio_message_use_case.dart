@@ -16,16 +16,16 @@ class CreateAudioMessageUseCase {
   final CacheRepository _cacheRepository;
 
   Future<void> execute(AudioMessage message) async {
-    final String? audioPath = message.localUrl;
+    final String? audioPath = message.audioInfo.localFullPath;
     if (audioPath == null) {
       return;
     }
 
-    final String audioName = message.name;
+    final String audioName = message.audioInfo.name;
 
     await _cacheRepository.cacheFile(
       url: audioPath,
-      key: audioName,
+      key: message.audioInfo.name,
       file: File(audioPath),
     );
 
@@ -33,6 +33,9 @@ class CreateAudioMessageUseCase {
         .from('voice_messages')
         .upload(audioName, File(audioPath));
 
-    await _chatRepository.createAudioMessage(audioName);
+    await _chatRepository.createAudioMessage(
+      tempId: message.tempId!,
+      audioInfo: message.audioInfo,
+    );
   }
 }

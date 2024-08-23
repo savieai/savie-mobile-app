@@ -49,17 +49,17 @@ class PlayerCubit extends Cubit<PlayerState> {
   late final StreamSubscription<Duration> _positionSubscription;
   final TrackUseActivityUseCase _trackUseActivityUseCase;
 
-  Future<void> toggleAudio(AudioMessage audioMessage) async {
+  Future<void> toggleAudio(AudioInfo audioInfo) async {
     //  TODO: track user activity
 
-    if (audioMessage.name != state.audio?.audioPath) {
+    if (audioInfo.messageId != state.audio?.audioInfo.messageId) {
       await _player.stop();
       // TODO: create aduio repo
-      await _playAudio(audioMessage);
+      await _playAudio(audioInfo);
     } else {
       switch (_nativeState) {
         case audio.PlayerState.stopped:
-          _playAudio(audioMessage);
+          _playAudio(audioInfo);
         case audio.PlayerState.completed:
         case audio.PlayerState.paused:
           _player.resume();
@@ -73,7 +73,7 @@ class PlayerCubit extends Cubit<PlayerState> {
     emit(
       state.copyWith(
         audio: PlayingAudio(
-          audioPath: audioMessage.name,
+          audioInfo: audioInfo,
           duration: _position,
           isPlaying: _nativeState == audio.PlayerState.playing,
         ),
@@ -81,13 +81,11 @@ class PlayerCubit extends Cubit<PlayerState> {
     );
   }
 
-  Future<void> _playAudio(AudioMessage audioMessage) async {
+  Future<void> _playAudio(AudioInfo audioMessage) async {
     final File file = await getIt.get<GetFileUseCase>().execute(
-          attachment: Attachment(
-            name: audioMessage.name,
-            remoteUrl: audioMessage.remoteUrl,
-            localUrl: audioMessage.localUrl,
-          ),
+          signedUrl: audioMessage.signedUrl,
+          localFullPath: audioMessage.localFullPath,
+          name: audioMessage.name,
         );
 
     await _player.setSourceDeviceFile(file.path);

@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -10,6 +11,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:uuid/uuid.dart';
+
+import '../../../domain/domain.dart';
 
 part 'recording_state.dart';
 part 'recording_cubit.freezed.dart';
@@ -75,19 +78,25 @@ class RecordingCubit extends Cubit<RecordingState> {
     }
   }
 
-  Future<String?> finishRecording() async {
+  Future<AudioInfo?> finishRecording() async {
     _cancelEverything();
 
     final String? path = await _recorder.stop();
-    // AudioMessage? audioMessage;
+    AudioInfo? audioInfo;
 
-    // if (path != null) {
-    //   audioMessage = AudioMessage(
-    //     peeks: _peeks.toList(),
-    //     path: path,
-    //     seconds: _seconds,
-    //   );
-    // }
+    if (path != null) {
+      final String ext = path.split('.').last;
+      final String remoteStorageName = '${const Uuid().v4()}.$ext';
+
+      audioInfo = AudioInfo(
+        messageId: '',
+        peaks: _resample(_peeks, 40).toList(),
+        localFullPath: path,
+        name: remoteStorageName,
+        duration: Duration(seconds: _seconds),
+        signedUrl: null,
+      );
+    }
 
     _peeks.clear();
     _seconds = 0;
@@ -96,7 +105,7 @@ class RecordingCubit extends Cubit<RecordingState> {
       lastRecordingResult: RecordingResult.finish,
     ));
 
-    return path;
+    return audioInfo;
   }
 
   Future<void> cancelRecording() async {
@@ -123,5 +132,47 @@ class RecordingCubit extends Cubit<RecordingState> {
     _amplitudeSubscription = null;
     _timer?.cancel();
     _timer = null;
+  }
+
+  // TODO: move to an extension
+  List<double> _resample(List<double> list, int newLength) {
+    if (list.isEmpty) {
+      return List<double>.generate(newLength, (_) => 0);
+    }
+
+    if (newLength < 0) {
+      throw ArgumentError('newLength must be non-negative');
+    }
+
+    if (newLength == 0) {
+      return List<double>.generate(newLength, (_) => 0);
+    }
+
+    final List<double> result = <double>[];
+    final double factor = (list.length - 1) / (newLength - 1);
+
+    for (int i = 0; i < newLength; i++) {
+      final double index = i * factor;
+      final int leftIndex = index.floor();
+      final int rightIndex = index.ceil().clamp(0, newLength - 1);
+
+      if (leftIndex == rightIndex) {
+        result.add(list[leftIndex]);
+      } else {
+        final double leftValue = list[leftIndex];
+        final double rightValue = list[rightIndex];
+        final double interpolatedValue =
+            leftValue + (rightValue - leftValue) * (index - leftIndex);
+        result.add(interpolatedValue);
+      }
+    }
+
+    final double max = result.max;
+
+    if (max == 0) {
+      return result;
+    }
+
+    return result.map((double e) => e / max).toList();
   }
 }

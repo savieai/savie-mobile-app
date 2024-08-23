@@ -26,10 +26,10 @@ class CustomImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (attachment.remoteUrl != null) {
+    if (attachment.signedUrl != null) {
       return CachedNetworkImage(
         cacheKey: attachment.name,
-        imageUrl: attachment.remoteUrl!,
+        imageUrl: attachment.signedUrl!,
         httpHeaders: <String, String>{
           'apikey':
               'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsdXdjYmZveXphd2VjY21haHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTkzODkyNjQsImV4cCI6MjAzNDk2NTI2NH0.F-NoFb0zV5QaaM_S4VhiDA9lf7ShNo6GYIPCCi9XQSQ',
@@ -42,9 +42,9 @@ class CustomImage extends StatelessWidget {
         filterQuality: filterQuality ?? FilterQuality.low,
         memCacheHeight: memCacheHeight,
       );
-    } else if (attachment.localUrl != null) {
+    } else if (attachment.localFullPath != null) {
       return Image.file(
-        File(attachment.localUrl!),
+        File(attachment.localFullPath!),
         fit: fit,
         height: height,
         width: width,
@@ -60,9 +60,9 @@ class CustomImage extends StatelessWidget {
 ImageProvider? getCustomImageProvider(
   Attachment attachment,
 ) {
-  if (attachment.remoteUrl != null) {
+  if (attachment.signedUrl != null) {
     return CachedNetworkImageProvider(
-      attachment.remoteUrl!,
+      attachment.signedUrl!,
       cacheKey: attachment.name,
       headers: <String, String>{
         'apikey':
@@ -71,9 +71,9 @@ ImageProvider? getCustomImageProvider(
             'Bearer ${Supabase.instance.client.auth.currentSession?.accessToken}',
       },
     );
-  } else if (attachment.localUrl != null) {
+  } else if (attachment.localFullPath != null) {
     return FileImage(
-      File(attachment.localUrl!),
+      File(attachment.localFullPath!),
     );
   }
 

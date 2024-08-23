@@ -14,7 +14,7 @@ class WelcomeMessageView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FractionallySizedBox(
-      widthFactor: 0.8,
+      widthFactor: 0.9,
       alignment: Alignment.centerLeft,
       child: Align(
         alignment: Alignment.centerLeft,

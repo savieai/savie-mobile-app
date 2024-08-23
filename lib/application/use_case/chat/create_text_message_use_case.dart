@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../domain/domain.dart';
+import '../../application.dart';
 
 @Injectable()
 class CreateTextMessageUseCase {
@@ -18,7 +19,7 @@ class CreateTextMessageUseCase {
   final CacheRepository _cacheRepository;
 
   Future<void> execute(TextMessage message) async {
-    final List<String> fileNames = await Future.wait(
+    final List<(String, String)> fileNames = await Future.wait(
       message.images.map((Attachment a) => a).nonNulls.map(
         (Attachment a) async {
           final String fileName = a.name;
@@ -27,20 +28,22 @@ class CreateTextMessageUseCase {
           final Map<String, dynamic> result = await compute(
             processImage,
             <String, String>{
-              'imagePath': a.localUrl!,
+              'imagePath': a.localFullPath!,
               'fileName': fileName,
             },
           );
 
           // Get the compressed bytes and save them to a temporary file
           final String tempPath =
-              '${File(a.localUrl!).parent.path}/compressed_${result['fileName']}';
+              '${File(a.localFullPath!).parent.path}/compressed_${result['fileName']}';
           final File compressedFile = File(tempPath)
             ..writeAsBytesSync(result['compressedBytes']! as Uint8List);
 
           // Cache and upload the compressed image
           await _cacheRepository.cacheFile(
-            url: compressedFile.uri.toString(),
+            url: Supabase.instance.client.storage
+                .from('message_attachments')
+                .getAuthenticatedUrl(fileName),
             key: fileName,
             file: compressedFile,
           );
@@ -49,19 +52,25 @@ class CreateTextMessageUseCase {
               .from('message_attachments')
               .upload(fileName, compressedFile);
 
-          return fileName;
+          final String signedUrl = await Supabase.instance.client.storage
+              .from('message_attachments')
+              .createSignedUrl(fileName, 3600);
+
+          return (fileName, signedUrl);
         },
       ),
     );
 
     await _chatRepository.createTextMessage(
+      tempId: message.tempId!,
       text: message.text,
       images: fileNames.map(
-        (String fileName) {
+        ((String, String) fileName) {
           return Attachment(
-            name: fileName,
-            remoteUrl: null,
-            localUrl: null,
+            name: fileName.$1,
+            remoteStorageName: fileName.$1,
+            signedUrl: fileName.$2,
+            localFullPath: null,
           );
         },
       ).toList(),

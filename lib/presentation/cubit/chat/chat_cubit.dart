@@ -23,15 +23,21 @@ class ChatCubit extends Cubit<ChatState> {
   final GetMessageUseCase _getMessageUseCase;
   final CreatePdfThumbnailUseCase _createPdfThumbnailUseCase;
 
-  Future<void> _fetchMessages({String? pendingIdToRemove}) async {
-    final List<Message> messages = await _getMessageUseCase.execute();
+  Future<void> _fetchMessages() async {
+    final List<Message> sentMessages = (await _getMessageUseCase.execute())
+      ..sort((Message a, Message b) => a.date.compareTo(b.date));
     _sentMessages = <String, Message>{
-      for (final Message m in messages) m.id: m
+      for (final Message m in sentMessages) m.currentId: m
     };
-    _pendingMessages.remove(pendingIdToRemove);
+    _pendingMessages.removeWhere(
+      (String id, _) => _sentMessages.containsKey(id),
+    );
     emit(ChatState(messages: <Message>[
       ..._sentMessages.values,
-      ..._pendingMessages.values,
+      if (_pendingMessages.isNotEmpty) ...<Message>[
+        ..._pendingMessages.values.take(_pendingMessages.length - 1),
+        _pendingMessages.values.last.copyWith(isNew: true),
+      ],
     ]));
   }
 
@@ -41,20 +47,25 @@ class ChatCubit extends Cubit<ChatState> {
   Future<void> sendMessage({
     String? text,
     List<String>? mediaPaths,
+    bool hasFadeAnimation = false,
   }) async {
     final String pendingUuid = const Uuid().v4();
     final Message message = TextMessage(
       isPending: true,
+      tempId: pendingUuid,
       id: pendingUuid,
       date: DateTime.now(),
       text: text,
       images: (mediaPaths ?? <String>[]).map(
         (String mediaPath) {
           final String ext = mediaPath.split('.').last;
+          final String remoteStorageName = '${const Uuid().v4()}.$ext';
+
           return Attachment(
-            name: '${const Uuid().v4()}.$ext',
-            remoteUrl: null,
-            localUrl: mediaPath,
+            signedUrl: null,
+            name: remoteStorageName,
+            remoteStorageName: remoteStorageName,
+            localFullPath: mediaPath,
           );
         },
       ).toList(),
@@ -63,38 +74,49 @@ class ChatCubit extends Cubit<ChatState> {
     _pendingMessages[pendingUuid] = message;
     emit(ChatState(messages: <Message>[
       ..._sentMessages.values,
-      ..._pendingMessages.values,
+      if (_pendingMessages.isNotEmpty) ...<Message>[
+        ..._pendingMessages.values.take(_pendingMessages.length - 1),
+        _pendingMessages.values.last.copyWith(isNew: true),
+      ],
     ]));
 
     await _createMessageUseCase.execute(message);
-    _fetchMessages(pendingIdToRemove: pendingUuid);
+    _fetchMessages();
   }
 
-  Future<void> sendAudio(String? audioPath) async {
-    if (audioPath == null) {
+  Future<void> sendAudio(AudioInfo? audioInfo) async {
+    if (audioInfo == null) {
       return;
     }
 
     final String pendingUuid = const Uuid().v4();
-    final String ext = audioPath.split('.').last;
 
     final Message message = AudioMessage(
       isPending: true,
       id: pendingUuid,
+      tempId: pendingUuid,
       date: DateTime.now(),
-      name: '${const Uuid().v4()}.$ext',
-      remoteUrl: null,
-      localUrl: audioPath,
+      audioInfo: AudioInfo(
+        messageId: pendingUuid,
+        name: audioInfo.name,
+        signedUrl: null,
+        localFullPath: audioInfo.localFullPath,
+        duration: audioInfo.duration,
+        peaks: audioInfo.peaks,
+      ),
     );
 
     _pendingMessages[pendingUuid] = message;
     emit(ChatState(messages: <Message>[
       ..._sentMessages.values,
-      ..._pendingMessages.values,
+      if (_pendingMessages.isNotEmpty) ...<Message>[
+        ..._pendingMessages.values.take(_pendingMessages.length - 1),
+        _pendingMessages.values.last.copyWith(isNew: true),
+      ],
     ]));
 
     await _createMessageUseCase.execute(message);
-    _fetchMessages(pendingIdToRemove: pendingUuid);
+    _fetchMessages();
   }
 
   Future<void> sendFile(String? filePath) async {
@@ -103,17 +125,20 @@ class ChatCubit extends Cubit<ChatState> {
     }
 
     final String pendingUuid = const Uuid().v4();
+    final String fileName = filePath.split('/').last;
     final String ext = filePath.split('.').last;
 
     final Attachment file = Attachment(
-      name: '${const Uuid().v4()}.$ext',
-      remoteUrl: null,
-      localUrl: filePath,
+      signedUrl: null,
+      name: fileName,
+      remoteStorageName: '${const Uuid().v4()}.$ext',
+      localFullPath: filePath,
     );
 
     final Message message = FileMessage(
       isPending: true,
       id: pendingUuid,
+      tempId: pendingUuid,
       date: DateTime.now(),
       file: file,
     );
@@ -125,10 +150,13 @@ class ChatCubit extends Cubit<ChatState> {
     _pendingMessages[pendingUuid] = message;
     emit(ChatState(messages: <Message>[
       ..._sentMessages.values,
-      ..._pendingMessages.values,
+      if (_pendingMessages.isNotEmpty) ...<Message>[
+        ..._pendingMessages.values.take(_pendingMessages.length - 1),
+        _pendingMessages.values.last.copyWith(isNew: true),
+      ],
     ]));
 
     await _createMessageUseCase.execute(message);
-    _fetchMessages(pendingIdToRemove: pendingUuid);
+    _fetchMessages();
   }
 }

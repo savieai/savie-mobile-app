@@ -37,12 +37,10 @@ class AudioView extends StatefulWidget {
 }
 
 class _AudioViewState extends State<AudioView> {
-  late final Duration _totalDuration = const Duration(
-      // seconds: widget.audioMessage.seconds, // TODO: add seconds
-      );
+  late final Duration _totalDuration = widget.audioMessage.audioInfo.duration;
   late Duration _currentDuration;
   bool _isPlaying = false;
-  List<double>? _peeks = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  List<double>? _peeks;
 
   @override
   void didChangeDependencies() {
@@ -53,7 +51,7 @@ class _AudioViewState extends State<AudioView> {
   }
 
   void _updateVariables(PlayerState state) {
-    if (state.audio?.audioPath == widget.audioMessage.name) {
+    if (state.audio?.audioInfo.name == widget.audioMessage.audioInfo.name) {
       _currentDuration = state.audio!.duration;
       _isPlaying = state.audio!.isPlaying;
     } else {
@@ -63,23 +61,23 @@ class _AudioViewState extends State<AudioView> {
   }
 
   void _calculatePeeksIfNeeded(double maxWidth) {
-    // if (_peeks == null) {
-    //   if (widget.expand) {
-    //     final int peeksLength = maxWidth ~/ 4;
-    //     _peeks = resample(widget.audioMessage.peeks, peeksLength);
-    //   } else {
-    //     final int projectedPeeksLength =
-    //         (widget.audioMessage.seconds * 2).clamp(10, 60);
-    //     final double maxSpace =
-    //         (MediaQuery.sizeOf(context).width - 20 * 2) * 0.8 - 67 - 80;
-    //     // TODO: calculate text instead of 80;
-    //     final int maxPeeksLength = maxSpace ~/ 4;
-    //     final int acutalPeeksLength = min(maxPeeksLength, projectedPeeksLength);
-    //     _peeks = resample(widget.audioMessage.peeks, acutalPeeksLength);
-    //   }
-    // }
-
-    // TODO: calculate peeks
+    if (_peeks == null) {
+      if (widget.expand) {
+        final int peeksLength = maxWidth ~/ 4;
+        _peeks = resample(widget.audioMessage.audioInfo.peaks, peeksLength);
+      } else {
+        final int projectedPeeksLength =
+            (widget.audioMessage.audioInfo.duration.inSeconds * 2)
+                .clamp(10, 60);
+        final double maxSpace =
+            (MediaQuery.sizeOf(context).width - 20 * 2) * 0.9 - 67 - 80;
+        // TODO: calculate text instead of 80;
+        final int maxPeeksLength = maxSpace ~/ 4;
+        final int acutalPeeksLength = min(maxPeeksLength, projectedPeeksLength);
+        _peeks =
+            resample(widget.audioMessage.audioInfo.peaks, acutalPeeksLength);
+      }
+    }
   }
 
   @override
@@ -119,13 +117,15 @@ class _AudioViewState extends State<AudioView> {
         setState(() => _updateVariables(state));
       },
       listenWhen: (_, PlayerState current) =>
-          current.audio?.audioPath == widget.audioMessage.name,
+          current.audio?.audioInfo.messageId ==
+          widget.audioMessage.audioInfo.messageId,
       child: Row(
         mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
         children: <Widget>[
           GestureDetector(
-            onTap: () =>
-                context.read<PlayerCubit>().toggleAudio(widget.audioMessage),
+            onTap: () => context
+                .read<PlayerCubit>()
+                .toggleAudio(widget.audioMessage.audioInfo),
             child: Container(
               height: 40,
               width: 40,
@@ -252,6 +252,12 @@ class _AudioViewState extends State<AudioView> {
       }
     }
 
-    return result;
+    final double max = result.max;
+
+    if (max == 0) {
+      return result;
+    }
+
+    return result.map((double e) => e / max).toList();
   }
 }

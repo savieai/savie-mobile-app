@@ -13,11 +13,11 @@ class MessageDTO with _$MessageDTO {
   )
   const factory MessageDTO({
     required String id,
+    required String? tempId,
     required DateTime createdAt,
     required String? textContent,
     required String userId,
-    @Default('') String voiceMessageUrl,
-    @Default('') String voiceMessageUrlSigned,
+    required List<VoiceMessageDTO>? voiceMessage,
     @Default(<LinkDTO>[]) List<LinkDTO> links,
     required List<FileAttachmentResponseDTO> attachments,
   }) = _MessageDTO;

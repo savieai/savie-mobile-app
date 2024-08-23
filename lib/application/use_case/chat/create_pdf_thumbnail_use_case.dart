@@ -17,7 +17,7 @@ class CreatePdfThumbnailUseCase {
   final CacheRepository _cacheRepository;
 
   Future<Attachment> execute(Attachment pdf) async {
-    final PdfDocument document = await PdfDocument.openFile(pdf.localUrl!);
+    final PdfDocument document = await PdfDocument.openFile(pdf.localFullPath!);
     final PdfPage page = await document.getPage(1);
     final PdfPageImage pageImage = await page.render();
 
@@ -54,8 +54,12 @@ class CreatePdfThumbnailUseCase {
 
     pngFile.writeAsBytesSync(imgBytes!.buffer.asUint8List());
 
+    Supabase.instance.client.storage
+        .from('thumbnails')
+        .upload(pdf.pdfThumbnailName!, File(imagePath));
+
     final String url = Supabase.instance.client.storage
-        .from('message_attachments')
+        .from('thumbnails')
         .getAuthenticatedUrl(pdf.pdfThumbnailName!);
 
     await _cacheRepository.cacheFile(
@@ -64,14 +68,11 @@ class CreatePdfThumbnailUseCase {
       file: pngFile,
     );
 
-    Supabase.instance.client.storage
-        .from('message_attachments')
-        .upload(pdf.pdfThumbnailName!, File(imagePath));
-
     return Attachment(
       name: pdf.pdfThumbnailName!,
-      remoteUrl: url,
-      localUrl: imagePath,
+      remoteStorageName: pdf.pdfThumbnailName,
+      signedUrl: url,
+      localFullPath: imagePath,
     );
   }
 }
