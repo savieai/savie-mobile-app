@@ -185,7 +185,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
                   ),
                 ),
                 Positioned(
-                  left: posiiton.dx - 20,
+                  left: posiiton.dx - 16,
                   right: 0,
                   child: SizedBox(
                     height: screenHeight,
@@ -432,8 +432,8 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
                   MediaQuery.sizeOf(context).height - chatInsets.bottom;
 
               final Widget unconstrainedChild = OverflowBox(
-                maxWidth: renderBox.size.width + 40,
-                maxHeight: renderBox.size.height + 40,
+                maxWidth: renderBox.size.width + 42,
+                maxHeight: renderBox.size.height + 42,
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: contrainedChild,

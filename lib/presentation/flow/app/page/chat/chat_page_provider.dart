@@ -1,5 +1,7 @@
 import 'package:flutter/widgets.dart';
 
+import '../../../../presentation.dart';
+
 class ChatPagePorvider extends InheritedWidget {
   ChatPagePorvider({
     super.key,
@@ -20,8 +22,10 @@ class ChatPagePorvider extends InheritedWidget {
   final ValueNotifier<AnimationStatus> sentMessageAnimationStatusNotifier =
       ValueNotifier<AnimationStatus>(AnimationStatus.dismissed);
 
-  static const Duration sentMessageAnimationDuration =
-      Duration(milliseconds: 650);
+  static Duration _sentMessageAnimationDuration =
+      const Duration(milliseconds: 300);
+  static Duration get sentMessageAnimationDuration =>
+      _sentMessageAnimationDuration;
 
   static ChatPagePorvider of(BuildContext context) => maybeOf(context)!;
 
@@ -33,7 +37,28 @@ class ChatPagePorvider extends InheritedWidget {
 
   bool get canRunSentMessageAnimation => scrollController.offset == 0;
 
-  void runSentMessageAnimation() {
+  void runSentMessageAnimation({
+    required String text,
+    required BuildContext context,
+  }) {
+    final double height = (TextPainter(
+      text: TextSpan(
+        text: text,
+        style: AppTextStyles.paragraph,
+      ),
+      textScaler: MediaQuery.textScalerOf(context),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: (MediaQuery.sizeOf(context).width - 32) * 0.9))
+        .height;
+
+    final double heightRatio =
+        (height / MediaQuery.sizeOf(context).height).clamp(0, 1);
+
+    _sentMessageAnimationDuration =
+        const Duration(milliseconds: 300) * (1 + heightRatio * 2);
+
+    sentMessageAnimationController.duration = _sentMessageAnimationDuration;
+
     sentMessageAnimationController.forward().then(
           (_) => sentMessageAnimationController.reset(),
         );

@@ -22,12 +22,11 @@ class CreateFileMessageUseCase {
       return;
     }
 
-    final String fileName = message.file.name;
+    final String fileName = message.file.remoteStorageName!;
 
     await _cacheRepository.cacheFile(
       url: filePath,
-      // TODO: create unique keys for files
-      key: message.file.name,
+      key: message.file.remoteStorageName!,
       file: File(filePath),
     );
 

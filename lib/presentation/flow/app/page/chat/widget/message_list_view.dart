@@ -78,7 +78,7 @@ class _MessageListViewState extends State<MessageListView> {
                         .toList(),
                     areItemsTheSame: (String a, String b) => a == b,
                     insertDuration:
-                        ChatPagePorvider.sentMessageAnimationDuration,
+                        ChatPagePorvider.sentMessageAnimationDuration * 0.6,
                     itemBuilder: (
                       _,
                       Animation<double> animation,
@@ -87,8 +87,13 @@ class _MessageListViewState extends State<MessageListView> {
                     ) {
                       final int length = groupedMessages[date]!.length;
                       final bool isFirstInGroup = index == length - 1;
-                      final Message message =
-                          groupedMessages[date]![currentId]!;
+
+                      final Message? message =
+                          groupedMessages[date]![currentId];
+
+                      if (message == null) {
+                        return const SizedBox();
+                      }
 
                       return FadeTransition(
                         opacity: CurvedAnimation(
@@ -103,7 +108,7 @@ class _MessageListViewState extends State<MessageListView> {
                           axisAlignment: -1,
                           child: Padding(
                             padding:
-                                EdgeInsets.only(top: isFirstInGroup ? 58 : 0) +
+                                EdgeInsets.only(top: isFirstInGroup ? 46 : 0) +
                                     const EdgeInsets.only(bottom: 12) +
                                     const EdgeInsets.symmetric(horizontal: 16),
                             child: MessageView(
