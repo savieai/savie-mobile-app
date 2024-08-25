@@ -78,7 +78,7 @@ class _MessageListViewState extends State<MessageListView> {
                         .toList(),
                     areItemsTheSame: (String a, String b) => a == b,
                     insertDuration:
-                        ChatPagePorvider.sentMessageAnimationDuration * 0.6,
+                        ChatPagePorvider.sentMessageAnimationDuration,
                     itemBuilder: (
                       _,
                       Animation<double> animation,
@@ -98,12 +98,12 @@ class _MessageListViewState extends State<MessageListView> {
                       return FadeTransition(
                         opacity: CurvedAnimation(
                           parent: animation,
-                          curve: Curves.linearToEaseOut,
+                          curve: Curves.easeOut,
                         ),
                         child: SizeTransition(
                           sizeFactor: CurvedAnimation(
                             parent: animation,
-                            curve: Curves.linearToEaseOut,
+                            curve: Curves.easeOut,
                           ),
                           axisAlignment: -1,
                           child: Padding(

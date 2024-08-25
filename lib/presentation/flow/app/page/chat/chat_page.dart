@@ -33,7 +33,7 @@ class _ChatPageState extends State<ChatPage>
     );
     _sentMessageAnimation = CurvedAnimation(
       parent: _sentMessageAnimationController,
-      curve: Curves.easeOut,
+      curve: Curves.linearToEaseOut,
     );
   }
 

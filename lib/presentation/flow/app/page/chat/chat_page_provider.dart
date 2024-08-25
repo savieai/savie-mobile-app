@@ -23,7 +23,7 @@ class ChatPagePorvider extends InheritedWidget {
       ValueNotifier<AnimationStatus>(AnimationStatus.dismissed);
 
   static Duration _sentMessageAnimationDuration =
-      const Duration(milliseconds: 300);
+      const Duration(milliseconds: 200);
   static Duration get sentMessageAnimationDuration =>
       _sentMessageAnimationDuration;
 
@@ -48,14 +48,14 @@ class ChatPagePorvider extends InheritedWidget {
       ),
       textScaler: MediaQuery.textScalerOf(context),
       textDirection: TextDirection.ltr,
-    )..layout(maxWidth: (MediaQuery.sizeOf(context).width - 32) * 0.9))
+    )..layout(maxWidth: (MediaQuery.sizeOf(context).width - 32) * 0.9 - 34))
         .height;
 
     final double heightRatio =
         (height / MediaQuery.sizeOf(context).height).clamp(0, 1);
 
     _sentMessageAnimationDuration =
-        const Duration(milliseconds: 300) * (1 + heightRatio * 2);
+        const Duration(milliseconds: 200) * (1 + heightRatio * 0.8);
 
     sentMessageAnimationController.duration = _sentMessageAnimationDuration;
 

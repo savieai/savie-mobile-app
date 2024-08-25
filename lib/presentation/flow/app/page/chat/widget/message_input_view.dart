@@ -140,7 +140,7 @@ class _TextInputViewState extends State<_TextInputView> {
           duration: value == AnimationStatus.forward
               ? ChatPagePorvider.sentMessageAnimationDuration
               : const Duration(milliseconds: 1),
-          curve: Curves.linearToEaseOut,
+          curve: Curves.easeOut,
           child: child,
         );
       },
@@ -152,71 +152,78 @@ class _TextInputViewState extends State<_TextInputView> {
               applyHeightToFirstAscent: false,
               applyHeightToLastDescent: false,
             ),
-            child: CupertinoTextField(
-              focusNode: widget.focusNode,
-              controller: _controller,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
-              autofocus: true,
-              minLines: 1,
-              maxLines: 5,
-              cursorColor: AppColors.iconAccent,
-              decoration: const BoxDecoration(),
-              style: AppTextStyles.paragraph,
-              placeholderStyle: AppTextStyles.paragraph.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              placeholder: 'Share anything...',
-              textInputAction: TextInputAction.newline,
-              prefix: const Padding(
-                padding: EdgeInsets.fromLTRB(12, 12, 0, 12),
-                child: FilePickerButton(),
-              ),
-              suffix: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
-                child: ValueListenableBuilder<bool>(
-                  valueListenable: widget.canRecordNotifier,
-                  builder: (BuildContext context, bool canRecord, _) {
-                    return AnimatedCrossFade(
-                      duration: const Duration(milliseconds: 200),
-                      crossFadeState: canRecord
-                          ? CrossFadeState.showSecond
-                          : CrossFadeState.showFirst,
-                      firstChild: SendButton(
-                        onTap: _onSend,
-                      ),
-                      secondChild: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Assets.icons.mic24.svg(
-                          colorFilter: const ColorFilter.mode(
-                            AppColors.iconSecodary,
-                            BlendMode.srcIn,
+            child: IntrinsicHeight(
+              child: CupertinoTextField(
+                focusNode: widget.focusNode,
+                controller: _controller,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+                autofocus: true,
+                minLines: 1,
+                maxLines: 15,
+                cursorColor: AppColors.iconAccent,
+                decoration: const BoxDecoration(),
+                style: AppTextStyles.paragraph,
+                placeholderStyle: AppTextStyles.paragraph.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                placeholder: 'Share anything...',
+                textInputAction: TextInputAction.newline,
+                prefix: Container(
+                  alignment: Alignment.bottomCenter,
+                  padding: const EdgeInsets.fromLTRB(12, 12, 0, 12),
+                  child: const FilePickerButton(),
+                ),
+                suffix: Container(
+                  alignment: Alignment.bottomCenter,
+                  padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: widget.canRecordNotifier,
+                    builder: (BuildContext context, bool canRecord, _) {
+                      return AnimatedCrossFade(
+                        duration: const Duration(milliseconds: 200),
+                        crossFadeState: canRecord
+                            ? CrossFadeState.showSecond
+                            : CrossFadeState.showFirst,
+                        firstChild: SendButton(
+                          onTap: _onSend,
+                        ),
+                        secondChild: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Assets.icons.mic24.svg(
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.iconSecodary,
+                              BlendMode.srcIn,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
           ),
           AnimatedBuilder(
-            animation: _chatPagePorvider.sentMessageAnimation,
+            animation: _chatPagePorvider.sentMessageAnimationController,
             builder: (BuildContext context, Widget? child) {
-              final double animationValue =
+              final double opactiyValue =
                   _chatPagePorvider.sentMessageAnimation.value;
+              final double bottomOffsetValue = Curves.easeOut.transform(
+                  _chatPagePorvider.sentMessageAnimationController.value);
 
-              if (animationValue == 0) {
+              if (opactiyValue == 0) {
                 return const SizedBox();
               }
 
               return Positioned(
-                bottom: animationValue * 89 - 13,
+                bottom: bottomOffsetValue * 89 - 13,
                 left: 35,
                 right: 8,
                 child: Opacity(
-                  opacity: animationValue == 0 ? 0 : 1,
+                  opacity: opactiyValue == 0 ? 0 : 1,
                   child: Container(
-                    alignment: Alignment(-1 + 2 * animationValue, -1),
+                    alignment: Alignment.bottomRight,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 20,
