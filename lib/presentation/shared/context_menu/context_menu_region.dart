@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -18,7 +19,11 @@ class ContextMenuRegion extends StatefulWidget {
   });
 
   final List<ContextMenuItemData> data;
-  final Widget Function(BuildContext context, bool contextMenuShown) builder;
+  final Widget Function(
+    BuildContext context,
+    Animation<double> animation,
+    bool contextMenuShown,
+  ) builder;
   final String heroTag;
 
   @override
@@ -93,7 +98,10 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     final RenderBox renderBox = context.findRenderObject()! as RenderBox;
     Offset posiiton = renderBox.localToGlobal(Offset.zero);
 
-    const double minOffsetDy = 120;
+    final Offset contextMenuVisiblePosition =
+        HeroVisibleArea.positionOf(context);
+
+    final double minOffsetDy = contextMenuVisiblePosition.dy;
     final double maxOffset = MediaQuery.sizeOf(context).height -
         widget.data.length * 40 -
         renderBox.size.height -
@@ -115,7 +123,9 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     _childBottomDyNotifier.value = renderBox.size.height + posiiton.dy;
 
     final double childWidth = renderBox.size.width;
-    final bool shouldAttachToRight = width > childWidth;
+    final bool shouldAttachToRight =
+        MediaQuery.sizeOf(context).width - posiiton.dx < childWidth ||
+            posiiton.dx + width >= MediaQuery.sizeOf(context).width;
 
     final double screenHeight = MediaQuery.sizeOf(context).height;
 
@@ -185,8 +195,15 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
                   ),
                 ),
                 Positioned(
-                  left: posiiton.dx - 16,
-                  right: 0,
+                  left: (posiiton.dx < 16
+                          ? 16
+                          : (MediaQuery.sizeOf(context).width -
+                                      (posiiton.dx + renderBox.size.width)) <
+                                  16
+                              ? posiiton.dx - 16
+                              : posiiton.dx) -
+                      20,
+                  width: renderBox.size.width + 40,
                   child: SizedBox(
                     height: screenHeight,
                     child: SingleChildScrollView(
@@ -198,16 +215,19 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
                           GestureDetector(
                             behavior: HitTestBehavior.opaque,
                             onTap: _hideOverlay,
-                            child: const SizedBox(
+                            child: SizedBox(
                               height: minOffsetDy,
                               width: double.infinity,
                             ),
                           ),
-                          Hero(
-                            key: _childKey,
-                            tag: widget.heroTag,
-                            flightShuttleBuilder: flightShuttleBuilder,
-                            child: contrainedChild,
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Hero(
+                              key: _childKey,
+                              tag: widget.heroTag,
+                              flightShuttleBuilder: flightShuttleBuilder,
+                              child: unconstrainedChild,
+                            ),
                           ),
                           GestureDetector(
                             behavior: HitTestBehavior.opaque,
@@ -247,7 +267,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
                       return Positioned(
                         width: width,
                         right: shouldAttachToRight ? 16 : null,
-                        left: shouldAttachToRight ? null : posiiton.dx,
+                        left: shouldAttachToRight ? null : max(16, posiiton.dx),
                         top: value + 4 + _scrollPositionNotifier.value,
                         child: FadeTransition(
                           opacity: _overlayAnimation,
@@ -301,36 +321,44 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     });
   }
 
-  Widget get contrainedChild => ConstrainedBox(
+  Widget get constrainedChild => ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: (MediaQuery.of(context).size.width - 32) * 0.9,
+          maxWidth: _sizeNotifier.value?.width ?? 0,
         ),
-        child: Material(
-          type: MaterialType.transparency,
-          child: ValueListenableBuilder<Size?>(
-            valueListenable: _sizeNotifier,
-            builder: (BuildContext context, Size? size, _) {
-              return ValueListenableBuilder<bool>(
-                valueListenable: _contextMenuShownNotifier,
-                builder: (BuildContext context, bool isShown, _) {
-                  return AnimatedBuilder(
-                    animation: _longPressAnimation,
-                    builder: (BuildContext context, Widget? child) {
-                      return Transform.scale(
-                        scale: size == null
-                            ? 1
-                            : (size.longestSide -
-                                    16 * _longPressAnimation.value) /
-                                size.longestSide,
-                        child: child,
-                      );
-                    },
-                    child: widget.builder(context, isShown),
-                  );
-                },
-              );
-            },
-          ),
+        child: unconstrainedChild,
+      );
+
+  Widget get unconstrainedChild => Material(
+        type: MaterialType.transparency,
+        child: ValueListenableBuilder<Size?>(
+          valueListenable: _sizeNotifier,
+          builder: (BuildContext context, Size? size, _) {
+            return ValueListenableBuilder<bool>(
+              valueListenable: _contextMenuShownNotifier,
+              builder: (BuildContext context, bool isShown, _) {
+                return AnimatedBuilder(
+                  animation: _longPressAnimation,
+                  builder: (BuildContext context, Widget? child) {
+                    final double scale = size == null
+                        ? 1
+                        : ((size.longestSide + 50) -
+                                16 * _longPressAnimation.value) /
+                            (size.longestSide + 50);
+
+                    return Transform.scale(
+                      scale: scale,
+                      child: child,
+                    );
+                  },
+                  child: widget.builder(
+                    context,
+                    _overlayAnimation,
+                    _contextMenuShownNotifier.value,
+                  ),
+                );
+              },
+            );
+          },
         ),
       );
 
@@ -339,12 +367,18 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onLongPressDown: (_) {
-        final ChatHorizontalDragCubit cubit =
-            context.read<ChatHorizontalDragCubit>();
+        late final ChatHorizontalDragCubit? cubit;
+        try {
+          cubit = context.read<ChatHorizontalDragCubit>();
+        } catch (_) {
+          cubit = null;
+        }
+
         _pressedDown = true;
         Future<void>.delayed(const Duration(milliseconds: 200), () {
-          if (cubit.state != 0) {
+          if (cubit != null && cubit.state != 0) {
             _pressedDown = false;
             return;
           }
@@ -354,7 +388,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
               _longPressAnimationController.reverse();
               _pressedDown = false;
 
-              if (cubit.state != 0) {
+              if (cubit != null && cubit.state != 0) {
                 return;
               }
 
@@ -382,9 +416,9 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
               ? Hero(
                   tag: widget.heroTag,
                   flightShuttleBuilder: flightShuttleBuilder,
-                  child: contrainedChild,
+                  child: unconstrainedChild,
                 )
-              : contrainedChild;
+              : unconstrainedChild;
         },
       ),
     );
@@ -397,6 +431,10 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     BuildContext fromHeroContext,
     BuildContext toHeroContext,
   ) {
+    final BuildContext pageContext = flightDirection == HeroFlightDirection.push
+        ? fromHeroContext
+        : toHeroContext;
+
     animation.addListener(() {
       if (!flightContext.mounted) {
         return;
@@ -412,49 +450,48 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
       }
     });
 
-    return BlocBuilder<ChatInsetsCubit, EdgeInsets>(
-      builder: (_, EdgeInsets chatInsets) {
-        return AnimatedBuilder(
-          animation: animation,
-          builder: (_, __) {
-            final RenderBox? renderBox =
-                flightContext.findRenderObject() as RenderBox? ??
-                    fromHeroContext.findRenderObject() as RenderBox?;
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (BuildContext context, __) {
+        final Size contextMenuVisibleSize = HeroVisibleArea.sizeOf(pageContext);
+        final Offset contextMenuVisiblePosition =
+            HeroVisibleArea.positionOf(pageContext);
 
-            if (renderBox != null) {
-              final Offset offset = renderBox.localToGlobal(Offset.zero);
+        final RenderBox? renderBox =
+            flightContext.findRenderObject() as RenderBox? ??
+                fromHeroContext.findRenderObject() as RenderBox?;
 
-              final double top = offset.dy;
-              final double maxTop = chatInsets.top;
+        if (renderBox != null) {
+          final Offset offset = renderBox.localToGlobal(Offset.zero);
 
-              final double bottom = offset.dy + renderBox.size.height;
-              final double maxBottom =
-                  MediaQuery.sizeOf(context).height - chatInsets.bottom;
+          final double top = offset.dy;
+          final double maxTop = contextMenuVisiblePosition.dy;
 
-              final Widget unconstrainedChild = OverflowBox(
-                maxWidth: renderBox.size.width + 42,
-                maxHeight: renderBox.size.height + 42,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: contrainedChild,
-                ),
-              );
+          final double bottom = offset.dy + renderBox.size.height;
+          final double maxBottom = maxTop + contextMenuVisibleSize.height;
 
-              final double dyTop = maxTop - top;
-              final double dyBottom = bottom - maxBottom;
+          final Widget unconstrainedChild = OverflowBox(
+            maxWidth: renderBox.size.width + 44,
+            maxHeight: renderBox.size.height + 44,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: constrainedChild,
+            ),
+          );
 
-              return ClipRect(
-                clipper: TopBottomClipper(
-                  dyTop > 0 ? dyTop * (1 - animation.value) : null,
-                  dyBottom > 0 ? dyBottom * (1 - animation.value) : null,
-                ),
-                child: unconstrainedChild,
-              );
-            }
+          final double dyTop = maxTop - top;
+          final double dyBottom = bottom - maxBottom;
 
-            return contrainedChild;
-          },
-        );
+          return ClipRect(
+            clipper: TopBottomClipper(
+              dyTop > 0 ? dyTop * (1 - animation.value) : null,
+              dyBottom > 0 ? dyBottom * (1 - animation.value) : null,
+            ),
+            child: unconstrainedChild,
+          );
+        }
+
+        return constrainedChild;
       },
     );
   }
@@ -476,6 +513,7 @@ class _ContextMenuListView extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
+        clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
           color: AppColors.systemMenuBackground,
           borderRadius: BorderRadius.circular(16),
@@ -500,6 +538,7 @@ class _ContextMenuListView extends StatelessWidget {
           itemBuilder: (BuildContext context, int index) => _ContextMenuItem(
             data: data[index],
             onTap: () {
+              data[index].onTap();
               pop();
             },
           ),
@@ -513,7 +552,7 @@ class _ContextMenuListView extends StatelessWidget {
   }
 }
 
-class _ContextMenuItem extends StatelessWidget {
+class _ContextMenuItem extends StatefulWidget {
   const _ContextMenuItem({
     required this.data,
     required this.onTap,
@@ -523,28 +562,51 @@ class _ContextMenuItem extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_ContextMenuItem> createState() => _ContextMenuItemState();
+}
+
+class _ContextMenuItemState extends State<_ContextMenuItem> {
+  bool _isPointerDown = false;
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: onTap,
+      onTap: widget.onTap,
+      onPanDown: (_) => setState(() {
+        _isPointerDown = true;
+      }),
+      onPanEnd: (_) => setState(() {
+        _isPointerDown = false;
+      }),
+      onLongPress: () => setState(() {
+        _isPointerDown = true;
+      }),
+      onLongPressEnd: (_) => setState(() {
+        _isPointerDown = false;
+      }),
+      onPanCancel: () => setState(() {
+        _isPointerDown = false;
+      }),
       child: Container(
         height: 40,
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 16),
+        color: _isPointerDown ? AppColors.strokePrimaryAlpha : null,
         child: Row(
           children: <Widget>[
-            data.icon.svg(
+            widget.data.icon.svg(
               colorFilter: ColorFilter.mode(
-                data.color,
+                widget.data.color,
                 BlendMode.srcIn,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                data.title,
+                widget.data.title,
                 style: AppTextStyles.paragraph.copyWith(
-                  color: data.color,
+                  color: widget.data.color,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),

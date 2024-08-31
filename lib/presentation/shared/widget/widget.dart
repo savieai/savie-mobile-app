@@ -6,3 +6,4 @@ export 'layout_listener.dart';
 export 'popup_template.dart';
 export 'progress_hud.dart';
 export 'top_bottom_clipper.dart';
+export 'hero_visible_area.dart';

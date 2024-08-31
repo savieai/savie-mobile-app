@@ -4,5 +4,6 @@ part of 'chat_cubit.dart';
 class ChatState with _$ChatState {
   const factory ChatState({
     required List<Message> messages,
+    Message? selectedMessage,
   }) = _ChatState;
 }

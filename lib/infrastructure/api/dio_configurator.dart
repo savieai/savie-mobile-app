@@ -10,12 +10,16 @@ const String _apiBaseUrl =
 @module
 abstract class DioConfigurator {
   @lazySingleton
-  Dio configureDio(AuthInterceptor authInterceptor) {
+  Dio configureDio(
+    AuthInterceptor authInterceptor,
+    ErrorInterceptor errorInterceptor,
+  ) {
     final Dio dio = Dio(
       BaseOptions(baseUrl: _apiBaseUrl),
     );
 
     dio.interceptors.add(authInterceptor);
+    dio.interceptors.add(errorInterceptor);
 
     return dio;
   }

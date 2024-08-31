@@ -2,6 +2,7 @@ import 'package:animated_list_plus/animated_list_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_sticky_header/flutter_sticky_header.dart';
+import 'package:scrollview_observer/scrollview_observer.dart';
 
 import '../../../../../../application/application.dart';
 import '../../../../../../domain/domain.dart';
@@ -47,84 +48,88 @@ class _MessageListViewState extends State<MessageListView> {
 
     return Container(
       color: AppColors.backgroundPrimary,
-      child: CustomScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        controller: scrollController,
-        reverse: true,
-        slivers: <Widget>[
-          ...<Widget>[
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            const SliverPadding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              sliver: WelcomeMessageListView(),
-            ),
-            if (length != 0)
-              ...groupedMessages.keys.map((DateTime date) {
-                return SliverStickyHeader.builder(
-                  reverse: true,
-                  overlapsContent: true,
-                  builder: (_, __) => _MessageDateStickyHeader(
-                    isScrollingNotifier:
-                        scrollController.position.isScrollingNotifier,
-                    topPoint: _topPoint,
-                    date: date,
-                  ),
-                  sliver: SliverImplicitlyAnimatedList<String>(
-                    items: groupedMessages[date]!
-                        .values
-                        .map((Message m) => m.currentId)
-                        .toList()
-                        .reversed
-                        .toList(),
-                    areItemsTheSame: (String a, String b) => a == b,
-                    insertDuration:
-                        ChatPagePorvider.sentMessageAnimationDuration,
-                    itemBuilder: (
-                      _,
-                      Animation<double> animation,
-                      String currentId,
-                      int index,
-                    ) {
-                      final int length = groupedMessages[date]!.length;
-                      final bool isFirstInGroup = index == length - 1;
+      child: ListViewObserver(
+        child: CustomScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          controller: scrollController,
+          reverse: true,
+          slivers: <Widget>[
+            ...<Widget>[
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              const SliverPadding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                sliver: WelcomeMessageListView(),
+              ),
+              if (length != 0)
+                ...groupedMessages.keys.map((DateTime date) {
+                  return SliverStickyHeader.builder(
+                    key: ValueKey<DateTime>(date),
+                    reverse: true,
+                    overlapsContent: true,
+                    builder: (_, __) => _MessageDateStickyHeader(
+                      isScrollingNotifier:
+                          scrollController.position.isScrollingNotifier,
+                      topPoint: _topPoint,
+                      date: date,
+                    ),
+                    sliver: SliverImplicitlyAnimatedList<String>(
+                      items: groupedMessages[date]!
+                          .values
+                          .map((Message m) => m.currentId)
+                          .toList()
+                          .reversed
+                          .toList(),
+                      areItemsTheSame: (String a, String b) => a == b,
+                      insertDuration:
+                          ChatPagePorvider.sentMessageAnimationDuration,
+                      itemBuilder: (
+                        _,
+                        Animation<double> animation,
+                        String currentId,
+                        int index,
+                      ) {
+                        final int length = groupedMessages[date]!.length;
+                        final bool isFirstInGroup = index == length - 1;
 
-                      final Message? message =
-                          groupedMessages[date]![currentId];
+                        final Message? message =
+                            groupedMessages[date]![currentId];
 
-                      if (message == null) {
-                        return const SizedBox();
-                      }
+                        if (message == null) {
+                          return const SizedBox();
+                        }
 
-                      return FadeTransition(
-                        opacity: CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOut,
-                        ),
-                        child: SizeTransition(
-                          sizeFactor: CurvedAnimation(
+                        return FadeTransition(
+                          opacity: CurvedAnimation(
                             parent: animation,
                             curve: Curves.easeOut,
                           ),
-                          axisAlignment: -1,
-                          child: Padding(
-                            padding:
-                                EdgeInsets.only(top: isFirstInGroup ? 46 : 0) +
-                                    const EdgeInsets.only(bottom: 12) +
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                            child: MessageView(
-                              key: Key('MessageView${message.currentId}'),
-                              message: message,
+                          child: SizeTransition(
+                            sizeFactor: CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOut,
+                            ),
+                            axisAlignment: -1,
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                      top: isFirstInGroup ? 46 : 0) +
+                                  const EdgeInsets.only(bottom: 8, top: 4) +
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: MessageView(
+                                key: Key('MessageView${message.currentId}'),
+                                message: message,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }),
-            SliverToBoxAdapter(child: SizedBox(height: length == 0 ? 32 : 20)),
-          ].reversed,
-        ],
+                        );
+                      },
+                    ),
+                  );
+                }),
+              SliverToBoxAdapter(
+                  child: SizedBox(height: length == 0 ? 32 : 20)),
+            ].reversed,
+          ],
+        ),
       ),
     );
   }

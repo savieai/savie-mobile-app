@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -26,41 +28,24 @@ class SearchFiles extends StatelessWidget {
                 20,
                 4,
                 20,
-                MediaQuery.paddingOf(context).bottom,
+                max(MediaQuery.viewInsetsOf(context).bottom,
+                    MediaQuery.paddingOf(context).bottom),
               ),
               itemCount: data.length,
               itemBuilder: (BuildContext context, int index) {
                 final FileSearchResult file = data[index] as FileSearchResult;
 
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Row(
-                    children: <Widget>[
-                      FilePreview(file: file.file),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              file.file.name,
-                              style: AppTextStyles.paragraph.copyWith(
-                                color: AppColors.textPrimary,
-                              ),
-                              maxLines: 2,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${DateFormat('MMMM dd').format(file.date)}, ${file.date.year} at ${DateFormat('hh:mm').format(file.date)}',
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                return ContextMenuRegion(
+                  data: <ContextMenuItemData>[
+                    ContextMenuItemData(
+                      title: 'Show in chat',
+                      icon: Assets.icons.file12,
+                      color: AppColors.textPrimary,
+                      onTap: () {},
+                    ),
+                  ],
+                  heroTag: 'FileSearchResult${file.id}',
+                  builder: (_, __, ___) => _FileSearchResultView(file: file),
                 );
               },
               separatorBuilder: (_, __) => Container(
@@ -71,6 +56,52 @@ class SearchFiles extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _FileSearchResultView extends StatelessWidget {
+  const _FileSearchResultView({
+    required this.file,
+  });
+
+  final FileSearchResult file;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: IntrinsicHeight(
+        child: Row(
+          children: <Widget>[
+            FilePreview(file: file.file),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Spacer(),
+                  Text(
+                    file.file.name,
+                    style: AppTextStyles.paragraph.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${DateFormat('MMMM dd').format(file.date)}, ${file.date.year} at ${DateFormat('hh:mm').format(file.date)}',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

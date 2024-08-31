@@ -45,10 +45,51 @@ class _SearchImagesState extends State<SearchImages> {
                       crossAxisSpacing: 2,
                     ),
                     itemCount: data.length,
-                    itemBuilder: (BuildContext context, int i) => CustomImage(
-                      attachment: (data[i] as ImageSearchResult).image,
-                      fit: BoxFit.cover,
-                    ),
+                    itemBuilder: (BuildContext context, int i) {
+                      final ImageSearchResult image =
+                          data[i] as ImageSearchResult;
+                      return ContextMenuRegion(
+                        data: <ContextMenuItemData>[
+                          ContextMenuItemData(
+                            title: 'Show in chat',
+                            icon: Assets.icons.file12,
+                            color: AppColors.textPrimary,
+                            onTap: () {},
+                          ),
+                        ],
+                        heroTag: 'ImageSearchResult${image.id}',
+                        builder: (_, Animation<double> animation, __) {
+                          return AnimatedBuilder(
+                            animation: animation,
+                            builder: (BuildContext context, Widget? child) {
+                              return Container(
+                                clipBehavior: Clip.hardEdge,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(
+                                    12 * animation.value,
+                                  ),
+                                  boxShadow: <BoxShadow>[
+                                    BoxShadow(
+                                      color: AppColors.strokePrimaryAlpha
+                                          .withOpacity(0.25 * animation.value),
+                                      blurRadius: 18,
+                                      offset: const Offset(0, 4),
+                                    )
+                                  ],
+                                ),
+                                child: child,
+                              );
+                            },
+                            child: CustomImage(
+                              height: MediaQuery.sizeOf(context).width / 3 - 1,
+                              width: MediaQuery.sizeOf(context).width / 3 - 1,
+                              attachment: image.image,
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        },
+                      );
+                    },
                   ),
                   SliverToBoxAdapter(
                     child: SizedBox(

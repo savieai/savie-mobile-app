@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:auto_route/auto_route.dart';
@@ -9,6 +8,7 @@ import 'package:favicon/favicon.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -43,51 +43,12 @@ class MessageView extends StatelessWidget {
       child: _MessageAligner(
         child: ContextMenuRegion(
           heroTag: '${message.currentId}_context_menu',
-          data: <ContextMenuItemData>[
-            ContextMenuItemData(
-              title: 'Edit',
-              icon: Assets.icons.edit16,
-              color: AppColors.textPrimary,
-              onTap: () {},
-            ),
-            ContextMenuItemData(
-              title: 'Copy',
-              icon: Assets.icons.copy16,
-              color: AppColors.textPrimary,
-              onTap: () {},
-            ),
-            ContextMenuItemData(
-              title: 'Pin',
-              icon: Assets.icons.pin16,
-              color: AppColors.textPrimary,
-              onTap: () {},
-            ),
-            ContextMenuItemData(
-              title: 'Unpin',
-              icon: Assets.icons.unpin16,
-              color: AppColors.textPrimary,
-              onTap: () {},
-            ),
-            ContextMenuItemData(
-              title: 'Save',
-              icon: Assets.icons.download16,
-              color: AppColors.textPrimary,
-              onTap: () {},
-            ),
-            ContextMenuItemData(
-              title: 'Save all (8)',
-              icon: Assets.icons.download16,
-              color: AppColors.textPrimary,
-              onTap: () {},
-            ),
-            ContextMenuItemData(
-              title: 'Delete',
-              icon: Assets.icons.delete16,
-              color: AppColors.iconNegative,
-              onTap: () {},
-            ),
-          ],
-          builder: (BuildContext context, bool contextMenuShown) {
+          data: _getContextMenuData(),
+          builder: (
+            BuildContext context,
+            Animation<double> animtion,
+            bool contextMenuShown,
+          ) {
             return message.map(
               text: (TextMessage textMessage) {
                 if (textMessage.images.isNotEmpty) {
@@ -134,6 +95,93 @@ class MessageView extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<ContextMenuItemData> _getContextMenuData() {
+    return <ContextMenuItemData>[
+      ...message.map(
+        text: (TextMessage textMessage) {
+          return <ContextMenuItemData>[
+            if ((textMessage.text ?? '').isNotEmpty) ...<ContextMenuItemData>[
+              ContextMenuItemData(
+                title: 'Edit',
+                icon: Assets.icons.edit16,
+                color: AppColors.textPrimary,
+                onTap: () {},
+              ),
+              ContextMenuItemData(
+                title: 'Copy',
+                icon: Assets.icons.copy16,
+                color: AppColors.textPrimary,
+                onTap: () {
+                  Clipboard.setData(
+                      ClipboardData(text: textMessage.text ?? ''));
+                },
+              ),
+            ],
+            if (textMessage.images.isNotEmpty)
+              if (textMessage.images.length == 1)
+                ContextMenuItemData(
+                  title: 'Save',
+                  icon: Assets.icons.download16,
+                  color: AppColors.textPrimary,
+                  onTap: () {
+                    getIt.get<SaveFilesUseCase>().execute(textMessage.images);
+                  },
+                )
+              else
+                ContextMenuItemData(
+                  title: 'Save all (${textMessage.images.length})',
+                  icon: Assets.icons.download16,
+                  color: AppColors.textPrimary,
+                  onTap: () {
+                    getIt.get<SaveFilesUseCase>().execute(textMessage.images);
+                  },
+                )
+          ];
+        },
+        audio: (AudioMessage audioMessage) {
+          return <ContextMenuItemData>[
+            ContextMenuItemData(
+              title: 'Save',
+              icon: Assets.icons.download16,
+              color: AppColors.textPrimary,
+              onTap: () {
+                getIt.get<SaveFilesUseCase>().execute(<Attachment>[
+                  Attachment(
+                    name: audioMessage.audioInfo.name,
+                    remoteStorageName: audioMessage.audioInfo.name,
+                    signedUrl: audioMessage.audioInfo.signedUrl,
+                    localFullPath: audioMessage.audioInfo.localFullPath,
+                  ),
+                ]);
+              },
+            ),
+          ];
+        },
+        file: (FileMessage fileMessage) {
+          return <ContextMenuItemData>[
+            ContextMenuItemData(
+              title: 'Save',
+              icon: Assets.icons.download16,
+              color: AppColors.textPrimary,
+              onTap: () {
+                getIt.get<SaveFilesUseCase>().execute(<Attachment>[
+                  fileMessage.file,
+                ]);
+              },
+            ),
+          ];
+        },
+      ),
+      if (!message.isPending)
+        ContextMenuItemData(
+          title: 'Delete',
+          icon: Assets.icons.delete16,
+          color: AppColors.iconNegative,
+          onTap: () {},
+        ),
+    ];
   }
 }
 

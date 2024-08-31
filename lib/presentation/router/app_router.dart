@@ -14,17 +14,11 @@ class AppRouter extends $AppRouter {
   @override
   List<AutoRoute> get routes => <AutoRoute>[
         AutoRoute(
-          page: LogsWrapperFlowRoute.page,
+          page: AuthWrapperFlowRoute.page,
           initial: true,
           children: <AutoRoute>[
-            AutoRoute(
-              page: AuthWrapperFlowRoute.page,
-              initial: true,
-              children: <AutoRoute>[
-                _appFlow,
-                _onboardingFlow,
-              ],
-            ),
+            _appFlow,
+            _onboardingFlow,
           ],
         ),
         AutoRoute(page: LogsRoute.page),

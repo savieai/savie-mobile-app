@@ -32,41 +32,17 @@ class SearchLinks extends StatelessWidget {
               itemBuilder: (BuildContext context, int index) {
                 final LinkSearchResult link = data[index] as LinkSearchResult;
 
-                String completeLink(String url) {
-                  if (!url.startsWith(RegExp(r'https?://'))) {
-                    return 'http://$url';
-                  }
-                  return url;
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Row(
-                    children: <Widget>[
-                      FavIcon(completeLink: completeLink(link.url)),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              link.url,
-                              style: AppTextStyles.paragraph.copyWith(
-                                color: AppColors.iconAccent,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${DateFormat('MMMM dd').format(link.date)}, ${link.date.year} at ${DateFormat('hh:mm').format(link.date)}',
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                return ContextMenuRegion(
+                  data: <ContextMenuItemData>[
+                    ContextMenuItemData(
+                      title: 'Show in chat',
+                      icon: Assets.icons.copy16,
+                      color: AppColors.textPrimary,
+                      onTap: () {},
+                    ),
+                  ],
+                  heroTag: 'LinkSearchResult${link.id}',
+                  builder: (_, __, ___) => _LinkSearchResultView(link: link),
                 );
               },
               separatorBuilder: (_, __) => Container(
@@ -77,6 +53,58 @@ class SearchLinks extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _LinkSearchResultView extends StatelessWidget {
+  const _LinkSearchResultView({
+    required this.link,
+  });
+
+  final LinkSearchResult link;
+
+  @override
+  Widget build(BuildContext context) {
+    String completeLink(String url) {
+      if (!url.startsWith(RegExp(r'https?://'))) {
+        return 'http://$url';
+      }
+      return url;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: IntrinsicHeight(
+        child: Row(
+          children: <Widget>[
+            FavIcon(completeLink: completeLink(link.url)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Spacer(),
+                  Text(
+                    link.url,
+                    style: AppTextStyles.paragraph.copyWith(
+                      color: AppColors.iconAccent,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${DateFormat('MMMM dd').format(link.date)}, ${link.date.year} at ${DateFormat('hh:mm').format(link.date)}',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

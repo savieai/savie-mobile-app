@@ -25,8 +25,8 @@ class _MessageContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 9,
+            offset: const Offset(0, 2),
             color: AppColors.strokeSecondaryAlpha
                 .withOpacity(decorationOpacity * 0.06),
           ),

@@ -69,6 +69,7 @@ dependencies:
   pdf_render: ^1.4.7
   image: ^4.2.0
   animated_list_plus: ^0.5.2
+  scrollview_observer: ^1.21.2
 
 dev_dependencies:
   flutter_test:

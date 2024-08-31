@@ -161,41 +161,44 @@ Widget _flightShuttleBilder(
   BuildContext toHeroContext, {
   required Widget child,
 }) {
-  return BlocBuilder<ChatInsetsCubit, EdgeInsets>(
-    builder: (BuildContext context, EdgeInsets chatInsets) {
-      return AnimatedBuilder(
-        animation: animation,
-        builder: (BuildContext context, _) {
-          final RenderBox? renderBox =
-              flightContext.findRenderObject() as RenderBox?;
+  final BuildContext pageContext = flightDirection == HeroFlightDirection.push
+      ? fromHeroContext
+      : toHeroContext;
 
-          if (renderBox != null) {
-            final RenderBox? renderBox =
-                flightContext.findRenderObject() as RenderBox?;
+  return AnimatedBuilder(
+    animation: animation,
+    builder: (BuildContext context, _) {
+      final Size contextMenuVisibleSize = HeroVisibleArea.sizeOf(pageContext);
+      final Offset contextMenuVisiblePosition =
+          HeroVisibleArea.positionOf(pageContext);
 
-            if (renderBox != null) {
-              final Offset offset = renderBox.localToGlobal(Offset.zero);
+      final RenderBox? renderBox =
+          flightContext.findRenderObject() as RenderBox?;
 
-              final double top = offset.dy;
-              final double maxTop = chatInsets.top;
+      if (renderBox != null) {
+        final RenderBox? renderBox =
+            flightContext.findRenderObject() as RenderBox?;
 
-              final double bottom = offset.dy + renderBox.size.height;
-              final double maxBottom =
-                  MediaQuery.sizeOf(context).height - chatInsets.bottom;
+        if (renderBox != null) {
+          final Offset offset = renderBox.localToGlobal(Offset.zero);
 
-              return ClipRect(
-                clipper: TopBottomClipper(
-                  (maxTop - top) * (1 - animation.value),
-                  (bottom - maxBottom) * (1 - animation.value),
-                ),
-                child: child,
-              );
-            }
-          }
+          final double top = offset.dy;
+          final double maxTop = contextMenuVisiblePosition.dy;
 
-          return child;
-        },
-      );
+          final double bottom = offset.dy + renderBox.size.height;
+          final double maxBottom = maxTop + contextMenuVisibleSize.height;
+
+          return ClipRect(
+            clipper: TopBottomClipper(
+              (maxTop - top) * (1 - animation.value),
+              (bottom - maxBottom) * (1 - animation.value),
+            ),
+            child: child,
+          );
+        }
+      }
+
+      return child;
     },
   );
 }

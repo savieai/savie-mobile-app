@@ -35,7 +35,9 @@ class RenderLayoutListener extends RenderProxyBox {
     super.performLayout();
     if (_oldConstraints != constraints) {
       _oldConstraints = constraints;
-      onConstraintsChanged(constraints);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        onConstraintsChanged(constraints);
+      });
     }
   }
 }

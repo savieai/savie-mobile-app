@@ -48,6 +48,7 @@ class _SearchPageState extends State<SearchPage> {
       value: _searchCubit,
       child: Scaffold(
         backgroundColor: AppColors.backgroundPrimary,
+        resizeToAvoidBottomInset: false,
         body: Column(
           children: <Widget>[
             SizedBox(
@@ -148,14 +149,16 @@ class _TabViewState extends State<_TabView>
           indicatorSize: TabBarIndicatorSize.label,
         ),
         Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: const <Widget>[
-              SearchImages(),
-              SearchLinks(),
-              SearchFiles(),
-              SearchAudioFiles(),
-            ],
+          child: HeroVisibleArea(
+            child: TabBarView(
+              controller: _tabController,
+              children: const <Widget>[
+                SearchImages(),
+                SearchLinks(),
+                SearchFiles(),
+                SearchAudioFiles(),
+              ],
+            ),
           ),
         ),
       ],
