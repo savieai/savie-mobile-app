@@ -8,8 +8,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../flow/app/page/chat/cubit/cubit.dart';
 import '../../presentation.dart';
 
-//TODO: TOTOALLY REFACTOR THIS SANDBOX CLASS
-
 class ContextMenuRegion extends StatefulWidget {
   const ContextMenuRegion({
     super.key,
@@ -68,15 +66,9 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     super.initState();
 
     _contextMenuCubit = context.read<ContextMenuCubit>();
-    _overlayAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 150),
-    );
-    _overlayAnimation = CurvedAnimation(
-      parent: _overlayAnimationController,
-      curve: Curves.linearToEaseOut,
-      reverseCurve: Curves.easeOut,
-    );
+    _overlayAnimationController =
+        ContextMenuScope.of(context)!.overlayAnimationController;
+    _overlayAnimation = ContextMenuScope.of(context)!.overlayAnimation;
 
     _longPressAnimationController = AnimationController(
       vsync: this,
@@ -314,10 +306,8 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     });
     Navigator.of(context).pop();
     _overlayAnimationController.reverse().then((_) {
-      setState(() {
-        _overlayEntry?.remove();
-        _overlayEntry = null;
-      });
+      _overlayEntry?.remove();
+      _overlayEntry = null;
     });
   }
 

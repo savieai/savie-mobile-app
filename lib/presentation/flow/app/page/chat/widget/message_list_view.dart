@@ -82,6 +82,8 @@ class _MessageListViewState extends State<MessageListView> {
                       areItemsTheSame: (String a, String b) => a == b,
                       insertDuration:
                           ChatPagePorvider.sentMessageAnimationDuration,
+                      removeDuration:
+                          ChatPagePorvider.sentMessageAnimationDuration,
                       itemBuilder: (
                         _,
                         Animation<double> animation,
@@ -113,6 +115,41 @@ class _MessageListViewState extends State<MessageListView> {
                               padding: EdgeInsets.only(
                                       top: isFirstInGroup ? 46 : 0) +
                                   const EdgeInsets.only(bottom: 8, top: 4) +
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              child: MessageView(
+                                key: Key('MessageView${message.currentId}'),
+                                message: message,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      removeItemBuilder: (
+                        BuildContext context,
+                        Animation<double> animation,
+                        String item,
+                      ) {
+                        final Message message = context
+                            .read<ChatCubit>()
+                            .state
+                            .removedMessages[item]!;
+
+                        // TODO: track if was first in group
+
+                        return FadeTransition(
+                          opacity: CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOut,
+                          ),
+                          child: SizeTransition(
+                            sizeFactor: CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOut,
+                            ),
+                            axisAlignment: -1,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                      bottom: 8, top: 4) +
                                   const EdgeInsets.symmetric(horizontal: 16),
                               child: MessageView(
                                 key: Key('MessageView${message.currentId}'),

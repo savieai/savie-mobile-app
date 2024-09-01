@@ -25,7 +25,9 @@ class AppFlow extends StatelessWidget {
       child: const InAppNotification(
         child: ProgressHud(
           child: ContextMenuListener(
-            child: AutoRouter(),
+            child: ContextMenuScope(
+              child: AutoRouter(),
+            ),
           ),
         ),
       ),

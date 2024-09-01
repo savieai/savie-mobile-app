@@ -106,4 +106,10 @@ class ChatRepositoryImpl implements ChatRepository {
           .toList(),
     };
   }
+
+  @override
+  Future<void> removeMessage({
+    required String messageId,
+  }) =>
+      _chatApi.deleteMessage(messageId);
 }

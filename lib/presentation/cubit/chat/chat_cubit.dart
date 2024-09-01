@@ -15,6 +15,7 @@ class ChatCubit extends Cubit<ChatState> {
     this._createMessageUseCase,
     this._getMessageUseCase,
     this._createPdfThumbnailUseCase,
+    this._deleteMessagesUseCase,
   ) : super(const ChatState(messages: <Message>[])) {
     _fetchMessages();
   }
@@ -22,6 +23,7 @@ class ChatCubit extends Cubit<ChatState> {
   final CreateMessageUseCase _createMessageUseCase;
   final GetMessageUseCase _getMessageUseCase;
   final CreatePdfThumbnailUseCase _createPdfThumbnailUseCase;
+  final DeleteMessagesUseCase _deleteMessagesUseCase;
 
   Future<void> _fetchMessages() async {
     final List<Message> sentMessages = (await _getMessageUseCase.execute())
@@ -158,5 +160,23 @@ class ChatCubit extends Cubit<ChatState> {
 
     await _createMessageUseCase.execute(message);
     _fetchMessages();
+  }
+
+  Future<void> deleteMessage({required String messageId}) {
+    final List<Message> messages = state.messages.toList();
+    final Message message =
+        messages.firstWhere((Message m) => m.id == messageId);
+    messages.remove(message);
+
+    final Map<String, Message> removedMessages =
+        Map<String, Message>.from(state.removedMessages);
+    removedMessages[message.currentId] = message;
+
+    emit(state.copyWith(
+      messages: messages,
+      removedMessages: removedMessages,
+    ));
+
+    return _deleteMessagesUseCase.execute(messageId: messageId);
   }
 }

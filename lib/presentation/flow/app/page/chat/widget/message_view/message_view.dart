@@ -43,7 +43,7 @@ class MessageView extends StatelessWidget {
       child: _MessageAligner(
         child: ContextMenuRegion(
           heroTag: '${message.currentId}_context_menu',
-          data: _getContextMenuData(),
+          data: _getContextMenuData(context),
           builder: (
             BuildContext context,
             Animation<double> animtion,
@@ -97,7 +97,7 @@ class MessageView extends StatelessWidget {
     );
   }
 
-  List<ContextMenuItemData> _getContextMenuData() {
+  List<ContextMenuItemData> _getContextMenuData(BuildContext context) {
     return <ContextMenuItemData>[
       ...message.map(
         text: (TextMessage textMessage) {
@@ -179,7 +179,9 @@ class MessageView extends StatelessWidget {
           title: 'Delete',
           icon: Assets.icons.delete16,
           color: AppColors.iconNegative,
-          onTap: () {},
+          onTap: () {
+            context.read<ChatCubit>().deleteMessage(messageId: message.id);
+          },
         ),
     ];
   }

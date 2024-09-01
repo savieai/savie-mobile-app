@@ -19,4 +19,7 @@ abstract class ChatRepository {
     required String query,
     required SearchResultType type,
   });
+  Future<void> removeMessage({
+    required String messageId,
+  });
 }

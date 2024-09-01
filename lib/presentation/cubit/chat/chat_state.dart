@@ -4,6 +4,6 @@ part of 'chat_cubit.dart';
 class ChatState with _$ChatState {
   const factory ChatState({
     required List<Message> messages,
-    Message? selectedMessage,
+    @Default(<String, Message>{}) Map<String, Message> removedMessages,
   }) = _ChatState;
 }

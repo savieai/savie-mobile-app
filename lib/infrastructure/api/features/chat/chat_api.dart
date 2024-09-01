@@ -33,4 +33,9 @@ abstract class ChatApi {
     @Query('q') String query,
     @Query('type') String type,
   );
+
+  @DELETE('/messages/{messageId}')
+  Future<HttpResponse<void>> deleteMessage(
+    @Path('messageId') String messageId,
+  );
 }
