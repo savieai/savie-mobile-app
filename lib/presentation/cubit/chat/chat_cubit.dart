@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:sortedmap/sortedmap.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../application/application.dart';
@@ -17,7 +18,7 @@ class ChatCubit extends Cubit<ChatState> {
     this._createPdfThumbnailUseCase,
     this._deleteMessagesUseCase,
   ) : super(const ChatState(messages: <Message>[])) {
-    _fetchMessages();
+    _fetchMessages(page: _currentPage);
   }
 
   final CreateMessageUseCase _createMessageUseCase;
@@ -25,26 +26,56 @@ class ChatCubit extends Cubit<ChatState> {
   final CreatePdfThumbnailUseCase _createPdfThumbnailUseCase;
   final DeleteMessagesUseCase _deleteMessagesUseCase;
 
-  Future<void> _fetchMessages() async {
-    final List<Message> sentMessages = (await _getMessageUseCase.execute())
-      ..sort((Message a, Message b) => a.date.compareTo(b.date));
-    _sentMessages = <String, Message>{
-      for (final Message m in sentMessages) m.currentId: m
-    };
+  static const int _pageSize = 100;
+  int _currentPage = 1;
+
+  final Map<String, Message> _pendingMessages = <String, Message>{};
+
+  final SortedMap<String, Message> _sentMessages =
+      SortedMap<String, Message>(const Ordering.byValue());
+
+  Future<void> _fetchMessages({
+    required int page,
+  }) async {
+    final List<Message> sentMessages = await _getMessageUseCase.execute(
+      pageSize: _pageSize,
+      page: page,
+    );
+
+    for (final Message m in sentMessages) {
+      _sentMessages[m.currentId] = m;
+    }
+
     _pendingMessages.removeWhere(
       (String id, _) => _sentMessages.containsKey(id),
     );
-    emit(ChatState(messages: <Message>[
-      ..._sentMessages.values,
-      if (_pendingMessages.isNotEmpty) ...<Message>[
-        ..._pendingMessages.values.take(_pendingMessages.length - 1),
-        _pendingMessages.values.last.copyWith(isNew: true),
+
+    emit(ChatState(
+      messages: <Message>[
+        ..._sentMessages.values,
+        if (_pendingMessages.isNotEmpty) ...<Message>[
+          ..._pendingMessages.values.take(_pendingMessages.length - 1),
+          _pendingMessages.values.last.copyWith(isNew: true),
+        ],
       ],
-    ]));
+    ));
   }
 
-  final Map<String, Message> _pendingMessages = <String, Message>{};
-  Map<String, Message> _sentMessages = <String, Message>{};
+  Future<void> fetchPrevious() async {
+    _currentPage--;
+
+    emit(state.copyWith(fetchingPrevious: true));
+    await _fetchMessages(page: _currentPage);
+    emit(state.copyWith(fetchingPrevious: false));
+  }
+
+  Future<void> fetchNext() async {
+    _currentPage++;
+
+    emit(state.copyWith(fetchingNext: true));
+    await _fetchMessages(page: _currentPage);
+    emit(state.copyWith(fetchingNext: false));
+  }
 
   Future<void> sendMessage({
     String? text,
@@ -83,7 +114,7 @@ class ChatCubit extends Cubit<ChatState> {
     ]));
 
     await _createMessageUseCase.execute(message);
-    _fetchMessages();
+    _fetchMessages(page: 1);
   }
 
   Future<void> sendAudio(AudioInfo? audioInfo) async {
@@ -118,7 +149,7 @@ class ChatCubit extends Cubit<ChatState> {
     ]));
 
     await _createMessageUseCase.execute(message);
-    _fetchMessages();
+    _fetchMessages(page: 1);
   }
 
   Future<void> sendFile(String? filePath) async {
@@ -159,7 +190,7 @@ class ChatCubit extends Cubit<ChatState> {
     ]));
 
     await _createMessageUseCase.execute(message);
-    _fetchMessages();
+    _fetchMessages(page: 1);
   }
 
   Future<void> deleteMessage({required String messageId}) {

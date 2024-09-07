@@ -13,11 +13,14 @@ class ChatRepositoryImpl implements ChatRepository {
   final ChatApi _chatApi;
 
   @override
-  Future<List<Message>> fetchMessages() async {
+  Future<List<Message>> fetchMessages({
+    required int page,
+    required int pageSize,
+  }) async {
     final HttpResponse<GetMessagesResponse> response =
-        await _chatApi.getMessages();
+        await _chatApi.getMessages(page: page, pageSize: pageSize);
 
-    return response.data.map(MessageMapper.toDomain).toList();
+    return response.data.data.messages.map(MessageMapper.toDomain).toList();
   }
 
   @override

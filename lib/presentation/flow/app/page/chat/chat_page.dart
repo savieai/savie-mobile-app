@@ -42,19 +42,21 @@ class _ChatPageState extends State<ChatPage>
       scrollController: _scrollController,
       sentMessageAnimation: _sentMessageAnimation,
       sentMessageAnimationController: _sentMessageAnimationController,
-      child: const Scaffold(
-        appBar: _ChatAppBar(),
+      child: Scaffold(
+        appBar: const _ChatAppBar(),
         backgroundColor: AppColors.backgroundChatInput,
         body: Column(
           children: <Widget>[
             Expanded(
               child: HeroVisibleArea(
                 child: MessagesHorizontalDragListener(
-                  child: MessageListView(),
+                  child: MessageListView(
+                    scrollController: _scrollController,
+                  ),
                 ),
               ),
             ),
-            MessageInputView(),
+            const MessageInputView(),
           ],
         ),
       ),

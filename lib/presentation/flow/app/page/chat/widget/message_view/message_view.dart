@@ -180,7 +180,11 @@ class MessageView extends StatelessWidget {
           icon: Assets.icons.delete16,
           color: AppColors.iconNegative,
           onTap: () {
-            context.read<ChatCubit>().deleteMessage(messageId: message.id);
+            Future<void>.delayed(const Duration(milliseconds: 250), () {
+              if (context.mounted) {
+                context.read<ChatCubit>().deleteMessage(messageId: message.id);
+              }
+            });
           },
         ),
     ];

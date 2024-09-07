@@ -8,5 +8,12 @@ class GetMessageUseCase {
 
   final ChatRepository _chatRepository;
 
-  Future<List<Message>> execute() => _chatRepository.fetchMessages();
+  Future<List<Message>> execute({
+    required int page,
+    required int pageSize,
+  }) =>
+      _chatRepository.fetchMessages(
+        page: page,
+        pageSize: pageSize,
+      );
 }

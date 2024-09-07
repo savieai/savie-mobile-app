@@ -5,7 +5,7 @@ import '../domain.dart';
 part 'message.freezed.dart';
 
 @freezed
-class Message with _$Message {
+class Message with _$Message implements Comparable<Message> {
   const factory Message.text({
     required bool isPending,
     @Default(false) bool isNew,
@@ -58,4 +58,7 @@ class Message with _$Message {
   }
 
   String get currentId => tempId ?? id;
+
+  @override
+  int compareTo(Message other) => date.compareTo(other.date);
 }

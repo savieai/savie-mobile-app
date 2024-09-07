@@ -1,7 +1,11 @@
 import '../domain.dart';
 
 abstract class ChatRepository {
-  Future<List<Message>> fetchMessages();
+  Future<List<Message>> fetchMessages({
+    required int page,
+    required int pageSize,
+  });
+
   Future<void> createTextMessage({
     required String tempId,
     required String? text,

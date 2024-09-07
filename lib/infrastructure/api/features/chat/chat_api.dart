@@ -21,7 +21,10 @@ abstract class ChatApi {
   factory ChatApi(Dio dio, {String baseUrl}) = _ChatApi;
 
   @GET('/messages')
-  Future<HttpResponse<GetMessagesResponse>> getMessages();
+  Future<HttpResponse<GetMessagesResponse>> getMessages({
+    @Query('page') required int page,
+    @Query('page_size') required int pageSize,
+  });
 
   @POST('/messages')
   Future<HttpResponse<void>> createMessage(
