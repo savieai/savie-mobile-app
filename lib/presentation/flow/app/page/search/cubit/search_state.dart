@@ -6,6 +6,7 @@ class SearchState with _$SearchState {
     required TabSearchState images,
     required TabSearchState links,
     required TabSearchState files,
+    required TabSearchState audios,
   }) = _SearchState;
 
   const SearchState._();
@@ -14,6 +15,7 @@ class SearchState with _$SearchState {
     images: TabSearchState.initial(),
     links: TabSearchState.initial(),
     files: TabSearchState.initial(),
+    audios: TabSearchState.initial(),
   );
 }
 

@@ -10,7 +10,7 @@ class VoiceMessageRequestDTO with _$VoiceMessageRequestDTO {
     required String url,
     required String name,
     required int duration,
-    required List<double> peaks,
+    required String peaks,
   }) = _VoiceMessageRequestDTO;
 
   factory VoiceMessageRequestDTO.fromJson(Map<String, Object?> json) =>

@@ -57,6 +57,8 @@ class SearchCubit extends Cubit<SearchState> {
         emit(state.copyWith(files: const TabSearchState.fetching()));
       case SearchResultType.link:
         emit(state.copyWith(links: const TabSearchState.fetching()));
+      case SearchResultType.voice:
+        emit(state.copyWith(audios: const TabSearchState.fetching()));
     }
 
     final List<SearchResult> searchResult =
@@ -77,6 +79,10 @@ class SearchCubit extends Cubit<SearchState> {
       case SearchResultType.link:
         emit(SearchState.initial.copyWith(
           links: TabSearchState.fetched(data: searchResult),
+        ));
+      case SearchResultType.voice:
+        emit(SearchState.initial.copyWith(
+          audios: TabSearchState.fetched(data: searchResult),
         ));
     }
   }

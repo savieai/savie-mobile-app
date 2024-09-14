@@ -41,7 +41,7 @@ class SearchLinks extends StatelessWidget {
                       onTap: () {},
                     ),
                   ],
-                  heroTag: 'LinkSearchResult${link.id}',
+                  heroTag: '${link.hashCode}',
                   builder: (_, __, ___) => _LinkSearchResultView(link: link),
                 );
               },

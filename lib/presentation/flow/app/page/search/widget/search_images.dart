@@ -57,8 +57,23 @@ class _SearchImagesState extends State<SearchImages> {
                             onTap: () {},
                           ),
                         ],
-                        heroTag: 'ImageSearchResult${image.id}',
-                        builder: (_, Animation<double> animation, __) {
+                        heroTag: '${image.hashCode}',
+                        builder: (
+                          _,
+                          Animation<double> animation,
+                          bool contextMenuShown,
+                        ) {
+                          final Widget imageView = CustomImage(
+                            height: MediaQuery.sizeOf(context).width / 3 - 1,
+                            width: MediaQuery.sizeOf(context).width / 3 - 1,
+                            attachment: image.image,
+                            fit: BoxFit.cover,
+                          );
+
+                          if (!contextMenuShown) {
+                            return imageView;
+                          }
+
                           return AnimatedBuilder(
                             animation: animation,
                             builder: (BuildContext context, Widget? child) {
@@ -80,12 +95,7 @@ class _SearchImagesState extends State<SearchImages> {
                                 child: child,
                               );
                             },
-                            child: CustomImage(
-                              height: MediaQuery.sizeOf(context).width / 3 - 1,
-                              width: MediaQuery.sizeOf(context).width / 3 - 1,
-                              attachment: image.image,
-                              fit: BoxFit.cover,
-                            ),
+                            child: imageView,
                           );
                         },
                       );

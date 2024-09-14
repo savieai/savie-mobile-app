@@ -98,6 +98,8 @@ class _TabViewState extends State<_TabView>
           cubit.updateSearchResultType(SearchResultType.link);
         case 2:
           cubit.updateSearchResultType(SearchResultType.file);
+        case 3:
+          cubit.updateSearchResultType(SearchResultType.voice);
       }
     });
   }

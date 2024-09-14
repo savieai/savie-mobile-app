@@ -37,7 +37,7 @@ class ChatRepositoryImpl implements ChatRepository {
         url: audioInfo.name,
         name: audioInfo.name,
         duration: audioInfo.duration.inSeconds,
-        peaks: audioInfo.peaks,
+        peaks: audioInfo.peaks.toString(),
       ),
     );
 
@@ -84,30 +84,67 @@ class ChatRepositoryImpl implements ChatRepository {
     required String query,
     required SearchResultType type,
   }) async {
-    // TODO: dont use enum name
-    final HttpResponse<void> response =
-        await _chatApi.searchMessages(query, type.name);
+    final HttpResponse<GetMessagesResponse> response = await _chatApi
+        .searchMessages(query: query, type: type.name, page: 1, pageSize: 100);
 
-    final List<dynamic> data =
-        response.response.data as List<dynamic>? ?? <dynamic>[];
+    final List<Message> messages =
+        response.data.data.messages.map(MessageMapper.toDomain).toList();
 
-    return switch (type) {
-      SearchResultType.image => data
-          .map((dynamic data) =>
-              ImageSearchResultDTO.fromJson(data as Map<String, dynamic>))
-          .map(SearchResultMapper.imageToDomain)
-          .toList(),
-      SearchResultType.file => data
-          .map((dynamic data) =>
-              FileSearchResultDTO.fromJson(data as Map<String, dynamic>))
-          .map(SearchResultMapper.fileToDomain)
-          .toList(),
-      SearchResultType.link => data
-          .map((dynamic data) =>
-              LinkSearchResultDTO.fromJson(data as Map<String, dynamic>))
-          .map(SearchResultMapper.linkToDomain)
-          .toList(),
-    };
+    switch (type) {
+      case SearchResultType.image:
+        final List<(Attachment, Message)> images = messages
+            .where((Message m) => m is TextMessage && m.images.isNotEmpty)
+            .expand((Message m) =>
+                (m as TextMessage).images.map((Attachment a) => (a, m)))
+            .toList();
+
+        return images
+            .map(((Attachment, Message) image) => SearchResult.image(
+                  messageId: image.$2.id,
+                  date: image.$2.date,
+                  image: image.$1,
+                ))
+            .toList();
+
+      case SearchResultType.file:
+        final List<FileMessage> fileMessages =
+            messages.whereType<FileMessage>().toList();
+
+        return fileMessages
+            .map((FileMessage fileMessage) => SearchResult.file(
+                  messageId: fileMessage.id,
+                  date: fileMessage.date,
+                  file: fileMessage.file,
+                ))
+            .toList();
+
+      case SearchResultType.link:
+        final List<(Link, Message)> links = messages
+            .where((Message m) => m is TextMessage && m.links.isNotEmpty)
+            .expand(
+                (Message m) => (m as TextMessage).links.map((Link l) => (l, m)))
+            .toList();
+
+        return links
+            .map(((Link, Message) link) => SearchResult.link(
+                  messageId: link.$2.id,
+                  date: link.$2.date,
+                  url: link.$1.url,
+                ))
+            .toList();
+
+      case SearchResultType.voice:
+        final List<AudioMessage> audioMessages =
+            messages.whereType<AudioMessage>().toList();
+
+        return audioMessages
+            .map((AudioMessage audioMessage) => SearchResult.audio(
+                  messageId: audioMessage.id,
+                  date: audioMessage.date,
+                  audioMessage: audioMessage,
+                ))
+            .toList();
+    }
   }
 
   @override

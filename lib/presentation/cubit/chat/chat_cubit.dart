@@ -17,7 +17,7 @@ class ChatCubit extends Cubit<ChatState> {
     this._getMessageUseCase,
     this._createPdfThumbnailUseCase,
     this._deleteMessagesUseCase,
-  ) : super(const ChatState(messages: <Message>[])) {
+  ) : super(const ChatState()) {
     _fetchMessages(page: _currentPage);
   }
 
@@ -51,18 +51,22 @@ class ChatCubit extends Cubit<ChatState> {
     );
 
     emit(ChatState(
-      messages: <Message>[
-        ..._sentMessages.values,
-        if (_pendingMessages.isNotEmpty) ...<Message>[
-          ..._pendingMessages.values.take(_pendingMessages.length - 1),
-          _pendingMessages.values.last.copyWith(isNew: true),
+      chatItems: _getChatItems(
+        <Message>[
+          ..._sentMessages.values,
+          if (_pendingMessages.isNotEmpty) ...<Message>[
+            ..._pendingMessages.values.take(_pendingMessages.length - 1),
+            _pendingMessages.values.last.copyWith(isNew: true),
+          ],
         ],
-      ],
+      ),
     ));
   }
 
   Future<void> fetchPrevious() async {
-    _currentPage--;
+    if (_currentPage != 1) {
+      _currentPage--;
+    }
 
     emit(state.copyWith(fetchingPrevious: true));
     await _fetchMessages(page: _currentPage);
@@ -105,13 +109,17 @@ class ChatCubit extends Cubit<ChatState> {
     );
 
     _pendingMessages[pendingUuid] = message;
-    emit(ChatState(messages: <Message>[
-      ..._sentMessages.values,
-      if (_pendingMessages.isNotEmpty) ...<Message>[
-        ..._pendingMessages.values.take(_pendingMessages.length - 1),
-        _pendingMessages.values.last.copyWith(isNew: true),
-      ],
-    ]));
+    emit(ChatState(
+      chatItems: _getChatItems(
+        <Message>[
+          ..._sentMessages.values,
+          if (_pendingMessages.isNotEmpty) ...<Message>[
+            ..._pendingMessages.values.take(_pendingMessages.length - 1),
+            _pendingMessages.values.last.copyWith(isNew: true),
+          ],
+        ],
+      ),
+    ));
 
     await _createMessageUseCase.execute(message);
     _fetchMessages(page: 1);
@@ -140,13 +148,17 @@ class ChatCubit extends Cubit<ChatState> {
     );
 
     _pendingMessages[pendingUuid] = message;
-    emit(ChatState(messages: <Message>[
-      ..._sentMessages.values,
-      if (_pendingMessages.isNotEmpty) ...<Message>[
-        ..._pendingMessages.values.take(_pendingMessages.length - 1),
-        _pendingMessages.values.last.copyWith(isNew: true),
-      ],
-    ]));
+    emit(ChatState(
+      chatItems: _getChatItems(
+        <Message>[
+          ..._sentMessages.values,
+          if (_pendingMessages.isNotEmpty) ...<Message>[
+            ..._pendingMessages.values.take(_pendingMessages.length - 1),
+            _pendingMessages.values.last.copyWith(isNew: true),
+          ],
+        ],
+      ),
+    ));
 
     await _createMessageUseCase.execute(message);
     _fetchMessages(page: 1);
@@ -181,33 +193,103 @@ class ChatCubit extends Cubit<ChatState> {
     }
 
     _pendingMessages[pendingUuid] = message;
-    emit(ChatState(messages: <Message>[
-      ..._sentMessages.values,
-      if (_pendingMessages.isNotEmpty) ...<Message>[
-        ..._pendingMessages.values.take(_pendingMessages.length - 1),
-        _pendingMessages.values.last.copyWith(isNew: true),
-      ],
-    ]));
+    emit(ChatState(
+      chatItems: _getChatItems(
+        <Message>[
+          ..._sentMessages.values,
+          if (_pendingMessages.isNotEmpty) ...<Message>[
+            ..._pendingMessages.values.take(_pendingMessages.length - 1),
+            _pendingMessages.values.last.copyWith(isNew: true),
+          ],
+        ],
+      ),
+    ));
 
     await _createMessageUseCase.execute(message);
     _fetchMessages(page: 1);
   }
 
-  Future<void> deleteMessage({required String messageId}) {
-    final List<Message> messages = state.messages.toList();
-    final Message message =
-        messages.firstWhere((Message m) => m.id == messageId);
-    messages.remove(message);
+  Future<void> deleteMessage({required String messageId}) async {
+    // Create a mutable copy of the current chatItems
+    final List<ChatItem> chatItems = List<ChatItem>.from(state.chatItems);
+    final List<ChatItem> removedChatItems = <ChatItem>[];
 
-    final Map<String, Message> removedMessages =
-        Map<String, Message>.from(state.removedMessages);
-    removedMessages[message.currentId] = message;
+    // Find the index of the message ChatItem to remove
+    final int messageIndex = chatItems.indexWhere((ChatItem item) {
+      return item.maybeWhen(
+        message: (Message m) => m.id == messageId,
+        orElse: () => false,
+      );
+    });
 
-    emit(state.copyWith(
-      messages: messages,
-      removedMessages: removedMessages,
-    ));
+    if (messageIndex == -1) {
+      // Message not found, nothing to remove
+      return;
+    }
 
-    return _deleteMessagesUseCase.execute(messageId: messageId);
+    // Remove the message ChatItem from the list
+    final ChatItem removedMessageItem = chatItems.removeAt(messageIndex);
+    removedChatItems.add(removedMessageItem);
+
+    // Remove the message from _sentMessages
+    _sentMessages.removeWhere((_, Message m) => m.id == messageId);
+
+    // Get the date of the removed message
+    final DateTime removedMessageDate =
+        (removedMessageItem as MessageChatItem).message.date.toDate;
+
+    // Check if there are any messages left on that date
+    final bool hasMessagesOnDate = chatItems.any((ChatItem item) {
+      return item.maybeWhen(
+        message: (Message m) {
+          final DateTime messageDate = m.date.toDate;
+          return messageDate == removedMessageDate;
+        },
+        orElse: () => false,
+      );
+    });
+
+    if (!hasMessagesOnDate) {
+      // No messages left on this date, remove the DateChatItem
+      final int dateItemIndex = chatItems.indexWhere((ChatItem item) {
+        return item.maybeWhen(
+          date: (DateTime date) => date == removedMessageDate,
+          orElse: () => false,
+        );
+      });
+
+      if (dateItemIndex != -1) {
+        final ChatItem removedDateItem = chatItems.removeAt(dateItemIndex);
+        removedChatItems.add(removedDateItem);
+      }
+    }
+
+    // Emit the new state with updated chatItems and removedChatItems
+    emit(state.copyWith(chatItems: chatItems));
+
+    // Perform the deletion operation
+    await _deleteMessagesUseCase.execute(messageId: messageId);
+  }
+
+  List<ChatItem> _getChatItems(final List<Message> messages) {
+    final List<ChatItem> chatItems = <ChatItem>[];
+    DateTime? lastDate;
+
+    for (final Message message in messages) {
+      // Extract the date part (year, month, day) of the message date
+      final DateTime messageDate = message.date.toDate;
+
+      // Check if the date has changed
+      if (lastDate == null || messageDate != lastDate) {
+        // Insert a DateChatItem for the new date
+        chatItems.add(ChatItem.date(date: messageDate));
+        lastDate = messageDate;
+      }
+
+      // Insert the MessageChatItem
+      chatItems.add(ChatItem.message(message: message));
+    }
+
+    return chatItems;
   }
 }

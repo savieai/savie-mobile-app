@@ -44,7 +44,7 @@ class SearchFiles extends StatelessWidget {
                       onTap: () {},
                     ),
                   ],
-                  heroTag: 'FileSearchResult${file.id}',
+                  heroTag: '${file.hashCode}',
                   builder: (_, __, ___) => _FileSearchResultView(file: file),
                 );
               },

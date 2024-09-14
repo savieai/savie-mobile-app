@@ -32,10 +32,12 @@ abstract class ChatApi {
   );
 
   @GET('/messages/search')
-  Future<HttpResponse<void>> searchMessages(
-    @Query('q') String query,
-    @Query('type') String type,
-  );
+  Future<HttpResponse<GetMessagesResponse>> searchMessages({
+    @Query('q') required String query,
+    @Query('type') required String type,
+    @Query('page') required int page,
+    @Query('page_size') required int pageSize,
+  });
 
   @DELETE('/messages/{messageId}')
   Future<HttpResponse<void>> deleteMessage(

@@ -64,14 +64,11 @@ class _MessageListViewState extends State<MessageListView> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Message> messages = context.select<ChatCubit, List<Message>>(
-      (ChatCubit cubit) => cubit.state.messages,
+    final List<ChatItem> chatItems = context.select<ChatCubit, List<ChatItem>>(
+      (ChatCubit cubit) => cubit.state.chatItems,
     );
-    final Map<String, Message> messageMap = <String, Message>{
-      for (final Message m in messages) m.currentId: m,
-    };
 
-    final int length = messages.length;
+    final int length = chatItems.length;
 
     return Container(
       color: AppColors.backgroundPrimary,
@@ -88,83 +85,7 @@ class _MessageListViewState extends State<MessageListView> {
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 sliver: WelcomeMessageListView(),
               ),
-              if (length != 0)
-                SliverImplicitlyAnimatedList<String>(
-                  items: messageMap.keys.toList().reversed.toList(),
-                  areItemsTheSame: (String a, String b) => a == b,
-                  insertDuration: ChatPagePorvider.sentMessageAnimationDuration,
-                  removeDuration: const Duration(milliseconds: 300),
-                  itemBuilder: (
-                    _,
-                    Animation<double> animation,
-                    String currentId,
-                    int index,
-                  ) {
-                    final bool isFirstInGroup = index == length - 1;
-
-                    final Message? message = messageMap[currentId];
-
-                    if (message == null) {
-                      return const SizedBox();
-                    }
-
-                    return FadeTransition(
-                      opacity: CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOut,
-                      ),
-                      child: SizeTransition(
-                        sizeFactor: CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOut,
-                        ),
-                        axisAlignment: -1,
-                        child: Padding(
-                          padding:
-                              EdgeInsets.only(top: isFirstInGroup ? 46 : 0) +
-                                  const EdgeInsets.only(bottom: 8, top: 4) +
-                                  const EdgeInsets.symmetric(horizontal: 16),
-                          child: MessageView(
-                            key: Key('MessageView${message.currentId}'),
-                            message: message,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                  removeItemBuilder: (
-                    BuildContext context,
-                    Animation<double> animation,
-                    String item,
-                  ) {
-                    final Message message =
-                        context.read<ChatCubit>().state.removedMessages[item]!;
-
-                    // TODO: track if was first in group
-
-                    return FadeTransition(
-                      opacity: CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOut.flipped,
-                      ),
-                      child: SizeTransition(
-                        sizeFactor: CurvedAnimation(
-                          parent: animation,
-                          curve: Curves.easeOut.flipped,
-                        ),
-                        axisAlignment: -1,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 8, top: 4) +
-                              const EdgeInsets.symmetric(horizontal: 16),
-                          child: MessageView(
-                            key: Key('MessageView${message.currentId}'),
-                            message: message,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+              if (length != 0) _ChatMessageList(chatItems: chatItems),
               SliverToBoxAdapter(
                 child: SizedBox(height: length == 0 ? 32 : 20),
               ),
@@ -176,38 +97,85 @@ class _MessageListViewState extends State<MessageListView> {
   }
 }
 
-class _MessageDateStickyHeader extends StatelessWidget {
-  const _MessageDateStickyHeader({
-    required this.isScrollingNotifier,
-    required this.date,
-    required this.topPoint,
+class _ChatMessageList extends StatelessWidget {
+  const _ChatMessageList({
+    required this.chatItems,
   });
 
-  final ValueNotifier<bool> isScrollingNotifier;
-  final DateTime date;
-  final double topPoint;
+  final List<ChatItem> chatItems;
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: isScrollingNotifier,
-      builder: (BuildContext context, _, __) {
-        final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
-        late final double curentPoint;
+    // Reverse the list to display messages from newest to oldest
+    final List<ChatItem> reversedChatItems = chatItems.reversed.toList();
 
-        try {
-          curentPoint =
-              renderBox?.localToGlobal(Offset.zero).dy ?? double.infinity;
-        } catch (_) {
-          curentPoint = double.infinity;
-        }
-
-        return ChatDateView(
-          date: date,
-          isPinned: curentPoint <= topPoint,
-          isScrollingNotifier: isScrollingNotifier,
+    return SliverImplicitlyAnimatedList<ChatItem>(
+      items: reversedChatItems,
+      areItemsTheSame: (ChatItem a, ChatItem b) => a.currentId == b.currentId,
+      insertDuration: ChatPagePorvider.sentMessageAnimationDuration,
+      removeDuration: const Duration(milliseconds: 300),
+      itemBuilder: (
+        BuildContext context,
+        Animation<double> animation,
+        ChatItem chatItem,
+        int index,
+      ) {
+        return _AnimatedChatItem(
+          animation: animation,
+          chatItem: chatItem,
+          isRemoved: false,
         );
       },
+      removeItemBuilder: (
+        BuildContext context,
+        Animation<double> animation,
+        ChatItem chatItem,
+      ) {
+        return _AnimatedChatItem(
+          animation: animation,
+          chatItem: chatItem,
+          isRemoved: true,
+        );
+      },
+    );
+  }
+}
+
+class _AnimatedChatItem extends StatelessWidget {
+  const _AnimatedChatItem({
+    required this.animation,
+    required this.chatItem,
+    required this.isRemoved,
+  });
+
+  final Animation<double> animation;
+  final ChatItem chatItem;
+  final bool isRemoved;
+
+  @override
+  Widget build(BuildContext context) {
+    final CurvedAnimation curvedAnimation = CurvedAnimation(
+      parent: animation,
+      curve: isRemoved ? Curves.easeOut.flipped : Curves.easeOut,
+    );
+
+    return FadeTransition(
+      opacity: curvedAnimation,
+      child: SizeTransition(
+        sizeFactor: curvedAnimation,
+        axisAlignment: -1,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 8, top: 4)
+              .add(const EdgeInsets.symmetric(horizontal: 16)),
+          child: chatItem.when(
+            message: (Message message) => MessageView(
+              key: ValueKey<String>('MessageView_${message.currentId}'),
+              message: message,
+            ),
+            date: (DateTime date) => ChatDateView(date: date),
+          ),
+        ),
+      ),
     );
   }
 }

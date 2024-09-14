@@ -38,62 +38,66 @@ class MessageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MessageTimeWrapper(
-      time: message.date,
-      child: _MessageAligner(
-        child: ContextMenuRegion(
-          heroTag: '${message.currentId}_context_menu',
-          data: _getContextMenuData(context),
-          builder: (
-            BuildContext context,
-            Animation<double> animtion,
-            bool contextMenuShown,
-          ) {
-            return message.map(
-              text: (TextMessage textMessage) {
-                if (textMessage.images.isNotEmpty) {
-                  if (textMessage.text != null) {
-                    return _TextWithMediaMessageView(
-                      message: textMessage,
-                      contextMenuShown: contextMenuShown,
+    return Column(
+      children: <Widget>[
+        MessageTimeWrapper(
+          time: message.date,
+          child: _MessageAligner(
+            child: ContextMenuRegion(
+              heroTag: '${message.currentId}_context_menu',
+              data: _getContextMenuData(context),
+              builder: (
+                BuildContext context,
+                Animation<double> animtion,
+                bool contextMenuShown,
+              ) {
+                return message.map(
+                  text: (TextMessage textMessage) {
+                    if (textMessage.images.isNotEmpty) {
+                      if (textMessage.text != null) {
+                        return _TextWithMediaMessageView(
+                          message: textMessage,
+                          contextMenuShown: contextMenuShown,
+                        );
+                      } else {
+                        return MediaMessageView(
+                          message: textMessage,
+                          contextMenuShown: contextMenuShown,
+                        );
+                      }
+                    } else {
+                      return MessagePendingWrapper(
+                        isPending: message.isPending,
+                        isNew: message.isNew,
+                        child: TextMessageView(
+                          textMessage: textMessage,
+                          contextMenuShown: contextMenuShown,
+                        ),
+                      );
+                    }
+                  },
+                  audio: (AudioMessage audioMessage) {
+                    return MessagePendingWrapper(
+                      isPending: message.isPending,
+                      isNew: message.isNew,
+                      child: AudioMessageView(
+                        audioMessage: audioMessage,
+                      ),
                     );
-                  } else {
-                    return MediaMessageView(
-                      message: textMessage,
-                      contextMenuShown: contextMenuShown,
-                    );
-                  }
-                } else {
-                  return MessagePendingWrapper(
+                  },
+                  file: (FileMessage fileMessage) => MessagePendingWrapper(
                     isPending: message.isPending,
                     isNew: message.isNew,
-                    child: TextMessageView(
-                      textMessage: textMessage,
-                      contextMenuShown: contextMenuShown,
+                    child: FileMessageView(
+                      fileMessage: fileMessage,
                     ),
-                  );
-                }
-              },
-              audio: (AudioMessage audioMessage) {
-                return MessagePendingWrapper(
-                  isPending: message.isPending,
-                  isNew: message.isNew,
-                  child: AudioMessageView(
-                    audioMessage: audioMessage,
                   ),
                 );
               },
-              file: (FileMessage fileMessage) => MessagePendingWrapper(
-                isPending: message.isPending,
-                isNew: message.isNew,
-                child: FileMessageView(
-                  fileMessage: fileMessage,
-                ),
-              ),
-            );
-          },
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 

@@ -1,5 +1,6 @@
 enum SearchResultType {
   file,
   image,
-  link;
+  link,
+  voice;
 }

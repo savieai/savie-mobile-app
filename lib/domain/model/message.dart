@@ -9,6 +9,7 @@ class Message with _$Message implements Comparable<Message> {
   const factory Message.text({
     required bool isPending,
     @Default(false) bool isNew,
+    @Default(false) bool isRemoved,
     required String id,
     required String? tempId,
     required DateTime date,
@@ -20,6 +21,7 @@ class Message with _$Message implements Comparable<Message> {
   const factory Message.audio({
     required bool isPending,
     @Default(false) bool isNew,
+    @Default(false) bool isRemoved,
     required String id,
     required String? tempId,
     required DateTime date,
@@ -29,6 +31,7 @@ class Message with _$Message implements Comparable<Message> {
   const factory Message.file({
     required bool isPending,
     @Default(false) bool isNew,
+    @Default(false) bool isRemoved,
     required String id,
     required String? tempId,
     required DateTime date,
