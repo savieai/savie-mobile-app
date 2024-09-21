@@ -20,9 +20,13 @@ class ChatItem with _$ChatItem {
 
 @freezed
 class ChatState with _$ChatState {
-  const factory ChatState({
-    @Default(<ChatItem>[]) List<ChatItem> chatItems,
+  const factory ChatState.loading() = ChatLoading;
+
+  const factory ChatState.fetched({
+    @Default(<ChatItem>[]) List<ChatItem> earlierMessages,
+    @Default(<ChatItem>[]) List<ChatItem> laterMessages,
+    @Default(<Message>[]) List<Message> pendingMessages,
     @Default(false) bool fetchingPrevious,
     @Default(false) bool fetchingNext,
-  }) = _ChatState;
+  }) = ChatFetched;
 }

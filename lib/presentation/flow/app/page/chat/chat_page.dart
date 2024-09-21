@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../application/application.dart';
 import '../../../../presentation.dart';
@@ -18,7 +19,6 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage>
     with SingleTickerProviderStateMixin {
-  final ScrollController _scrollController = ScrollController();
   late final AnimationController _sentMessageAnimationController;
   late final Animation<double> _sentMessageAnimation;
 
@@ -36,28 +36,39 @@ class _ChatPageState extends State<ChatPage>
     );
   }
 
+  ScrollController _scrollController = ScrollController();
+
   @override
   Widget build(BuildContext context) {
-    return ChatPagePorvider(
-      scrollController: _scrollController,
-      sentMessageAnimation: _sentMessageAnimation,
-      sentMessageAnimationController: _sentMessageAnimationController,
-      child: Scaffold(
-        appBar: const _ChatAppBar(),
-        backgroundColor: AppColors.backgroundChatInput,
-        body: Column(
-          children: <Widget>[
-            Expanded(
-              child: HeroVisibleArea(
-                child: MessagesHorizontalDragListener(
-                  child: MessageListView(
-                    scrollController: _scrollController,
+    return BlocListener<ChatCubit, ChatState>(
+      listener: (BuildContext context, ChatState state) {
+        setState(() {
+          _scrollController = ScrollController();
+        });
+      },
+      listenWhen: (ChatState previous, ChatState current) =>
+          previous.runtimeType != current.runtimeType,
+      child: ChatPagePorvider(
+        scrollController: _scrollController,
+        sentMessageAnimation: _sentMessageAnimation,
+        sentMessageAnimationController: _sentMessageAnimationController,
+        child: Scaffold(
+          appBar: const _ChatAppBar(),
+          backgroundColor: AppColors.backgroundChatInput,
+          body: Column(
+            children: <Widget>[
+              Expanded(
+                child: HeroVisibleArea(
+                  child: MessagesHorizontalDragListener(
+                    child: MessageListView(
+                      scrollController: _scrollController,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const MessageInputView(),
-          ],
+              const MessageInputView(),
+            ],
+          ),
         ),
       ),
     );

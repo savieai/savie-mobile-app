@@ -21,8 +21,14 @@ abstract class ChatApi {
   factory ChatApi(Dio dio, {String baseUrl}) = _ChatApi;
 
   @GET('/messages')
-  Future<HttpResponse<GetMessagesResponse>> getMessages({
+  Future<HttpResponse<GetMessagesResponse>> getMessagesByPage({
     @Query('page') required int page,
+    @Query('page_size') required int pageSize,
+  });
+
+  @GET('/messages')
+  Future<HttpResponse<GetMessagesResponse>> getMessagesByMessageId({
+    @Query('message_id') required String messageId,
     @Query('page_size') required int pageSize,
   });
 
@@ -34,7 +40,7 @@ abstract class ChatApi {
   @GET('/messages/search')
   Future<HttpResponse<GetMessagesResponse>> searchMessages({
     @Query('q') required String query,
-    @Query('type') required String type,
+    @Query('type') required String? type,
     @Query('page') required int page,
     @Query('page_size') required int pageSize,
   });

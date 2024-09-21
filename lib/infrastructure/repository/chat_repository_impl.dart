@@ -13,14 +13,37 @@ class ChatRepositoryImpl implements ChatRepository {
   final ChatApi _chatApi;
 
   @override
-  Future<List<Message>> fetchMessages({
+  Future<(Pagination, List<Message>)> fetchMessagesByPage({
     required int page,
     required int pageSize,
   }) async {
     final HttpResponse<GetMessagesResponse> response =
-        await _chatApi.getMessages(page: page, pageSize: pageSize);
+        await _chatApi.getMessagesByPage(
+      page: page,
+      pageSize: pageSize,
+    );
 
-    return response.data.data.messages.map(MessageMapper.toDomain).toList();
+    return (
+      PaginationMapper.toDomain(response.data.data.pagination),
+      response.data.data.messages.map(MessageMapper.toDomain).toList()
+    );
+  }
+
+  @override
+  Future<(Pagination, List<Message>)> fetchMessagesByMessageId({
+    required String messageId,
+    required int pageSize,
+  }) async {
+    final HttpResponse<GetMessagesResponse> response =
+        await _chatApi.getMessagesByMessageId(
+      messageId: messageId,
+      pageSize: pageSize,
+    );
+
+    return (
+      PaginationMapper.toDomain(response.data.data.pagination),
+      response.data.data.messages.map(MessageMapper.toDomain).toList()
+    );
   }
 
   @override
@@ -76,6 +99,7 @@ class ChatRepositoryImpl implements ChatRepository {
       textContent: text ?? '',
       voiceMessage: null,
     );
+
     await _chatApi.createMessage(jsonEncode(request));
   }
 
@@ -152,4 +176,24 @@ class ChatRepositoryImpl implements ChatRepository {
     required String messageId,
   }) =>
       _chatApi.deleteMessage(messageId);
+
+  @override
+  Future<(Pagination, List<Message>)> searchInMessages({
+    required String query,
+    required int page,
+    required int pageSize,
+  }) async {
+    final HttpResponse<GetMessagesResponse> response =
+        await _chatApi.searchMessages(
+      query: query,
+      type: null,
+      page: page,
+      pageSize: pageSize,
+    );
+
+    return (
+      PaginationMapper.toDomain(response.data.data.pagination),
+      response.data.data.messages.map(MessageMapper.toDomain).toList()
+    );
+  }
 }

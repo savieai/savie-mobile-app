@@ -1,3 +1,4 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -52,9 +53,17 @@ class _SearchImagesState extends State<SearchImages> {
                         data: <ContextMenuItemData>[
                           ContextMenuItemData(
                             title: 'Show in chat',
-                            icon: Assets.icons.file12,
+                            icon: Assets.icons.messageCircle16,
                             color: AppColors.textPrimary,
-                            onTap: () {},
+                            onTap: () {
+                              context
+                                  .read<ChatCubit>()
+                                  .findMessage(image.messageId);
+
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                context.router.maybePop();
+                              });
+                            },
                           ),
                         ],
                         heroTag: '${image.hashCode}',

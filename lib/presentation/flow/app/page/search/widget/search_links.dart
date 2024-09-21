@@ -1,3 +1,4 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -36,9 +37,15 @@ class SearchLinks extends StatelessWidget {
                   data: <ContextMenuItemData>[
                     ContextMenuItemData(
                       title: 'Show in chat',
-                      icon: Assets.icons.copy16,
+                      icon: Assets.icons.messageCircle16,
                       color: AppColors.textPrimary,
-                      onTap: () {},
+                      onTap: () {
+                        context.read<ChatCubit>().findMessage(link.messageId);
+
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          context.router.maybePop();
+                        });
+                      },
                     ),
                   ],
                   heroTag: '${link.hashCode}',

@@ -66,6 +66,7 @@ class MessageView extends StatelessWidget {
                         );
                       }
                     } else {
+                      
                       return MessagePendingWrapper(
                         isPending: message.isPending,
                         isNew: message.isNew,

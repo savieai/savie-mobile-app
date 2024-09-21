@@ -21,6 +21,7 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final SearchCubit _searchCubit = getIt.get<SearchCubit>();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -39,6 +40,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void dispose() {
     _searchCubit.close();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -56,16 +58,27 @@ class _SearchPageState extends State<SearchPage> {
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: const Row(
+              child: Row(
                 children: <Widget>[
-                  Expanded(child: _SearchField()),
-                  SizedBox(width: 16),
-                  _CancelButton(),
+                  Expanded(child: _SearchField(controller: _searchController)),
+                  const SizedBox(width: 16),
+                  const _CancelButton(),
                 ],
               ),
             ),
             const SizedBox(height: 8),
-            const Expanded(child: _TabView()),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _searchController,
+              builder: (BuildContext context, TextEditingValue value, _) {
+                return Expanded(
+                  child: value.text.isEmpty
+                      ? const _TabView()
+                      : SearchChat(
+                          searchController: _searchController,
+                        ),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -168,8 +181,19 @@ class _TabViewState extends State<_TabView>
   }
 }
 
-class _SearchField extends StatelessWidget {
-  const _SearchField();
+class _SearchField extends StatefulWidget {
+  const _SearchField({
+    required this.controller,
+  });
+
+  final TextEditingController controller;
+
+  @override
+  State<_SearchField> createState() => _SearchFieldState();
+}
+
+class _SearchFieldState extends State<_SearchField> {
+  final FocusNode _focusNode = FocusNode();
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +204,7 @@ class _SearchField extends StatelessWidget {
         vertical: 9,
         horizontal: 8,
       ),
+      controller: widget.controller,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: AppColors.backgroundChatInput,
@@ -189,6 +214,9 @@ class _SearchField extends StatelessWidget {
       placeholderStyle: AppTextStyles.paragraph.copyWith(
         color: AppColors.textSecondary,
       ),
+      onTapOutside: (_) {
+        _focusNode.unfocus();
+      },
       onChanged: context.read<SearchCubit>().updateQuery,
       prefix: Padding(
         padding: const EdgeInsets.only(left: 8),
@@ -199,15 +227,15 @@ class _SearchField extends StatelessWidget {
           ),
         ),
       ),
-      suffix: Padding(
-        padding: const EdgeInsets.only(right: 8),
-        child: Assets.icons.calendarSearch24.svg(
-          colorFilter: const ColorFilter.mode(
-            AppColors.iconSecodary,
-            BlendMode.srcIn,
-          ),
-        ),
-      ),
+      // suffix: Padding(
+      //   padding: const EdgeInsets.only(right: 8),
+      //   child: Assets.icons.calendarSearch24.svg(
+      //     colorFilter: const ColorFilter.mode(
+      //       AppColors.iconSecodary,
+      //       BlendMode.srcIn,
+      //     ),
+      //   ),
+      // ),
     );
   }
 }

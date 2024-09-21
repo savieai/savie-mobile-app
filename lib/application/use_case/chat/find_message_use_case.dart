@@ -3,17 +3,17 @@ import 'package:injectable/injectable.dart';
 import '../../../domain/domain.dart';
 
 @Injectable()
-class GetMessageUseCase {
-  GetMessageUseCase(this._chatRepository);
+class FindMessageUseCase {
+  FindMessageUseCase(this._chatRepository);
 
   final ChatRepository _chatRepository;
 
   Future<(Pagination, List<Message>)> execute({
-    required int page,
+    required String messageId,
     required int pageSize,
   }) =>
-      _chatRepository.fetchMessagesByPage(
-        page: page,
+      _chatRepository.fetchMessagesByMessageId(
+        messageId: messageId,
         pageSize: pageSize,
       );
 }

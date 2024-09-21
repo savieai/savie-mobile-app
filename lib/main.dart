@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -29,12 +28,6 @@ void main() async {
       );
 
       await configureDependencies();
-
-      Clipboard.setData(
-        ClipboardData(
-          text: Supabase.instance.client.auth.currentSession?.accessToken ?? '',
-        ),
-      );
 
       runApp(const SavieApp());
     },

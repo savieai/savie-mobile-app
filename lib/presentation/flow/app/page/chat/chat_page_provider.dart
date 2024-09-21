@@ -35,7 +35,9 @@ class ChatPagePorvider extends InheritedWidget {
     return result;
   }
 
-  bool get canRunSentMessageAnimation => scrollController.offset == 0;
+  bool get canRunSentMessageAnimation =>
+      scrollController.position.minScrollExtent ==
+      scrollController.position.pixels;
 
   void runSentMessageAnimation({
     required String text,

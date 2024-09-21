@@ -1,8 +1,13 @@
 import '../domain.dart';
 
 abstract class ChatRepository {
-  Future<List<Message>> fetchMessages({
+  Future<(Pagination, List<Message>)> fetchMessagesByPage({
     required int page,
+    required int pageSize,
+  });
+
+  Future<(Pagination, List<Message>)> fetchMessagesByMessageId({
+    required String messageId,
     required int pageSize,
   });
 
@@ -22,6 +27,11 @@ abstract class ChatRepository {
   Future<List<SearchResult>> searchMessages({
     required String query,
     required SearchResultType type,
+  });
+  Future<(Pagination, List<Message>)> searchInMessages({
+    required String query,
+    required int page,
+    required int pageSize,
   });
   Future<void> removeMessage({
     required String messageId,

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -14,71 +15,189 @@ part 'chat_cubit.freezed.dart';
 class ChatCubit extends Cubit<ChatState> {
   ChatCubit(
     this._createMessageUseCase,
+    this._searchInMessagesUseCase,
     this._getMessageUseCase,
     this._createPdfThumbnailUseCase,
     this._deleteMessagesUseCase,
-  ) : super(const ChatState()) {
-    _fetchMessages(page: _currentPage);
+    this._findMessageUseCase, {
+    @factoryParam String? query,
+  })  : _query = query,
+        super(const ChatState.loading()) {
+    _fetchMessages(1, query: query);
   }
 
   final CreateMessageUseCase _createMessageUseCase;
+  final SearchInMessagesUseCase _searchInMessagesUseCase;
   final GetMessageUseCase _getMessageUseCase;
   final CreatePdfThumbnailUseCase _createPdfThumbnailUseCase;
   final DeleteMessagesUseCase _deleteMessagesUseCase;
+  final FindMessageUseCase _findMessageUseCase;
 
   static const int _pageSize = 100;
-  int _currentPage = 1;
 
-  final Map<String, Message> _pendingMessages = <String, Message>{};
+  int _minimumDisplayedPage = 1;
+  int _maximumDisplayedPage = 1;
+  int _maximumPage = 2;
+
+  String? _query;
 
   final SortedMap<String, Message> _sentMessages =
       SortedMap<String, Message>(const Ordering.byValue());
 
-  Future<void> _fetchMessages({
-    required int page,
-  }) async {
-    final List<Message> sentMessages = await _getMessageUseCase.execute(
-      pageSize: _pageSize,
-      page: page,
-    );
+  final Map<String, Message> _pendingMessages = <String, Message>{};
+
+  Message? foundMessage;
+
+  Future<void> _fetchMessages(int page, {required String? query}) async {
+    final (Pagination pagination, List<Message> sentMessages) = query == null
+        ? await _getMessageUseCase.execute(
+            pageSize: _pageSize,
+            page: page,
+          )
+        : await _searchInMessagesUseCase.execute(
+            page: page,
+            pageSize: _pageSize,
+            query: query,
+          );
+
+    _maximumPage = pagination.totalPages;
 
     for (final Message m in sentMessages) {
+      _pendingMessages.remove(m.tempId);
       _sentMessages[m.currentId] = m;
     }
 
-    _pendingMessages.removeWhere(
-      (String id, _) => _sentMessages.containsKey(id),
+    _emitMessages();
+  }
+
+  Future<void> fetchLaterMessages() async {
+    state.mapOrNull(
+      fetched: (ChatFetched _) async {
+        if (_minimumDisplayedPage > 1) {
+          _minimumDisplayedPage--;
+        } else {
+          return;
+        }
+
+        state.mapOrNull(
+          fetched: (ChatFetched f) => emit(f.copyWith(fetchingPrevious: true)),
+        );
+        await _fetchMessages(_minimumDisplayedPage, query: _query);
+        state.mapOrNull(
+          fetched: (ChatFetched f) => emit(f.copyWith(fetchingPrevious: false)),
+        );
+      },
+    );
+  }
+
+  Future<void> fetchEarlierMessages() async {
+    state.mapOrNull(
+      fetched: (ChatFetched _) async {
+        if (_maximumDisplayedPage < _maximumPage) {
+          _maximumDisplayedPage++;
+        } else {
+          return;
+        }
+
+        state.mapOrNull(
+          fetched: (ChatFetched f) => emit(f.copyWith(fetchingNext: true)),
+        );
+        await _fetchMessages(_maximumDisplayedPage, query: _query);
+        state.mapOrNull(
+          fetched: (ChatFetched f) => emit(f.copyWith(fetchingNext: false)),
+        );
+      },
+    );
+  }
+
+  Future<void> findMessages(String query) async {
+    _query = query;
+    state.mapOrNull(
+      fetched: (ChatFetched _) async {
+        emit(const ChatState.loading());
+
+        _sentMessages.clear();
+
+        _minimumDisplayedPage = 1;
+        _maximumDisplayedPage = 1;
+        _maximumPage = 2;
+
+        _fetchMessages(1, query: query);
+      },
+    );
+  }
+
+  Future<void> findMessage(String messageId) async {
+    state.mapOrNull(
+      fetched: (ChatFetched _) async {
+        emit(const ChatState.loading());
+        final Pagination pagination = await _findMessage(messageId);
+        _minimumDisplayedPage = pagination.currentPage;
+        _maximumDisplayedPage = pagination.currentPage;
+
+        await fetchLaterMessages();
+      },
+    );
+  }
+
+  Future<Pagination> _findMessage(String messageId) async {
+    final (Pagination pagination, List<Message> messages) =
+        await _findMessageUseCase.execute(
+      pageSize: _pageSize,
+      messageId: messageId,
     );
 
-    emit(ChatState(
-      chatItems: _getChatItems(
-        <Message>[
-          ..._sentMessages.values,
-          if (_pendingMessages.isNotEmpty) ...<Message>[
-            ..._pendingMessages.values.take(_pendingMessages.length - 1),
-            _pendingMessages.values.last.copyWith(isNew: true),
-          ],
-        ],
-      ),
-    ));
-  }
+    _sentMessages.clear();
 
-  Future<void> fetchPrevious() async {
-    if (_currentPage != 1) {
-      _currentPage--;
+    for (final Message m in messages) {
+      _pendingMessages.remove(m.tempId);
+      _sentMessages[m.currentId] = m;
     }
 
-    emit(state.copyWith(fetchingPrevious: true));
-    await _fetchMessages(page: _currentPage);
-    emit(state.copyWith(fetchingPrevious: false));
+    // Find the index of the message with the given messageId
+    final int messageIndex =
+        messages.indexWhere((Message message) => message.id == messageId);
+
+    foundMessage = messages[messageIndex];
+
+    _emitMessages();
+
+    return pagination;
   }
 
-  Future<void> fetchNext() async {
-    _currentPage++;
+  void _emitMessages() {
+    if (isClosed) {
+      return;
+    }
 
-    emit(state.copyWith(fetchingNext: true));
-    await _fetchMessages(page: _currentPage);
-    emit(state.copyWith(fetchingNext: false));
+    final List<Message> messagesToEmit = <Message>[
+      ..._sentMessages.values,
+      if (_pendingMessages.isNotEmpty) ...<Message>[
+        ..._pendingMessages.values.take(_pendingMessages.length - 1),
+        _pendingMessages.values.last.copyWith(isNew: true),
+      ],
+    ];
+
+    if (foundMessage == null) {
+      emit(ChatState.fetched(
+        earlierMessages: _getChatItems(messagesToEmit),
+      ));
+    } else {
+      final Iterable<Message> earlierMessages = messagesToEmit.where(
+        (Message message) => !message.date.isAfter(foundMessage!.date),
+      );
+      final Iterable<Message> laterMessages = messagesToEmit.where(
+        (Message message) => message.date.isAfter(foundMessage!.date),
+      );
+
+      emit(ChatState.fetched(
+        earlierMessages: _getChatItems(earlierMessages.toList()),
+        laterMessages: _getChatItems(
+          laterMessages.toList(),
+          initialLastDate: earlierMessages.firstOrNull?.date.toDate,
+        ).reversed.toList(),
+      ));
+    }
   }
 
   Future<void> sendMessage({
@@ -109,20 +228,9 @@ class ChatCubit extends Cubit<ChatState> {
     );
 
     _pendingMessages[pendingUuid] = message;
-    emit(ChatState(
-      chatItems: _getChatItems(
-        <Message>[
-          ..._sentMessages.values,
-          if (_pendingMessages.isNotEmpty) ...<Message>[
-            ..._pendingMessages.values.take(_pendingMessages.length - 1),
-            _pendingMessages.values.last.copyWith(isNew: true),
-          ],
-        ],
-      ),
-    ));
-
+    _emitMessages();
     await _createMessageUseCase.execute(message);
-    _fetchMessages(page: 1);
+    await _fetchMessages(1, query: null);
   }
 
   Future<void> sendAudio(AudioInfo? audioInfo) async {
@@ -148,20 +256,9 @@ class ChatCubit extends Cubit<ChatState> {
     );
 
     _pendingMessages[pendingUuid] = message;
-    emit(ChatState(
-      chatItems: _getChatItems(
-        <Message>[
-          ..._sentMessages.values,
-          if (_pendingMessages.isNotEmpty) ...<Message>[
-            ..._pendingMessages.values.take(_pendingMessages.length - 1),
-            _pendingMessages.values.last.copyWith(isNew: true),
-          ],
-        ],
-      ),
-    ));
-
+    _emitMessages();
     await _createMessageUseCase.execute(message);
-    _fetchMessages(page: 1);
+    await _fetchMessages(1, query: null);
   }
 
   Future<void> sendFile(String? filePath) async {
@@ -191,89 +288,29 @@ class ChatCubit extends Cubit<ChatState> {
     if (file.fileType == FileType.pdf) {
       await _createPdfThumbnailUseCase.execute(file);
     }
-
     _pendingMessages[pendingUuid] = message;
-    emit(ChatState(
-      chatItems: _getChatItems(
-        <Message>[
-          ..._sentMessages.values,
-          if (_pendingMessages.isNotEmpty) ...<Message>[
-            ..._pendingMessages.values.take(_pendingMessages.length - 1),
-            _pendingMessages.values.last.copyWith(isNew: true),
-          ],
-        ],
-      ),
-    ));
-
+    _emitMessages();
     await _createMessageUseCase.execute(message);
-    _fetchMessages(page: 1);
+    await _fetchMessages(1, query: null);
   }
 
   Future<void> deleteMessage({required String messageId}) async {
-    // Create a mutable copy of the current chatItems
-    final List<ChatItem> chatItems = List<ChatItem>.from(state.chatItems);
-    final List<ChatItem> removedChatItems = <ChatItem>[];
-
-    // Find the index of the message ChatItem to remove
-    final int messageIndex = chatItems.indexWhere((ChatItem item) {
-      return item.maybeWhen(
-        message: (Message m) => m.id == messageId,
-        orElse: () => false,
-      );
-    });
-
-    if (messageIndex == -1) {
-      // Message not found, nothing to remove
-      return;
-    }
-
-    // Remove the message ChatItem from the list
-    final ChatItem removedMessageItem = chatItems.removeAt(messageIndex);
-    removedChatItems.add(removedMessageItem);
-
-    // Remove the message from _sentMessages
-    _sentMessages.removeWhere((_, Message m) => m.id == messageId);
-
-    // Get the date of the removed message
-    final DateTime removedMessageDate =
-        (removedMessageItem as MessageChatItem).message.date.toDate;
-
-    // Check if there are any messages left on that date
-    final bool hasMessagesOnDate = chatItems.any((ChatItem item) {
-      return item.maybeWhen(
-        message: (Message m) {
-          final DateTime messageDate = m.date.toDate;
-          return messageDate == removedMessageDate;
-        },
-        orElse: () => false,
-      );
-    });
-
-    if (!hasMessagesOnDate) {
-      // No messages left on this date, remove the DateChatItem
-      final int dateItemIndex = chatItems.indexWhere((ChatItem item) {
-        return item.maybeWhen(
-          date: (DateTime date) => date == removedMessageDate,
-          orElse: () => false,
-        );
-      });
-
-      if (dateItemIndex != -1) {
-        final ChatItem removedDateItem = chatItems.removeAt(dateItemIndex);
-        removedChatItems.add(removedDateItem);
-      }
-    }
-
-    // Emit the new state with updated chatItems and removedChatItems
-    emit(state.copyWith(chatItems: chatItems));
-
-    // Perform the deletion operation
-    await _deleteMessagesUseCase.execute(messageId: messageId);
+    state.mapOrNull(
+      fetched: (ChatFetched fetched) async {
+        _sentMessages.removeWhere((_, Message m) => m.id == messageId);
+        _deleteMessagesUseCase.execute(messageId: messageId);
+        _emitMessages();
+      },
+    );
   }
 
-  List<ChatItem> _getChatItems(final List<Message> messages) {
+  // Helper method to clean up date headers if no messages remain for a specific date
+  List<ChatItem> _getChatItems(
+    final List<Message> messages, {
+    DateTime? initialLastDate,
+  }) {
     final List<ChatItem> chatItems = <ChatItem>[];
-    DateTime? lastDate;
+    DateTime? lastDate = initialLastDate;
 
     for (final Message message in messages) {
       // Extract the date part (year, month, day) of the message date

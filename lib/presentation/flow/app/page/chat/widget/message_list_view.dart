@@ -1,7 +1,6 @@
 import 'package:animated_list_plus/animated_list_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:scrollview_observer/scrollview_observer.dart';
 
 import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
@@ -12,49 +11,68 @@ class MessageListView extends StatefulWidget {
   const MessageListView({
     super.key,
     required this.scrollController,
+    this.includeWelcomeMessages = true,
   });
 
   final ScrollController scrollController;
+  final bool includeWelcomeMessages;
 
   @override
   State<MessageListView> createState() => _MessageListViewState();
 }
 
 class _MessageListViewState extends State<MessageListView> {
-  late final ListObserverController _observerController;
-  late final ScrollController _scrollController;
+  late ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
     _scrollController = widget.scrollController;
-    _observerController = ListObserverController(controller: _scrollController);
 
     _scrollController.addListener(_scrollControllerListener);
   }
 
   double _previousOffset = 0;
 
+  @override
+  void didUpdateWidget(covariant MessageListView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.scrollController != widget.scrollController) {
+      _scrollController = widget.scrollController;
+
+      _scrollController.addListener(_scrollControllerListener);
+    }
+  }
+
   void _scrollControllerListener() {
     final ChatCubit chatCubit = context.read<ChatCubit>();
-    if (!chatCubit.state.fetchingNext) {
-      final double threshold = _scrollController.position.maxScrollExtent - 100;
-      if (_scrollController.offset >= threshold &&
-          _previousOffset < threshold) {
-        chatCubit.fetchNext();
-      }
-    }
+    chatCubit.state.mapOrNull(
+      fetched: (ChatFetched state) {
+        if (!state.fetchingNext) {
+          final double threshold =
+              _scrollController.position.maxScrollExtent - 500;
+          if (_scrollController.offset >= threshold &&
+              _previousOffset < threshold) {
+            chatCubit.fetchEarlierMessages();
+          }
+        }
 
-    if (!chatCubit.state.fetchingPrevious) {
-      const double threshold = 100;
-      if (_scrollController.offset <= threshold &&
-          _previousOffset > threshold) {
-        chatCubit.fetchPrevious();
-      }
-    }
+        if (!state.fetchingPrevious) {
+          final double threshold =
+              _scrollController.position.minScrollExtent + 500;
 
-    _previousOffset = _scrollController.offset;
+          if (_scrollController.offset <= threshold &&
+              _previousOffset > threshold) {
+            chatCubit.fetchLaterMessages();
+          }
+        }
+
+        _previousOffset = _scrollController.offset;
+      },
+    );
   }
+
+  GlobalKey _centerKey = GlobalKey();
 
   @override
   void dispose() {
@@ -64,35 +82,87 @@ class _MessageListViewState extends State<MessageListView> {
 
   @override
   Widget build(BuildContext context) {
-    final List<ChatItem> chatItems = context.select<ChatCubit, List<ChatItem>>(
-      (ChatCubit cubit) => cubit.state.chatItems,
-    );
+    return BlocConsumer<ChatCubit, ChatState>(
+      listener: (BuildContext context, ChatState state) async {
+        setState(() {
+          _centerKey = GlobalKey();
+        });
+      },
+      listenWhen: (ChatState previous, ChatState current) =>
+          previous is ChatLoading,
+      builder: (BuildContext context, ChatState state) {
+        return Container(
+          color: AppColors.backgroundPrimary,
+          child: state.map(
+            loading: (_) {
+              return const Center(
+                child: CircularProgressIndicator.adaptive(),
+              );
+            },
+            fetched: (ChatFetched fetched) {
+              final List<ChatItem> earlierChatItems = fetched.earlierMessages;
+              final List<ChatItem> laterChatItems = fetched.laterMessages;
 
-    final int length = chatItems.length;
+              final int totalLength =
+                  earlierChatItems.length + laterChatItems.length;
 
-    return Container(
-      color: AppColors.backgroundPrimary,
-      child: ListViewObserver(
-        controller: _observerController,
-        child: CustomScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          controller: _scrollController,
-          reverse: true,
-          slivers: <Widget>[
-            ...<Widget>[
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              const SliverPadding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                sliver: WelcomeMessageListView(),
-              ),
-              if (length != 0) _ChatMessageList(chatItems: chatItems),
-              SliverToBoxAdapter(
-                child: SizedBox(height: length == 0 ? 32 : 20),
-              ),
-            ].reversed,
-          ],
-        ),
-      ),
+              return CustomScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                controller: _scrollController,
+                center: _centerKey,
+                reverse: true,
+                slivers: <Widget>[
+                  ...<Widget>[
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                    if (widget.includeWelcomeMessages)
+                      const SliverPadding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        sliver: WelcomeMessageListView(),
+                      ),
+                    SliverPadding(
+                      key: _centerKey,
+                      padding: EdgeInsets.only(
+                        bottom: laterChatItems.isEmpty ? 24 : 0,
+                      ),
+                      sliver: earlierChatItems.isNotEmpty
+                          ? _ChatMessageList(
+                              chatItems: earlierChatItems,
+                            )
+                          : const SliverToBoxAdapter(child: SizedBox()),
+                    ),
+                    if (laterChatItems.isNotEmpty)
+                      SliverPadding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        sliver: _ChatMessageList(
+                          chatItems: laterChatItems,
+                          newMessageRenderedCallback: () {
+                            _scrollController.animateTo(
+                              _scrollController.position.minScrollExtent,
+                              duration: ChatPagePorvider
+                                      .sentMessageAnimationDuration *
+                                  0.6,
+                              curve: Curves.easeOut,
+                            );
+                          },
+                          hadInitiallyMinScrollExtent: _scrollController
+                                  .hasClients &&
+                              _scrollController.position.minScrollExtent + 50 >=
+                                  _scrollController.offset,
+                          useSizeAnimation: false,
+                        ),
+                      ),
+                    if (totalLength == 0)
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 12),
+                      ),
+                  ].reversed,
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
@@ -100,9 +170,15 @@ class _MessageListViewState extends State<MessageListView> {
 class _ChatMessageList extends StatelessWidget {
   const _ChatMessageList({
     required this.chatItems,
+    this.newMessageRenderedCallback,
+    this.useSizeAnimation = true,
+    this.hadInitiallyMinScrollExtent,
   });
 
   final List<ChatItem> chatItems;
+  final VoidCallback? newMessageRenderedCallback;
+  final bool useSizeAnimation;
+  final bool? hadInitiallyMinScrollExtent;
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +200,9 @@ class _ChatMessageList extends StatelessWidget {
           animation: animation,
           chatItem: chatItem,
           isRemoved: false,
+          newMessageRenderedCallback: newMessageRenderedCallback,
+          useSizeAnimation: useSizeAnimation,
+          hadInitiallyMinScrollExtent: hadInitiallyMinScrollExtent,
         );
       },
       removeItemBuilder: (
@@ -141,16 +220,24 @@ class _ChatMessageList extends StatelessWidget {
   }
 }
 
+Set<String> _reportedHeights = <String>{};
+
 class _AnimatedChatItem extends StatelessWidget {
   const _AnimatedChatItem({
     required this.animation,
     required this.chatItem,
     required this.isRemoved,
+    this.newMessageRenderedCallback,
+    this.useSizeAnimation = true,
+    this.hadInitiallyMinScrollExtent,
   });
 
   final Animation<double> animation;
   final ChatItem chatItem;
   final bool isRemoved;
+  final VoidCallback? newMessageRenderedCallback;
+  final bool useSizeAnimation;
+  final bool? hadInitiallyMinScrollExtent;
 
   @override
   Widget build(BuildContext context) {
@@ -162,15 +249,30 @@ class _AnimatedChatItem extends StatelessWidget {
     return FadeTransition(
       opacity: curvedAnimation,
       child: SizeTransition(
-        sizeFactor: curvedAnimation,
+        sizeFactor: useSizeAnimation
+            ? curvedAnimation
+            : const AlwaysStoppedAnimation<double>(1),
         axisAlignment: -1,
         child: Padding(
           padding: const EdgeInsets.only(bottom: 8, top: 4)
               .add(const EdgeInsets.symmetric(horizontal: 16)),
           child: chatItem.when(
-            message: (Message message) => MessageView(
-              key: ValueKey<String>('MessageView_${message.currentId}'),
-              message: message,
+            message: (Message message) => Builder(
+              builder: (BuildContext context) {
+                if (message.isNew &&
+                    !_reportedHeights.contains(message.currentId) &&
+                    (hadInitiallyMinScrollExtent ?? false)) {
+                  _reportedHeights.add(message.currentId);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    newMessageRenderedCallback?.call();
+                  });
+                }
+
+                return MessageView(
+                  key: ValueKey<String>('MessageView_${message.currentId}'),
+                  message: message,
+                );
+              },
             ),
             date: (DateTime date) => ChatDateView(date: date),
           ),
