@@ -196,4 +196,12 @@ class ChatRepositoryImpl implements ChatRepository {
       response.data.data.messages.map(MessageMapper.toDomain).toList()
     );
   }
+
+  @override
+  Future<void> editMessage({
+    required String messageId,
+    required String textContent,
+  }) {
+    return _chatApi.updateMessage(messageId, textContent);
+  }
 }

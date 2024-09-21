@@ -6,6 +6,7 @@ import '../../../../../application/application.dart';
 import '../../../../presentation.dart';
 import '../../../../router/app_router.gr.dart';
 import 'chat_page_provider.dart';
+import 'cubit/cubit.dart';
 import 'widget/chat_horizontal_drag_listener.dart';
 import 'widget/widget.dart';
 
@@ -40,34 +41,42 @@ class _ChatPageState extends State<ChatPage>
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ChatCubit, ChatState>(
-      listener: (BuildContext context, ChatState state) {
-        setState(() {
-          _scrollController = ScrollController();
-        });
-      },
-      listenWhen: (ChatState previous, ChatState current) =>
-          previous.runtimeType != current.runtimeType,
-      child: ChatPagePorvider(
-        scrollController: _scrollController,
-        sentMessageAnimation: _sentMessageAnimation,
-        sentMessageAnimationController: _sentMessageAnimationController,
-        child: Scaffold(
-          appBar: const _ChatAppBar(),
-          backgroundColor: AppColors.backgroundChatInput,
-          body: Column(
-            children: <Widget>[
-              Expanded(
-                child: HeroVisibleArea(
-                  child: MessagesHorizontalDragListener(
-                    child: MessageListView(
-                      scrollController: _scrollController,
+    return BlocProvider<ChatPageCubit>(
+      create: (BuildContext context) => ChatPageCubit(),
+      child: BlocListener<ChatCubit, ChatState>(
+        listener: (BuildContext context, ChatState state) {
+          setState(() {
+            _scrollController = ScrollController();
+          });
+        },
+        listenWhen: (ChatState previous, ChatState current) =>
+            previous.runtimeType != current.runtimeType,
+        child: ChatPagePorvider(
+          scrollController: _scrollController,
+          sentMessageAnimation: _sentMessageAnimation,
+          sentMessageAnimationController: _sentMessageAnimationController,
+          child: Scaffold(
+            appBar: const _ChatAppBar(),
+            backgroundColor: AppColors.backgroundChatInput,
+            body: Column(
+              children: <Widget>[
+                Expanded(
+                  child: HeroVisibleArea(
+                    child: MessagesHorizontalDragListener(
+                      child: MessageListView(
+                        scrollController: _scrollController,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const MessageInputView(),
-            ],
+                const Column(
+                  children: <Widget>[
+                    EditingMessageView(),
+                    MessageInputView(),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),

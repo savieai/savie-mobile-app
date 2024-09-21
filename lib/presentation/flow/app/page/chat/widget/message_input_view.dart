@@ -11,6 +11,7 @@ import '../../../../../../application/application.dart';
 import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
 import '../chat_page_provider.dart';
+import '../cubit/cubit.dart';
 import 'message_view/sent_animation_text.dart';
 import 'widget.dart';
 
@@ -116,6 +117,10 @@ class _TextInputViewState extends State<_TextInputView> {
   void initState() {
     super.initState();
     _controller.addListener(() {
+      if (_editingMessage != null) {
+        return;
+      }
+
       if (widget.canRecordNotifier.value != _controller.text.isEmpty) {
         widget.canRecordNotifier.value = _controller.text.isEmpty;
       }
@@ -129,133 +134,167 @@ class _TextInputViewState extends State<_TextInputView> {
   }
 
   String _textForAnimation = '';
+  TextMessage? _editingMessage;
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<AnimationStatus>(
-      valueListenable: _chatPagePorvider.sentMessageAnimationStatusNotifier,
-      builder: (BuildContext context, AnimationStatus value, Widget? child) {
-        return AnimatedSize(
-          alignment: Alignment.bottomCenter,
-          duration: value == AnimationStatus.forward
-              ? ChatPagePorvider.sentMessageAnimationDuration
-              : const Duration(milliseconds: 1),
-          curve: Curves.easeOut,
-          child: child,
+    return BlocListener<ChatPageCubit, ChatPageState>(
+      listener: (BuildContext context, ChatPageState state) {
+        state.when(
+          idle: (String preservedText) {
+            setState(() => _editingMessage = null);
+            _controller.value = TextEditingValue(text: preservedText);
+            widget.canRecordNotifier.value = _controller.text.isEmpty;
+          },
+          editingMessage: (TextMessage message) {
+            setState(() => _editingMessage = message);
+            context.read<ChatPageCubit>().updatePreservedText(_controller.text);
+            _controller.value = TextEditingValue(text: message.text ?? '');
+            widget.canRecordNotifier.value = false;
+          },
         );
       },
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: <Widget>[
-          DefaultTextHeightBehavior(
-            textHeightBehavior: const TextHeightBehavior(
-              applyHeightToFirstAscent: false,
-              applyHeightToLastDescent: false,
-            ),
-            child: IntrinsicHeight(
-              child: CupertinoTextField(
-                focusNode: widget.focusNode,
-                controller: _controller,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
-                autofocus: true,
-                minLines: 1,
-                maxLines: 15,
-                cursorColor: AppColors.iconAccent,
-                decoration: const BoxDecoration(),
-                style: AppTextStyles.paragraph,
-                placeholderStyle: AppTextStyles.paragraph.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                placeholder: 'Share anything...',
-                textInputAction: TextInputAction.newline,
-                prefix: Container(
-                  alignment: Alignment.bottomCenter,
-                  padding: const EdgeInsets.fromLTRB(12, 12, 0, 12),
-                  child: const FilePickerButton(),
-                ),
-                suffix: Container(
-                  alignment: Alignment.bottomCenter,
-                  padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
-                  child: ValueListenableBuilder<bool>(
-                    valueListenable: widget.canRecordNotifier,
-                    builder: (BuildContext context, bool canRecord, _) {
-                      return AnimatedCrossFade(
-                        duration: const Duration(milliseconds: 200),
-                        crossFadeState: canRecord
-                            ? CrossFadeState.showSecond
-                            : CrossFadeState.showFirst,
-                        firstChild: SendButton(
-                          onTap: _onSend,
-                        ),
-                        secondChild: Padding(
-                          padding: const EdgeInsets.all(8),
-                          child: Assets.icons.mic24.svg(
-                            colorFilter: const ColorFilter.mode(
-                              AppColors.iconSecodary,
-                              BlendMode.srcIn,
+      child: ValueListenableBuilder<AnimationStatus>(
+        valueListenable: _chatPagePorvider.sentMessageAnimationStatusNotifier,
+        builder: (BuildContext context, AnimationStatus value, Widget? child) {
+          return AnimatedSize(
+            alignment: Alignment.bottomCenter,
+            duration: value == AnimationStatus.forward
+                ? ChatPagePorvider.sentMessageAnimationDuration
+                : const Duration(milliseconds: 1),
+            curve: Curves.easeOut,
+            child: child,
+          );
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            DefaultTextHeightBehavior(
+              textHeightBehavior: const TextHeightBehavior(
+                applyHeightToFirstAscent: false,
+                applyHeightToLastDescent: false,
+              ),
+              child: IntrinsicHeight(
+                child: CupertinoTextField(
+                  focusNode: widget.focusNode,
+                  controller: _controller,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+                  autofocus: true,
+                  minLines: 1,
+                  maxLines: 15,
+                  cursorColor: AppColors.iconAccent,
+                  decoration: const BoxDecoration(),
+                  style: AppTextStyles.paragraph,
+                  placeholderStyle: AppTextStyles.paragraph.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  placeholder: 'Share anything...',
+                  textInputAction: TextInputAction.newline,
+                  prefix: AnimatedOpacity(
+                    opacity: _editingMessage != null ? 0.4 : 1,
+                    duration: const Duration(milliseconds: 150),
+                    child: IgnorePointer(
+                      ignoring: _editingMessage != null,
+                      child: Container(
+                        alignment: Alignment.bottomCenter,
+                        padding: const EdgeInsets.fromLTRB(12, 12, 0, 12),
+                        child: const FilePickerButton(),
+                      ),
+                    ),
+                  ),
+                  suffix: Container(
+                    alignment: Alignment.bottomCenter,
+                    padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
+                    child: ValueListenableBuilder<bool>(
+                      valueListenable: widget.canRecordNotifier,
+                      builder: (BuildContext context, bool canRecord, _) {
+                        return AnimatedCrossFade(
+                          duration: const Duration(milliseconds: 200),
+                          crossFadeState: canRecord
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          firstChild: SendButton(
+                            onTap: _onSend,
+                          ),
+                          secondChild: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Assets.icons.mic24.svg(
+                              colorFilter: const ColorFilter.mode(
+                                AppColors.iconSecodary,
+                                BlendMode.srcIn,
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          AnimatedBuilder(
-            animation: _chatPagePorvider.sentMessageAnimationController,
-            builder: (BuildContext context, Widget? child) {
-              final double opactiyValue =
-                  _chatPagePorvider.sentMessageAnimation.value;
-              final double bottomOffsetValue = Curves.easeOut.transform(
-                  _chatPagePorvider.sentMessageAnimationController.value);
+            AnimatedBuilder(
+              animation: _chatPagePorvider.sentMessageAnimationController,
+              builder: (BuildContext context, Widget? child) {
+                final double opactiyValue =
+                    _chatPagePorvider.sentMessageAnimation.value;
+                final double bottomOffsetValue = Curves.easeOut.transform(
+                    _chatPagePorvider.sentMessageAnimationController.value);
 
-              if (opactiyValue == 0) {
-                return const SizedBox();
-              }
+                if (opactiyValue == 0) {
+                  return const SizedBox();
+                }
 
-              return Positioned(
-                bottom: bottomOffsetValue * 89 - 13,
-                left: 35,
-                right: 8,
-                child: Opacity(
-                  opacity: opactiyValue == 0 ? 0 : 1,
-                  child: Container(
-                    alignment: Alignment.bottomRight,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 20,
-                    ),
-                    child: SentAnimationText(
-                      text: _textForAnimation,
+                return Positioned(
+                  bottom: bottomOffsetValue * 89 - 13,
+                  left: 35,
+                  right: 8,
+                  child: Opacity(
+                    opacity: opactiyValue == 0 ? 0 : 1,
+                    child: Container(
+                      alignment: Alignment.bottomRight,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 20,
+                      ),
+                      child: SentAnimationText(
+                        text: _textForAnimation,
+                      ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-        ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   void _onSend() {
-    context.read<ChatCubit>().sendMessage(text: _controller.text);
-    _textForAnimation = _controller.text;
+    if (_editingMessage != null) {
+      context.read<ChatCubit>().editMessage(
+            textMessage: _editingMessage!,
+            newText: _controller.text,
+          );
 
-    if (ChatPagePorvider.of(context).canRunSentMessageAnimation) {
-      ChatPagePorvider.of(context).runSentMessageAnimation(
-        text: _textForAnimation,
-        context: context,
-      );
+      context.read<ChatPageCubit>().setIdle();
+    } else {
+      context.read<ChatCubit>().sendMessage(text: _controller.text);
+      _textForAnimation = _controller.text;
+
+      if (ChatPagePorvider.of(context).canRunSentMessageAnimation) {
+        ChatPagePorvider.of(context).runSentMessageAnimation(
+          text: _textForAnimation,
+          context: context,
+        );
+      }
+      getIt
+          .get<TrackUseActivityUseCase>()
+          .execute(AppEvents.chat.sendButtonClicked);
+
+      _controller.value = TextEditingValue.empty;
     }
-    getIt
-        .get<TrackUseActivityUseCase>()
-        .execute(AppEvents.chat.sendButtonClicked);
-
-    _controller.value = TextEditingValue.empty;
   }
 }
 

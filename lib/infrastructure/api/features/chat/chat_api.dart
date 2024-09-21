@@ -49,4 +49,10 @@ abstract class ChatApi {
   Future<HttpResponse<void>> deleteMessage(
     @Path('messageId') String messageId,
   );
+
+  @PATCH('/messages/{messageId}')
+  Future<HttpResponse<void>> updateMessage(
+    @Path('messageId') String messageId,
+    @Field('text_content') String newText,
+  );
 }

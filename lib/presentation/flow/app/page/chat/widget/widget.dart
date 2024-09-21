@@ -1,4 +1,5 @@
 export 'chat_date_view.dart';
+export 'editing_message_view.dart';
 export 'file_picker_button.dart';
 export 'message_input_view.dart';
 export 'message_list_view.dart';

@@ -19,6 +19,7 @@ import '../../../../../../../domain/domain.dart';
 import '../../../../../../presentation.dart';
 import '../../../../../../router/app_router.gr.dart';
 import '../../chat_page_provider.dart';
+import '../../cubit/cubit.dart';
 import '../widget.dart';
 
 part 'media_message_view.dart';
@@ -66,7 +67,6 @@ class MessageView extends StatelessWidget {
                         );
                       }
                     } else {
-                      
                       return MessagePendingWrapper(
                         isPending: message.isPending,
                         isNew: message.isNew,
@@ -106,14 +106,28 @@ class MessageView extends StatelessWidget {
     return <ContextMenuItemData>[
       ...message.map(
         text: (TextMessage textMessage) {
+          late final bool hasChatPageCubit;
+
+          try {
+            context.read<ChatPageCubit>();
+            hasChatPageCubit = true;
+          } catch (_) {
+            hasChatPageCubit = false;
+          }
+
           return <ContextMenuItemData>[
             if ((textMessage.text ?? '').isNotEmpty) ...<ContextMenuItemData>[
-              ContextMenuItemData(
-                title: 'Edit',
-                icon: Assets.icons.edit16,
-                color: AppColors.textPrimary,
-                onTap: () {},
-              ),
+              if (!message.isPending && hasChatPageCubit)
+                ContextMenuItemData(
+                  title: 'Edit',
+                  icon: Assets.icons.edit16,
+                  color: AppColors.textPrimary,
+                  onTap: () {
+                    context
+                        .read<ChatPageCubit>()
+                        .setEditingMessage(textMessage);
+                  },
+                ),
               ContextMenuItemData(
                 title: 'Copy',
                 icon: Assets.icons.copy16,
@@ -264,6 +278,10 @@ class _PendingWrapperState extends State<MessagePendingWrapper>
   @override
   void didUpdateWidget(covariant MessagePendingWrapper oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.isPending) {
+      _state = _MessagePendingWrapperState.pending;
+    }
+
     if (oldWidget.isPending && !widget.isPending) {
       setState(() {
         _state = _MessagePendingWrapperState.success;

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -19,7 +18,8 @@ class ChatCubit extends Cubit<ChatState> {
     this._getMessageUseCase,
     this._createPdfThumbnailUseCase,
     this._deleteMessagesUseCase,
-    this._findMessageUseCase, {
+    this._findMessageUseCase,
+    this._editTextMessageUseCase, {
     @factoryParam String? query,
   })  : _query = query,
         super(const ChatState.loading()) {
@@ -32,6 +32,7 @@ class ChatCubit extends Cubit<ChatState> {
   final CreatePdfThumbnailUseCase _createPdfThumbnailUseCase;
   final DeleteMessagesUseCase _deleteMessagesUseCase;
   final FindMessageUseCase _findMessageUseCase;
+  final EditTextMessageUseCase _editTextMessageUseCase;
 
   static const int _pageSize = 100;
 
@@ -231,6 +232,26 @@ class ChatCubit extends Cubit<ChatState> {
     _emitMessages();
     await _createMessageUseCase.execute(message);
     await _fetchMessages(1, query: null);
+  }
+
+  Future<void> editMessage({
+    required TextMessage textMessage,
+    required String newText,
+  }) async {
+    final TextMessage updatedMessage = textMessage.copyWith(
+      text: newText,
+      isPending: true,
+    );
+    _sentMessages[updatedMessage.currentId] = updatedMessage;
+
+    _emitMessages();
+    await _editTextMessageUseCase.execute(updatedMessage);
+
+    // TODO: get result from backend
+    _sentMessages[updatedMessage.currentId] = updatedMessage.copyWith(
+      isPending: false,
+    );
+    _emitMessages();
   }
 
   Future<void> sendAudio(AudioInfo? audioInfo) async {

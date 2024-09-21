@@ -59,6 +59,16 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     });
   }
 
+  @override
+  void didUpdateWidget(covariant ContextMenuRegion oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && context.mounted) {
+        _sizeNotifier.value = context.size;
+      }
+    });
+  }
+
   final ValueNotifier<Size?> _sizeNotifier = ValueNotifier<Size?>(null);
 
   @override
