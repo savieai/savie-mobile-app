@@ -7,8 +7,12 @@ abstract interface class CacheRepository {
     required File file,
   });
 
-  Future<File> getCachedFile({
+  Future<File> getBackendCachedFile({
     required String url,
+    required String key,
+  });
+
+  Future<File?> getOtherCachedFile({
     required String key,
   });
 }

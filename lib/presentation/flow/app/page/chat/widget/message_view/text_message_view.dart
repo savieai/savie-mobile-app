@@ -138,11 +138,6 @@ class _TextMessageViewState extends State<TextMessageView>
   }
 }
 
-// Global cache for storing favicon URLs and their image bytes
-final Map<String, Uint8List?> _faviconCache = <String, Uint8List?>{};
-final Map<String, bool> _isSvgMap = <String, bool>{};
-final Map<String, String> _faviconUrls = <String, String>{};
-
 class FavIcon extends StatefulWidget {
   const FavIcon({
     super.key,
@@ -156,69 +151,39 @@ class FavIcon extends StatefulWidget {
 }
 
 class _FavIconState extends State<FavIcon> {
-  Uint8List? _imageBytes;
-  bool _isSvg = false;
+  String? _imageUrl;
   bool _isLoading = true;
   bool _noIcon = false;
 
   @override
   void initState() {
     super.initState();
-    _loadFavicon();
+    final String? syncUrl =
+        getIt.get<GetFavIconUrlSyncUseCase>().execute(widget.completeLink);
+    if (syncUrl != null) {
+      _processFaviconUrl(syncUrl);
+    } else {
+      _loadFavicon();
+    }
   }
 
   Future<void> _loadFavicon() async {
-    // Check if the image bytes are already in the cache
-    if (_faviconCache.containsKey(widget.completeLink)) {
-      setState(() {
-        _imageBytes = _faviconCache[widget.completeLink];
-        _isSvg = _isSvgMap[widget.completeLink] ?? false;
-        _isLoading = false;
-        if (_imageBytes!.isEmpty) {
-          _noIcon = true;
-        }
-      });
-      return;
-    }
-    try {
-      final String? url = await (_faviconUrls.containsKey(widget.completeLink)
-          ? Future<String>.value(_faviconUrls[widget.completeLink]!)
-          : FaviconFinder.getBest(widget.completeLink).then((Favicon? f) {
-              return f?.url;
-            })
-        ..then((String? url) =>
-            url == null ? null : _faviconUrls[widget.completeLink] = url));
+    final String? iconUrl =
+        await getIt.get<GetFavIconUrlUseCase>().execute(widget.completeLink);
 
-      if (url != null) {
-        final Response<dynamic> response = await Dio().get(
-          url,
-          options: Options(responseType: ResponseType.bytes),
-        );
+    _processFaviconUrl(iconUrl);
+  }
 
-        setState(() {
-          final String? contentType = response.headers.value('content-type');
-
-          _imageBytes = response.data as Uint8List?;
-          _isLoading = false;
-          // Cache the fetched image bytes
-          if (_imageBytes != null) {
-            _isSvg = contentType != null && contentType.contains('svg');
-            _isSvgMap[widget.completeLink] = _isSvg;
-            _faviconCache[widget.completeLink] = _imageBytes;
-          }
-        });
-      } else {
-        _faviconCache[widget.completeLink] = Uint8List(0);
-        setState(() {
-          _isLoading = false;
-          _noIcon = true;
-        });
-      }
-    } catch (e) {
-      _faviconCache[widget.completeLink] = Uint8List(0);
+  void _processFaviconUrl(String? iconUrl) {
+    if (iconUrl == null) {
       setState(() {
         _isLoading = false;
         _noIcon = true;
+      });
+    } else {
+      setState(() {
+        _imageUrl = iconUrl;
+        _isLoading = false;
       });
     }
   }
@@ -246,20 +211,13 @@ class _FavIconState extends State<FavIcon> {
       return Assets.icons.linkIcon.svg();
     }
 
-    if (_imageBytes == null) {
+    if (_imageUrl == null) {
       return const SizedBox();
     }
 
-    if (_isSvg) {
-      return SvgPicture.memory(
-        _imageBytes!,
-        height: 20,
-        width: 20,
-      );
-    }
-
-    return Image.memory(
-      _imageBytes!,
+    return CachedNetworkImage(
+      imageUrl: _imageUrl!,
+      cacheKey: _imageUrl,
       height: 20,
       width: 20,
     );

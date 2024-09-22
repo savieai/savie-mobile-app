@@ -15,7 +15,7 @@ class GetFileUseCase {
     required String? signedUrl,
     required String name,
   }) async {
-    return _cacheRepository.getCachedFile(
+    return _cacheRepository.getBackendCachedFile(
       url: signedUrl ?? localFullPath!,
       key: name,
     );

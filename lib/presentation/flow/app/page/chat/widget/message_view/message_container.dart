@@ -32,7 +32,11 @@ class _MessageContainer extends StatelessWidget {
           ),
         ],
       ),
-      child: child,
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.linearToEaseOut,
+        child: child,
+      ),
     );
   }
 }

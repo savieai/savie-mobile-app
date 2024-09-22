@@ -10,7 +10,7 @@ class MultiKeyCacheService {
 
   final Map<String, File> _lastFiles = <String, File>{};
 
-  Future<File> getFile({
+  Future<File> getBackendFile({
     required String url,
     required String key,
   }) async {
@@ -31,6 +31,34 @@ class MultiKeyCacheService {
     _lastFiles[key] = result;
 
     return result;
+  }
+
+  bool hasFileInRuntime(String key) => _lastFiles.containsKey(key);
+
+  File? getFileSync(String key) {
+    if (_lastFiles.containsKey(key)) {
+      return _lastFiles[key];
+    }
+    return null;
+  }
+
+  Future<File?> getOtherFile({
+    required String key,
+  }) async {
+    if (_lastFiles.containsKey(key)) {
+      return _lastFiles[key]!;
+    }
+
+    final FileInfo? result = await _cacheManager.getFileFromCache(
+      key,
+    );
+
+    if (result != null) {
+      _lastFiles[key] = result.file;
+      return result.file;
+    }
+
+    return null;
   }
 
   Future<File> cacheFile({

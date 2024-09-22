@@ -72,6 +72,7 @@ dependencies:
   positioned_scroll_observer: ^2.2.2
   sortedmap: ^0.5.4
   animated_size_and_fade: ^4.0.0
+  cached_network_svg_image: ^1.0.0
 
 dev_dependencies:
   flutter_test:
