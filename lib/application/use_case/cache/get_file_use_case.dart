@@ -14,10 +14,14 @@ class GetFileUseCase {
     required String? localFullPath,
     required String? signedUrl,
     required String name,
-  }) async {
-    return _cacheRepository.getBackendCachedFile(
-      url: signedUrl ?? localFullPath!,
-      key: name,
-    );
+  }) {
+    // Convert the stream into a future that completes when the file is downloaded
+    return _cacheRepository
+        .initiateBackendFileDownload(
+          url: signedUrl ?? localFullPath!,
+          key: name,
+        )
+        .firstWhere(((double?, File?) event) => event.$2 != null)
+        .then(((double?, File?) event) => event.$2!);
   }
 }

@@ -13,26 +13,76 @@ class FileMessageView extends StatelessWidget {
     return _MessageContainer(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) => Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              FilePreview(
-                file: fileMessage.file,
-              ),
-              const SizedBox(width: 12),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: constraints.maxWidth - 12 - 60 - 2,
+        child: StreamBuilder<(double?, File?)>(
+          stream: getIt
+              .get<GetFileStreamUseCase>()
+              .execute(name: fileMessage.file.name),
+          builder: (
+            BuildContext context,
+            AsyncSnapshot<(double?, File?)> snapshot,
+          ) {
+            final File? file = snapshot.data?.$2;
+
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                if (file == null && !snapshot.hasData) {
+                  getIt.get<GetFileUseCase>().execute(
+                        localFullPath: fileMessage.file.localFullPath,
+                        signedUrl: fileMessage.file.signedUrl,
+                        name: fileMessage.file.name,
+                      );
+                } else if (file != null) {
+                  OpenFile.open(file.path);
+                }
+              },
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) =>
+                    Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    FilePreview(
+                      file: fileMessage.file,
+                    ),
+                    const SizedBox(width: 12),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: constraints.maxWidth - 12 - 60,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            fileMessage.file.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.paragraph,
+                          ),
+                          if (snapshot.hasData && file == null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                CustomPercentIndicator(
+                                  progress: snapshot.data?.$1,
+                                  color: AppColors.textSecondary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${((snapshot.data?.$1 ?? 0) * 100).round()}%',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                )
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  fileMessage.file.name,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.paragraph,
-                ),
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

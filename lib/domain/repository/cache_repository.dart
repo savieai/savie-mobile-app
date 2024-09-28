@@ -7,8 +7,12 @@ abstract interface class CacheRepository {
     required File file,
   });
 
-  Future<File> getBackendCachedFile({
+  Stream<(double?, File?)> initiateBackendFileDownload({
     required String url,
+    required String key,
+  });
+
+  Stream<(double?, File?)> getBackendFileStream({
     required String key,
   });
 

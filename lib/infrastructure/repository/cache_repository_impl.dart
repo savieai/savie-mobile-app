@@ -20,11 +20,17 @@ class CacheRepositoryImpl implements CacheRepository {
       _cacheService.cacheFile(url: url, key: key, file: file);
 
   @override
-  Future<File> getBackendCachedFile({
+  Stream<(double?, File?)> initiateBackendFileDownload({
     required String url,
     required String key,
   }) =>
-      _cacheService.getBackendFile(url: url, key: key);
+      _cacheService.initiateBackendFileDownload(url: url, key: key);
+
+  @override
+  Stream<(double?, File?)> getBackendFileStream({
+    required String key,
+  }) =>
+      _cacheService.getBackendFileStream(key);
 
   @override
   Future<File?> getOtherCachedFile({

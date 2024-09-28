@@ -136,6 +136,8 @@ class _TextInputViewState extends State<_TextInputView> {
   String _textForAnimation = '';
   TextMessage? _editingMessage;
 
+  ChatPageState? _lastChatPageState;
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<ChatPageCubit, ChatPageState>(
@@ -153,15 +155,23 @@ class _TextInputViewState extends State<_TextInputView> {
             widget.canRecordNotifier.value = false;
           },
         );
+        _lastChatPageState = state;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _lastChatPageState = null;
+        });
       },
       child: ValueListenableBuilder<AnimationStatus>(
         valueListenable: _chatPagePorvider.sentMessageAnimationStatusNotifier,
         builder: (BuildContext context, AnimationStatus value, Widget? child) {
           return AnimatedSize(
             alignment: Alignment.bottomCenter,
-            duration: value == AnimationStatus.forward
-                ? ChatPagePorvider.sentMessageAnimationDuration
-                : const Duration(milliseconds: 1),
+            duration: _lastChatPageState?.map(
+                  idle: (_) => const Duration(milliseconds: 250),
+                  editingMessage: (_) => const Duration(milliseconds: 150),
+                ) ??
+                (value == AnimationStatus.forward
+                    ? ChatPagePorvider.sentMessageAnimationDuration
+                    : const Duration(milliseconds: 1)),
             curve: Curves.easeOut,
             child: child,
           );

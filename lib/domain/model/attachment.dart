@@ -32,6 +32,6 @@ extension AttachmentExtension on Attachment {
       return null;
     }
 
-    return '${name.split('.').first}_thumbnail.png';
+    return '${(remoteStorageName ?? name).split('.').first}_thumbnail.png';
   }
 }

@@ -81,15 +81,19 @@ class PlayerCubit extends Cubit<PlayerState> {
     );
   }
 
+  String? _lastDownloadingAudioId;
   Future<void> _playAudio(AudioInfo audioMessage) async {
+    _lastDownloadingAudioId = audioMessage.messageId;
     final File file = await getIt.get<GetFileUseCase>().execute(
           signedUrl: audioMessage.signedUrl,
           localFullPath: audioMessage.localFullPath,
           name: audioMessage.name,
         );
 
-    await _player.setSourceDeviceFile(file.path);
-    _player.resume();
+    if (_lastDownloadingAudioId == audioMessage.messageId) {
+      await _player.setSourceDeviceFile(file.path);
+      _player.resume();
+    }
   }
 
   @override

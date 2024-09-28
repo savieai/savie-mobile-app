@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../domain/domain.dart';
+import '../../presentation.dart';
 
 class CustomImage extends StatelessWidget {
   const CustomImage({
@@ -41,6 +42,12 @@ class CustomImage extends StatelessWidget {
         width: width,
         filterQuality: filterQuality ?? FilterQuality.low,
         memCacheHeight: memCacheHeight,
+        placeholder: (_, __) => Container(
+          color: AppColors.strokePrimaryAlpha,
+        ),
+        errorWidget: (_, __, ___) => Container(
+          color: AppColors.strokePrimaryAlpha,
+        ),
       );
     } else if (attachment.localFullPath != null) {
       return Image.file(

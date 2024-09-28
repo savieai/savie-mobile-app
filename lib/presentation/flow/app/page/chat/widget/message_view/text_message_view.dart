@@ -220,6 +220,18 @@ class _FavIconState extends State<FavIcon> {
       cacheKey: _imageUrl,
       height: 20,
       width: 20,
+      // placeholder: (_, __) => Assets.icons.link16.svg(
+      //   colorFilter: const ColorFilter.mode(
+      //     AppColors.iconAccent,
+      //     BlendMode.srcIn,
+      //   ),
+      // ),
+      errorWidget: (_, __, ___) => Assets.icons.link16.svg(
+        colorFilter: const ColorFilter.mode(
+          AppColors.iconAccent,
+          BlendMode.srcIn,
+        ),
+      ),
     );
   }
 }

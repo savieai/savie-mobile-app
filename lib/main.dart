@@ -28,7 +28,6 @@ void main() async {
       );
 
       await configureDependencies();
-
       runApp(const SavieApp());
     },
     (Object e, StackTrace s) {

@@ -195,7 +195,7 @@ class ChatCubit extends Cubit<ChatState> {
         earlierMessages: _getChatItems(earlierMessages.toList()),
         laterMessages: _getChatItems(
           laterMessages.toList(),
-          initialLastDate: earlierMessages.firstOrNull?.date.toDate,
+          initialLastDate: earlierMessages.lastOrNull?.date.toDate,
         ).reversed.toList(),
       ));
     }

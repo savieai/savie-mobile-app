@@ -20,7 +20,7 @@ class SaveFilesUseCase {
               .execute(
                 localFullPath: a.localFullPath,
                 signedUrl: a.signedUrl,
-                name: a.remoteStorageName!,
+                name: a.remoteStorageName ?? a.name,
               )
               .then((File f) => XFile(f.path)),
         ),

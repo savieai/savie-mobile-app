@@ -123,9 +123,11 @@ class _AudioViewState extends State<AudioView> {
         mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
         children: <Widget>[
           GestureDetector(
-            onTap: () => context
-                .read<PlayerCubit>()
-                .toggleAudio(widget.audioMessage.audioInfo),
+            onTap: () {
+              context
+                  .read<PlayerCubit>()
+                  .toggleAudio(widget.audioMessage.audioInfo);
+            },
             child: Container(
               height: 40,
               width: 40,
@@ -134,9 +136,37 @@ class _AudioViewState extends State<AudioView> {
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: _isPlaying
-                  ? Assets.icons.pause16.svg()
-                  : Assets.icons.play20.svg(),
+              child: StreamBuilder<(double?, File?)>(
+                stream: getIt
+                    .get<GetFileStreamUseCase>()
+                    .execute(name: widget.audioMessage.audioInfo.name),
+                builder: (
+                  BuildContext context,
+                  AsyncSnapshot<(double?, File?)> snapshot,
+                ) {
+                  final File? file = snapshot.data?.$2;
+                  final double? progress = snapshot.data?.$1;
+                  final bool hasData = snapshot.hasData;
+
+                  final Widget child;
+
+                  if (!hasData || file != null) {
+                    child = SizedBox(
+                      key: const Key('play_button'),
+                      child: _isPlaying
+                          ? Assets.icons.pause16.svg()
+                          : Assets.icons.play20.svg(),
+                    );
+                  } else  {
+                    child = CustomPercentIndicator(progress: progress);
+                  }
+
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 100),
+                    child: child,
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(width: 11),
