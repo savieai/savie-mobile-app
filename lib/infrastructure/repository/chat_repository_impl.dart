@@ -62,6 +62,7 @@ class ChatRepositoryImpl implements ChatRepository {
         duration: audioInfo.duration.inSeconds,
         peaks: audioInfo.peaks.toString(),
       ),
+      placeholderUrl: null,
     );
 
     await _chatApi.createMessage(jsonEncode(request));
@@ -71,6 +72,7 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<void> createFileMessage({
     required String tempId,
     required Attachment file,
+    required String? placeholderUrl,
   }) async {
     final CreateMessageRequest request = CreateMessageRequest(
       tempId: tempId,
@@ -80,6 +82,7 @@ class ChatRepositoryImpl implements ChatRepository {
       images: null,
       textContent: '',
       voiceMessage: null,
+      placeholderUrl: placeholderUrl,
     );
     await _chatApi.createMessage(jsonEncode(request));
   }
@@ -98,6 +101,7 @@ class ChatRepositoryImpl implements ChatRepository {
           : images.map(FileAttachmentMapper.toDto).toList(),
       textContent: text ?? '',
       voiceMessage: null,
+      placeholderUrl: null,
     );
 
     await _chatApi.createMessage(jsonEncode(request));

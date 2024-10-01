@@ -4,19 +4,19 @@ import 'link_mapper.dart';
 
 sealed class MessageMapper {
   static Message toDomain(MessageDTO dto) {
-    if (dto.voiceMessage?.firstOrNull != null) {
+    if (dto.voiceMessages?.firstOrNull != null) {
       return Message.audio(
         tempId: dto.tempId,
         id: dto.id,
         date: dto.createdAt.toLocal(),
         isPending: false,
         audioInfo: AudioInfo(
-          name: dto.voiceMessage!.first.name,
-          signedUrl: dto.voiceMessage!.first.signedUrl,
+          name: dto.voiceMessages!.first.name,
+          signedUrl: dto.voiceMessages!.first.signedUrl,
           localFullPath: null,
-          messageId: dto.voiceMessage!.first.messageId,
-          duration: Duration(seconds: dto.voiceMessage!.first.duration),
-          peaks: dto.voiceMessage!.first.peaks,
+          messageId: dto.voiceMessages!.first.messageId,
+          duration: Duration(seconds: dto.voiceMessages!.first.duration),
+          peaks: dto.voiceMessages!.first.peaks,
         ),
       );
     }

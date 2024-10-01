@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
+import '../../../../../router/app_router.gr.dart';
 import '../cubit/search_cubit.dart';
 import 'images_scrollbar.dart';
 
@@ -28,6 +29,9 @@ class _SearchImagesState extends State<SearchImages> {
             child: CircularProgressIndicator.adaptive(),
           ),
           fetched: (List<SearchResult> data) {
+            final List<ImageSearchResult> images =
+                data.cast<ImageSearchResult>();
+
             if (data.isEmpty) {
               return const SizedBox();
             }
@@ -46,9 +50,8 @@ class _SearchImagesState extends State<SearchImages> {
                       crossAxisSpacing: 2,
                     ),
                     itemCount: data.length,
-                    itemBuilder: (BuildContext context, int i) {
-                      final ImageSearchResult image =
-                          data[i] as ImageSearchResult;
+                    itemBuilder: (BuildContext context, int index) {
+                      final ImageSearchResult image = images[index];
                       return ContextMenuRegion(
                         data: <ContextMenuItemData>[
                           ContextMenuItemData(
@@ -72,15 +75,37 @@ class _SearchImagesState extends State<SearchImages> {
                           Animation<double> animation,
                           bool contextMenuShown,
                         ) {
-                          final Widget imageView = CustomImage(
-                            height: MediaQuery.sizeOf(context).width / 3 - 1,
-                            width: MediaQuery.sizeOf(context).width / 3 - 1,
-                            attachment: image.image,
-                            fit: BoxFit.cover,
+                          final Widget imageView = GestureDetector(
+                            onTap: contextMenuShown
+                                ? null
+                                : () {
+                                    context.router.push(
+                                      PhotoCarouselRoute(
+                                        images: images
+                                            .map((ImageSearchResult i) =>
+                                                i.image)
+                                            .toList(),
+                                        caption: null,
+                                        initialBorderRadius: 0,
+                                        initialIndex: index,
+                                        heroTagPredicate: (Attachment image) =>
+                                            '${image.name}_search',
+                                      ),
+                                    );
+                                  },
+                            child: CustomImage(
+                              height: MediaQuery.sizeOf(context).width / 3 - 1,
+                              width: MediaQuery.sizeOf(context).width / 3 - 1,
+                              attachment: image.image,
+                              fit: BoxFit.cover,
+                            ),
                           );
 
                           if (!contextMenuShown) {
-                            return imageView;
+                            return Hero(
+                              tag: '${image.image.name}_search',
+                              child: imageView,
+                            );
                           }
 
                           return AnimatedBuilder(

@@ -18,6 +18,7 @@ class CreateMessageRequest with _$CreateMessageRequest {
     required List<FileAttachmentRequestDTO>? images,
     required String? textContent,
     required VoiceMessageRequestDTO? voiceMessage,
+    required String? placeholderUrl,
   }) = _CreateMessageRequest;
 
   factory CreateMessageRequest.fromJson(Map<String, Object?> json) =>

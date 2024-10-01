@@ -1,3 +1,4 @@
+import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -27,17 +28,34 @@ class SearchAudioFiles extends StatelessWidget {
                 20,
                 MediaQuery.paddingOf(context).bottom,
               ),
-              itemCount: 0,
+              itemCount: data.length,
               itemBuilder: (BuildContext context, int index) {
                 final AudioSearchResult audio =
                     data[index] as AudioSearchResult;
 
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: AudioView(
-                    expand: true,
-                    previewInfo: index != 1,
-                    audioMessage: audio.audioMessage,
+                return ContextMenuRegion(
+                  data: <ContextMenuItemData>[
+                    ContextMenuItemData(
+                      title: 'Show in chat',
+                      icon: Assets.icons.messageCircle16,
+                      color: AppColors.textPrimary,
+                      onTap: () {
+                        context.read<ChatCubit>().findMessage(audio.messageId);
+
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          context.router.maybePop();
+                        });
+                      },
+                    ),
+                  ],
+                  heroTag: '${audio.hashCode}',
+                  builder: (_, __, ___) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: AudioView(
+                      expand: true,
+                      previewInfo: true,
+                      audioMessage: audio.audioMessage,
+                    ),
                   ),
                 );
               },

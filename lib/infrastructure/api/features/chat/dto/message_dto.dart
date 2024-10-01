@@ -17,7 +17,7 @@ class MessageDTO with _$MessageDTO {
     required DateTime createdAt,
     required String? textContent,
     required String userId,
-    required List<VoiceMessageDTO>? voiceMessage,
+    required List<VoiceMessageDTO>? voiceMessages,
     @Default(<LinkDTO>[]) List<LinkDTO> links,
     required List<FileAttachmentResponseDTO> attachments,
   }) = _MessageDTO;

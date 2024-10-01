@@ -14,6 +14,7 @@ class FileAttachmentResponseDTO with _$FileAttachmentResponseDTO {
   const factory FileAttachmentResponseDTO({
     required String name,
     @Default('') String signedUrl,
+    String? placeholderUrl,
     required FileAttachmentTypeDTO attachmentType,
   }) = _FileAttachmentResponseDTO;
 

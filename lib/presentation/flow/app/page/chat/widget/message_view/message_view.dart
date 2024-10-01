@@ -10,8 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 import '../../../../../../../application/application.dart';
@@ -172,6 +172,7 @@ class MessageView extends StatelessWidget {
                     remoteStorageName: audioMessage.audioInfo.name,
                     signedUrl: audioMessage.audioInfo.signedUrl,
                     localFullPath: audioMessage.audioInfo.localFullPath,
+                    placeholderUrl: null,
                   ),
                 ]);
               },

@@ -11,6 +11,7 @@ class Attachment with _$Attachment {
     required String? remoteStorageName,
     required String? signedUrl,
     required String? localFullPath,
+    required String? placeholderUrl,
   }) = _Attachment;
 }
 
@@ -25,13 +26,5 @@ extension AttachmentExtension on Attachment {
       default:
         return FileType.other;
     }
-  }
-
-  String? get pdfThumbnailName {
-    if (fileType != FileType.pdf) {
-      return null;
-    }
-
-    return '${(remoteStorageName ?? name).split('.').first}_thumbnail.png';
   }
 }

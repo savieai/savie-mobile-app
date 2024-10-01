@@ -157,7 +157,7 @@ class _AudioViewState extends State<AudioView> {
                           ? Assets.icons.pause16.svg()
                           : Assets.icons.play20.svg(),
                     );
-                  } else  {
+                  } else {
                     child = CustomPercentIndicator(progress: progress);
                   }
 
@@ -172,21 +172,21 @@ class _AudioViewState extends State<AudioView> {
           const SizedBox(width: 11),
           Expanded(
             flex: widget.expand ? 1 : 0,
-            child: widget.previewInfo
+            child: widget.previewInfo && !_isPlaying
                 ? SizedBox(
                     height: 40,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          'June 14, 2024 at 20:21',
+                          '${DateFormat(DateFormat.YEAR_MONTH_DAY).format(widget.audioMessage.date)} at ${DateFormat.Hm().format(widget.audioMessage.date)}',
                           style: AppTextStyles.callout.copyWith(
                             color: AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '0:44',
+                          formatDuration(_totalDuration),
                           style: AppTextStyles.caption.copyWith(
                             color: AppColors.textSecondary,
                           ),
@@ -215,7 +215,7 @@ class _AudioViewState extends State<AudioView> {
                     ],
                   ),
           ),
-          if (!widget.previewInfo) ...<Widget>[
+          if (!widget.previewInfo || _isPlaying) ...<Widget>[
             const SizedBox(width: 7),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

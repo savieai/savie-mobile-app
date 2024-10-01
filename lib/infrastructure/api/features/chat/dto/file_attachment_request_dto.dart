@@ -9,6 +9,7 @@ class FileAttachmentRequestDTO with _$FileAttachmentRequestDTO {
   const factory FileAttachmentRequestDTO({
     required String name,
     required String url,
+    required String? placeholderUrl,
   }) = _FileAttachmentRequestDTO;
 
   factory FileAttachmentRequestDTO.fromJson(Map<String, Object?> json) =>

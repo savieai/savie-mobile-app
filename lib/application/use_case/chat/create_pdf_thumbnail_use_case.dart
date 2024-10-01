@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf_render/pdf_render.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../domain/domain.dart';
 import '../../application.dart';
@@ -16,7 +17,7 @@ class CreatePdfThumbnailUseCase {
 
   final CacheRepository _cacheRepository;
 
-  Future<Attachment> execute(Attachment pdf) async {
+  Future<String> execute(Attachment pdf) async {
     final PdfDocument document = await PdfDocument.openFile(pdf.localFullPath!);
     final PdfPage page = await document.getPage(1);
     final PdfPageImage pageImage = await page.render();
@@ -48,31 +49,28 @@ class CreatePdfThumbnailUseCase {
       format: ui.ImageByteFormat.png,
     );
 
+    final String placeholderName = '${const Uuid().v4()}.png';
+
     final Directory cache = await getApplicationCacheDirectory();
-    final String imagePath = '${cache.path}/${pdf.pdfThumbnailName}';
+    final String imagePath = '${cache.path}/$placeholderName';
     final File pngFile = File(imagePath);
 
     pngFile.writeAsBytesSync(imgBytes!.buffer.asUint8List());
 
     Supabase.instance.client.storage
-        .from('thumbnails')
-        .upload(pdf.pdfThumbnailName!, File(imagePath));
+        .from('placeholders')
+        .upload(placeholderName, File(imagePath));
 
     final String url = Supabase.instance.client.storage
-        .from('thumbnails')
-        .getAuthenticatedUrl(pdf.pdfThumbnailName!);
+        .from('placeholders')
+        .getAuthenticatedUrl(placeholderName);
 
     await _cacheRepository.cacheFile(
       url: url,
-      key: pdf.pdfThumbnailName!,
+      key: url,
       file: pngFile,
     );
 
-    return Attachment(
-      name: pdf.pdfThumbnailName!,
-      remoteStorageName: pdf.pdfThumbnailName,
-      signedUrl: url,
-      localFullPath: imagePath,
-    );
+    return url;
   }
 }

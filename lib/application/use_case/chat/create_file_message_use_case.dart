@@ -37,6 +37,7 @@ class CreateFileMessageUseCase {
     await _chatRepository.createFileMessage(
       tempId: message.tempId!,
       file: message.file,
+      placeholderUrl: message.file.placeholderUrl,
     );
   }
 }

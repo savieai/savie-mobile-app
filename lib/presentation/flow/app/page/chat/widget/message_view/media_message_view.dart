@@ -10,8 +10,6 @@ class MediaMessageView extends StatelessWidget {
   final TextMessage message;
   final bool contextMenuShown;
 
-  String get heroTag => shownMediaPaths.first.name;
-
   List<Attachment> get shownMediaPaths =>
       message.images.take(4).toList().reversed.toList();
 
@@ -28,7 +26,13 @@ class MediaMessageView extends StatelessWidget {
                     ),
                   );
               context.router.push(
-                PhotoCarouselRoute(message: message),
+                PhotoCarouselRoute(
+                  images: message.images,
+                  caption: message.text,
+                  initialBorderRadius: 20,
+                  initialIndex: 0,
+                  heroTagPredicate: (Attachment image) => '${image.name}_chat',
+                ),
               );
             },
       child: Column(
@@ -112,7 +116,7 @@ class _ImageStack extends StatelessWidget {
                   child: contextMenuShown
                       ? child
                       : Hero(
-                          tag: attachment.name,
+                          tag: '${attachment.name}_chat',
                           flightShuttleBuilder: isMain
                               // ignore: always_specify_types
                               ? (p1, p2, p3, p4, p5) {
@@ -144,7 +148,7 @@ class _ImageStack extends StatelessWidget {
         if (!contextMenuShown)
           ...leftMediaPaths.map((Attachment attachment) {
             return Hero(
-              tag: attachment.name,
+              tag: '${attachment.name}_chat',
               child: const SizedBox(),
             );
           }),

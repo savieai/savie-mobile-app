@@ -114,7 +114,9 @@ class FilePreview extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         child: switch (file.fileType) {
           FileType.image => _ImageFilePreview(image: file),
-          FileType.pdf => _PdfFilePreview(pdf: file),
+          FileType.pdf => file.placeholderUrl == null
+              ? _DefaultFilePreview(file: file)
+              : _PdfFilePreview(placeholderUrl: file.placeholderUrl!),
           FileType.other => _DefaultFilePreview(file: file),
         },
       ),
@@ -154,10 +156,10 @@ class _ImageFilePreview extends StatelessWidget {
 
 class _PdfFilePreview extends StatelessWidget {
   const _PdfFilePreview({
-    required this.pdf,
+    required this.placeholderUrl,
   });
 
-  final Attachment pdf;
+  final String placeholderUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -165,23 +167,22 @@ class _PdfFilePreview extends StatelessWidget {
       children: <Widget>[
         CustomImage(
           attachment: Attachment(
-            name: pdf.pdfThumbnailName!,
-            remoteStorageName: pdf.pdfThumbnailName,
-            signedUrl: Supabase.instance.client.storage
-                .from('message_attachments')
-                .getAuthenticatedUrl(pdf.pdfThumbnailName!),
+            name: placeholderUrl,
+            remoteStorageName: placeholderUrl,
+            signedUrl: placeholderUrl,
             localFullPath: null,
+            placeholderUrl: placeholderUrl,
           ),
           height: 60,
           width: 60,
           fit: BoxFit.cover,
         ),
-        Positioned(
+        const Positioned(
           left: 4,
           bottom: 4,
           right: 4,
           child: _FileExtensionLabel(
-            fileName: pdf.name,
+            fileName: 'pdf',
           ),
         ),
       ],

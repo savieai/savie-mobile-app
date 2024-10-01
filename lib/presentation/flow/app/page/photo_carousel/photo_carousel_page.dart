@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 
-import '../../../../../application/application.dart';
 import '../../../../../domain/domain.dart';
 import '../../../../presentation.dart';
 
@@ -13,10 +12,18 @@ import '../../../../presentation.dart';
 class PhotoCarouselPage extends StatefulWidget {
   const PhotoCarouselPage({
     super.key,
-    required this.message,
+    required this.images,
+    required this.caption,
+    required this.initialBorderRadius,
+    required this.initialIndex,
+    required this.heroTagPredicate,
   });
 
-  final TextMessage message;
+  final List<Attachment> images;
+  final String? caption;
+  final double initialBorderRadius;
+  final int initialIndex;
+  final String Function(Attachment image) heroTagPredicate;
 
   @override
   State<PhotoCarouselPage> createState() => _PhotoCarouselPageState();
@@ -24,42 +31,46 @@ class PhotoCarouselPage extends StatefulWidget {
 
 class _PhotoCarouselPageState extends State<PhotoCarouselPage>
     with TickerProviderStateMixin {
-  final PageController _pageController = PageController();
+  late final PageController _pageController = PageController(
+    initialPage: widget.initialIndex,
+  );
   final ValueNotifier<double> _verticalOffsetNotifier =
       ValueNotifier<double>(0);
   final double _verticalOffsetThreshold = 100;
-  final ValueNotifier<int> _selectedIndexNotifier = ValueNotifier<int>(0);
+  late final ValueNotifier<int> _selectedIndexNotifier =
+      ValueNotifier<int>(widget.initialIndex);
 
   OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
+    //TODO: think of metrics
     super.initState();
-    getIt.get<TrackUseActivityUseCase>().execute(
-          AppEvents.photoView.screenOpened(
-            messageId: widget.message.id,
-            type: widget.message.appEventMessageType,
-          ),
-        );
+    // getIt.get<TrackUseActivityUseCase>().execute(
+    //       AppEvents.photoView.screenOpened(
+    //         messageId: widget.message.id,
+    //         type: widget.message.appEventMessageType,
+    //       ),
+    //     );
 
     _pageController.addListener(() {
       final int newSelectedIndex = _pageController.page?.round() ?? 0;
       if (newSelectedIndex != _selectedIndexNotifier.value) {
-        if (newSelectedIndex > _selectedIndexNotifier.value) {
-          getIt.get<TrackUseActivityUseCase>().execute(
-                AppEvents.photoView.swipeRight(
-                  messageId: widget.message.id,
-                  type: widget.message.appEventMessageType,
-                ),
-              );
-        } else {
-          getIt.get<TrackUseActivityUseCase>().execute(
-                AppEvents.photoView.swipeLeft(
-                  messageId: widget.message.id,
-                  type: widget.message.appEventMessageType,
-                ),
-              );
-        }
+        // if (newSelectedIndex > _selectedIndexNotifier.value) {
+        //   getIt.get<TrackUseActivityUseCase>().execute(
+        //         AppEvents.photoView.swipeRight(
+        //           messageId: widget.message.id,
+        //           type: widget.message.appEventMessageType,
+        //         ),
+        //       );
+        // } else {
+        //   getIt.get<TrackUseActivityUseCase>().execute(
+        //         AppEvents.photoView.swipeLeft(
+        //           messageId: widget.message.id,
+        //           type: widget.message.appEventMessageType,
+        //         ),
+        //       );
+        // }
         _selectedIndexNotifier.value = newSelectedIndex;
       }
     });
@@ -76,8 +87,9 @@ class _PhotoCarouselPageState extends State<PhotoCarouselPage>
                 return Opacity(
                   opacity: opacity,
                   child: _BottomBar(
-                    message: widget.message,
+                    images: widget.images,
                     selectedIndex: selectedIndex,
+                    caption: widget.caption,
                   ),
                 );
               },
@@ -158,9 +170,11 @@ class _PhotoCarouselPageState extends State<PhotoCarouselPage>
               valueListenable: _selectedIndexNotifier,
               builder: (BuildContext context, int selectedIndex, _) {
                 return _Carousel(
-                  message: widget.message,
+                  images: widget.images,
                   pageController: _pageController,
                   selectedIndex: selectedIndex,
+                  initialBorderRadius: widget.initialBorderRadius,
+                  heroTagPredicate: widget.heroTagPredicate,
                 );
               },
             ),
@@ -200,14 +214,18 @@ class _PhotoCarouselPageState extends State<PhotoCarouselPage>
 
 class _Carousel extends StatefulWidget {
   const _Carousel({
-    required this.message,
+    required this.images,
     required this.pageController,
     required this.selectedIndex,
+    required this.initialBorderRadius,
+    required this.heroTagPredicate,
   });
 
-  final TextMessage message;
+  final List<Attachment> images;
   final PageController pageController;
   final int selectedIndex;
+  final double initialBorderRadius;
+  final String Function(Attachment image) heroTagPredicate;
 
   @override
   State<_Carousel> createState() => _CarouselState();
@@ -221,7 +239,7 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
       scrollPhysics: const BouncingScrollPhysics(),
       builder: (BuildContext context, int index) {
         final PhotoViewController photoViewController = PhotoViewController();
-        final Attachment attachment = widget.message.images[index];
+        final Attachment attachment = widget.images[index];
 
         return PhotoViewGalleryPageOptions(
           controller: photoViewController,
@@ -229,7 +247,7 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
           disableGestures: true,
           heroAttributes: widget.selectedIndex == index
               ? PhotoViewHeroAttributes(
-                  tag: attachment.name,
+                  tag: widget.heroTagPredicate(attachment),
                   createRectTween: (Rect? begin, Rect? end) {
                     return RectTween(begin: begin, end: end);
                   },
@@ -244,12 +262,14 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
                       animation: animation,
                       builder: (BuildContext context, Widget? child) {
                         return Opacity(
-                          opacity: index == 0
+                          // TODO: fix [widget.initialBorderRadius == 0] workaround
+                          opacity: index == 0 || widget.initialBorderRadius == 0
                               ? 1
                               : Curves.easeOutExpo.transform(animation.value),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(
-                              (1 - animation.value) * 20,
+                              (1 - animation.value) *
+                                  widget.initialBorderRadius,
                             ),
                             child: child,
                           ),
@@ -265,7 +285,7 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
               : null,
         );
       },
-      itemCount: widget.message.images.length,
+      itemCount: widget.images.length,
       pageController: widget.pageController,
     );
   }
@@ -273,12 +293,14 @@ class _CarouselState extends State<_Carousel> with TickerProviderStateMixin {
 
 class _BottomBar extends StatefulWidget {
   const _BottomBar({
-    required this.message,
+    required this.images,
+    required this.caption,
     required this.selectedIndex,
   });
 
-  final TextMessage message;
+  final List<Attachment> images;
   final int selectedIndex;
+  final String? caption;
 
   @override
   State<_BottomBar> createState() => _BottomBarState();
@@ -286,7 +308,7 @@ class _BottomBar extends StatefulWidget {
 
 class _BottomBarState extends State<_BottomBar> {
   late final List<GlobalKey> _keys = List<GlobalKey>.generate(
-    widget.message.images.length,
+    widget.images.length,
     (_) => GlobalKey(),
   );
 
@@ -316,11 +338,11 @@ class _BottomBarState extends State<_BottomBar> {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           const SizedBox(height: 16),
-          if (widget.message.text?.isNotEmpty ?? false) ...<Widget>[
+          if (widget.caption?.isNotEmpty ?? false) ...<Widget>[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25),
               child: _Caption(
-                text: widget.message.text!,
+                text: widget.caption!,
               ),
             ),
             const SizedBox(height: 16),
@@ -333,12 +355,12 @@ class _BottomBarState extends State<_BottomBar> {
               itemBuilder: (BuildContext context, int index) {
                 return _ImagePreview(
                   key: _keys[index],
-                  attachment: widget.message.images[index],
+                  attachment: widget.images[index],
                   isSelected: widget.selectedIndex == index,
                 );
               },
               separatorBuilder: (_, __) => const SizedBox(width: 4),
-              itemCount: widget.message.images.length,
+              itemCount: widget.images.length,
             ),
           ),
           SizedBox(

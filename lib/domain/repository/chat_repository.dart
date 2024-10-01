@@ -20,6 +20,7 @@ abstract class ChatRepository {
   Future<void> createFileMessage({
     required String tempId,
     required Attachment file,
+    required String? placeholderUrl,
   });
 
   Future<void> createAudioMessage({

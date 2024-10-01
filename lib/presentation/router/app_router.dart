@@ -45,6 +45,12 @@ class AppRouter extends $AppRouter {
             customRouteBuilder: RouteBuilders.modalPopupSheet,
             page: ProComingSoonRoute.page,
           ),
+          CustomRoute(
+            page: PhotoCarouselRoute.page,
+            fullscreenDialog: true,
+            opaque: false,
+            barrierColor: Colors.transparent,
+          ),
         ],
       ),
       AutoRoute(page: EnterReferralCodeRoute.page),
@@ -63,12 +69,6 @@ class AppRouter extends $AppRouter {
       CustomRoute(
         page: CameraRollRoute.page,
         customRouteBuilder: RouteBuilders.modalBottomSheet,
-      ),
-      CustomRoute(
-        page: PhotoCarouselRoute.page,
-        fullscreenDialog: true,
-        opaque: false,
-        barrierColor: Colors.transparent,
       ),
     ],
   );

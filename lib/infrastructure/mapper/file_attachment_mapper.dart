@@ -8,6 +8,7 @@ sealed class FileAttachmentMapper {
       remoteStorageName: null,
       signedUrl: dto.signedUrl,
       localFullPath: null,
+      placeholderUrl: dto.placeholderUrl,
     );
   }
 
@@ -15,6 +16,7 @@ sealed class FileAttachmentMapper {
     return FileAttachmentRequestDTO(
       name: attachment.name,
       url: attachment.remoteStorageName!,
+      placeholderUrl: attachment.placeholderUrl,
     );
   }
 }

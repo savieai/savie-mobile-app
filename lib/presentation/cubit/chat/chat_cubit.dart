@@ -17,6 +17,7 @@ class ChatCubit extends Cubit<ChatState> {
     this._searchInMessagesUseCase,
     this._getMessageUseCase,
     this._createPdfThumbnailUseCase,
+    this._createImageThumbnailUseCase,
     this._deleteMessagesUseCase,
     this._findMessageUseCase,
     this._editTextMessageUseCase, {
@@ -30,6 +31,7 @@ class ChatCubit extends Cubit<ChatState> {
   final SearchInMessagesUseCase _searchInMessagesUseCase;
   final GetMessageUseCase _getMessageUseCase;
   final CreatePdfThumbnailUseCase _createPdfThumbnailUseCase;
+  final CreateImageThumbnailUseCase _createImageThumbnailUseCase;
   final DeleteMessagesUseCase _deleteMessagesUseCase;
   final FindMessageUseCase _findMessageUseCase;
   final EditTextMessageUseCase _editTextMessageUseCase;
@@ -223,6 +225,7 @@ class ChatCubit extends Cubit<ChatState> {
             name: remoteStorageName,
             remoteStorageName: remoteStorageName,
             localFullPath: mediaPath,
+            placeholderUrl: null,
           );
         },
       ).toList(),
@@ -296,19 +299,27 @@ class ChatCubit extends Cubit<ChatState> {
       name: fileName,
       remoteStorageName: '${const Uuid().v4()}.$ext',
       localFullPath: filePath,
+      placeholderUrl: null,
     );
+
+    String? placeholderUrl;
+    if (file.fileType == FileType.pdf) {
+      placeholderUrl = await _createPdfThumbnailUseCase.execute(file);
+    }
+    if (file.fileType == FileType.image) {
+      placeholderUrl = await _createImageThumbnailUseCase.execute(file);
+    }
 
     final Message message = FileMessage(
       isPending: true,
       id: pendingUuid,
       tempId: pendingUuid,
       date: DateTime.now(),
-      file: file,
+      file: file.copyWith(
+        placeholderUrl: placeholderUrl,
+      ),
     );
 
-    if (file.fileType == FileType.pdf) {
-      await _createPdfThumbnailUseCase.execute(file);
-    }
     _pendingMessages[pendingUuid] = message;
     _emitMessages();
     await _createMessageUseCase.execute(message);
