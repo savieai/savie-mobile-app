@@ -12,6 +12,8 @@ import 'firebase_options.dart';
 import 'infrastructure/service/logging_service.dart';
 import 'presentation/savie_app.dart';
 
+late final bool wasInitiallyLoggedIn;
+
 void main() async {
   runZonedGuarded(
     () async {
@@ -26,6 +28,9 @@ void main() async {
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsdXdjYmZveXphd2VjY21haHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTkzODkyNjQsImV4cCI6MjAzNDk2NTI2NH0.F-NoFb0zV5QaaM_S4VhiDA9lf7ShNo6GYIPCCi9XQSQ',
         debug: kDebugMode,
       );
+
+      wasInitiallyLoggedIn =
+          Supabase.instance.client.auth.currentSession != null;
 
       await configureDependencies();
       runApp(const SavieApp());

@@ -59,10 +59,15 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.256363804943-pj14l9af8j4p07n5mqluhor3khmggm3t</string>
+				<string>ShareMedia-$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 			</array>
 		</dict>
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This will allow you save photos to your photo library</string>
+	<key>AppGroupId</key>
+    <string>$(CUSTOM_GROUP_ID)</string>
 </dict>
 </plist>

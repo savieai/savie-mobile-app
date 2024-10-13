@@ -110,7 +110,7 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
               .execute(AppEvents.chat.searchButtonPressed);
         },
       ),
-      middle: const Text('Today'),
+      middle: const Text('Savie'),
     );
   }
 

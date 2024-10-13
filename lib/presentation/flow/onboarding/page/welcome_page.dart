@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../application/application.dart';
 import '../../../presentation.dart';
@@ -221,6 +222,7 @@ class _TermsAndPolicy extends StatelessWidget {
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
+                launchUrl(Uri.parse('https://savie.ai/privacy'));
                 getIt
                     .get<TrackUseActivityUseCase>()
                     .execute(AppEvents.welcome.privacyPolicyPressed);
@@ -234,6 +236,7 @@ class _TermsAndPolicy extends StatelessWidget {
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
+                launchUrl(Uri.parse('https://savie.ai/terms'));
                 getIt
                     .get<TrackUseActivityUseCase>()
                     .execute(AppEvents.welcome.termsOfUsePressed);

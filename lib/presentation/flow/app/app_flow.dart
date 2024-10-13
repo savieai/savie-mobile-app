@@ -15,7 +15,11 @@ class AppFlow extends StatelessWidget {
     return MultiBlocProvider(
       providers: <BlocProvider<void>>[
         BlocProvider<PlayerCubit>(create: (_) => getIt.get<PlayerCubit>()),
-        BlocProvider<ChatCubit>(create: (_) => getIt.get<ChatCubit>()),
+        BlocProvider<ChatCubit>(
+          create: (_) => getIt.get<ChatCubit>(
+            param2: true,
+          ),
+        ),
         BlocProvider<ContextMenuCubit>(create: (_) => ContextMenuCubit()),
         BlocProvider<AuthCubit>.value(value: getIt.get<AuthCubit>()),
         BlocProvider<RecordingCubit>(

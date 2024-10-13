@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -200,7 +201,10 @@ class _TextInputViewState extends State<_TextInputView> {
                     color: AppColors.textSecondary,
                   ),
                   placeholder: 'Share anything...',
-                  textInputAction: TextInputAction.newline,
+                  onSubmitted: (_) => _onSend(),
+                  textInputAction: Platform.isMacOS
+                      ? TextInputAction.send
+                      : TextInputAction.newline,
                   prefix: AnimatedOpacity(
                     opacity: _editingMessage != null ? 0.4 : 1,
                     duration: const Duration(milliseconds: 150),

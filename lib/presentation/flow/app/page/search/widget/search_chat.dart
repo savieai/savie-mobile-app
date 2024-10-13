@@ -24,6 +24,7 @@ class _SearchChatState extends State<SearchChat> {
   ScrollController _scrollController = ScrollController();
   late final ChatCubit _chatCubit = getIt.get<ChatCubit>(
     param1: widget.searchController.text,
+    param2: false,
   );
 
   late String _lastQuery;

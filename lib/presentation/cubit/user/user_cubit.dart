@@ -19,7 +19,9 @@ class UserCubit extends Cubit<SavieUser?> {
       _authRepository.logout();
     }
 
-    _userRepository.fetchUser();
+    if (_authRepository.getAuthStatus()) {
+      _userRepository.fetchUser();
+    }
 
     _authStatusSubscription = _authRepository.watchAuthStatus().listen(
       (bool isAuthorized) {

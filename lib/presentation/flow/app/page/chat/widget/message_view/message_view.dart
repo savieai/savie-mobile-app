@@ -145,7 +145,7 @@ class MessageView extends StatelessWidget {
                   icon: Assets.icons.download16,
                   color: AppColors.textPrimary,
                   onTap: () {
-                    getIt.get<SaveFilesUseCase>().execute(textMessage.images);
+                    getIt.get<SaveImagesUseCase>().execute(textMessage.images);
                   },
                 )
               else
@@ -154,19 +154,30 @@ class MessageView extends StatelessWidget {
                   icon: Assets.icons.download16,
                   color: AppColors.textPrimary,
                   onTap: () {
-                    getIt.get<SaveFilesUseCase>().execute(textMessage.images);
+                    getIt.get<SaveImagesUseCase>().execute(textMessage.images);
                   },
-                )
+                ),
+            ContextMenuItemData(
+              title: 'Share',
+              icon: Assets.icons.share16,
+              color: AppColors.textPrimary,
+              onTap: () {
+                getIt.get<ShareFilesUseCase>().execute(
+                      textMessage.images,
+                      text: textMessage.text,
+                    );
+              },
+            )
           ];
         },
         audio: (AudioMessage audioMessage) {
           return <ContextMenuItemData>[
             ContextMenuItemData(
-              title: 'Save',
-              icon: Assets.icons.download16,
+              title: 'Share',
+              icon: Assets.icons.share16,
               color: AppColors.textPrimary,
               onTap: () {
-                getIt.get<SaveFilesUseCase>().execute(<Attachment>[
+                getIt.get<ShareFilesUseCase>().execute(<Attachment>[
                   Attachment(
                     name: audioMessage.audioInfo.name,
                     remoteStorageName: audioMessage.audioInfo.name,
@@ -182,11 +193,11 @@ class MessageView extends StatelessWidget {
         file: (FileMessage fileMessage) {
           return <ContextMenuItemData>[
             ContextMenuItemData(
-              title: 'Save',
-              icon: Assets.icons.download16,
+              title: 'Share',
+              icon: Assets.icons.share16,
               color: AppColors.textPrimary,
               onTap: () {
-                getIt.get<SaveFilesUseCase>().execute(<Attachment>[
+                getIt.get<ShareFilesUseCase>().execute(<Attachment>[
                   fileMessage.file,
                 ]);
               },

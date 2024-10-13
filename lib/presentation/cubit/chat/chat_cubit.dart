@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -20,11 +22,20 @@ class ChatCubit extends Cubit<ChatState> {
     this._createImageThumbnailUseCase,
     this._deleteMessagesUseCase,
     this._findMessageUseCase,
-    this._editTextMessageUseCase, {
+    this._editTextMessageUseCase,
+    this._processSharingIntent,
+    this._processSharingIntentStream, {
     @factoryParam String? query,
+    @factoryParam required bool processSharingIntent,
   })  : _query = query,
         super(const ChatState.loading()) {
     _fetchMessages(1, query: query);
+
+    if (processSharingIntent) {
+      _processSharingIntent.execute(this);
+      _processSharingIntentSubscription =
+          _processSharingIntentStream.execute(this);
+    }
   }
 
   final CreateMessageUseCase _createMessageUseCase;
@@ -35,6 +46,11 @@ class ChatCubit extends Cubit<ChatState> {
   final DeleteMessagesUseCase _deleteMessagesUseCase;
   final FindMessageUseCase _findMessageUseCase;
   final EditTextMessageUseCase _editTextMessageUseCase;
+
+  final ProcessSharingIntentStream _processSharingIntentStream;
+  final ProcessSharingIntent _processSharingIntent;
+
+  StreamSubscription<void>? _processSharingIntentSubscription;
 
   static const int _pageSize = 100;
 
@@ -360,5 +376,11 @@ class ChatCubit extends Cubit<ChatState> {
     }
 
     return chatItems;
+  }
+
+  @override
+  Future<void> close() {
+    _processSharingIntentSubscription?.cancel();
+    return super.close();
   }
 }

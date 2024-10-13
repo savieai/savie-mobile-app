@@ -2,9 +2,11 @@ import 'dart:math';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../application/application.dart';
 import '../../../../presentation.dart';
@@ -53,6 +55,7 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Assets.icons.support24,
             color: AppColors.textPrimary,
             onTap: () {
+              launchUrl(Uri.parse('mailto:support@savie.ai'));
               getIt
                   .get<TrackUseActivityUseCase>()
                   .execute(AppEvents.profile.supportClicked);
@@ -83,10 +86,30 @@ class _ProfilePageState extends State<ProfilePage> {
           const Spacer(),
           const _GiftButton(),
           const SizedBox(height: 32),
-          Text(
-            'Terms & Terms',
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.textSecondary,
+          RichText(
+            text: TextSpan(
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              children: <InlineSpan>[
+                TextSpan(
+                  text: 'Terms',
+                  style: const TextStyle(decoration: TextDecoration.underline),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      launchUrl(Uri.parse('https://savie.ai/privacy'));
+                    },
+                ),
+                const TextSpan(text: ' & '),
+                TextSpan(
+                  text: 'Privacy',
+                  style: const TextStyle(decoration: TextDecoration.underline),
+                  recognizer: TapGestureRecognizer()
+                    ..onTap = () {
+                      launchUrl(Uri.parse('https://savie.ai/privacy'));
+                    },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 16),

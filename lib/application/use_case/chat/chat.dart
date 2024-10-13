@@ -8,6 +8,7 @@ export 'delete_message_use_case.dart';
 export 'edit_text_message_use_case.dart';
 export 'find_message_use_case.dart';
 export 'get_messages_use_case.dart';
-export 'save_files_use_case.dart';
+export 'save_images_use_case.dart';
 export 'search_in_messages_use_case.dart';
 export 'search_messages_use_case.dart';
+export 'share_files_use_case.dart';
