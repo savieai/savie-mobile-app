@@ -50,7 +50,6 @@ class _SearchPageState extends State<SearchPage> {
       value: _searchCubit,
       child: Scaffold(
         backgroundColor: AppColors.backgroundPrimary,
-        resizeToAvoidBottomInset: false,
         body: Column(
           children: <Widget>[
             SizedBox(
@@ -204,12 +203,14 @@ class _SearchFieldState extends State<_SearchField> {
         vertical: 9,
         horizontal: 8,
       ),
+      focusNode: _focusNode,
       controller: widget.controller,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: AppColors.backgroundChatInput,
       ),
       placeholder: 'Search',
+      autofocus: true,
       style: AppTextStyles.paragraph,
       placeholderStyle: AppTextStyles.paragraph.copyWith(
         color: AppColors.textSecondary,

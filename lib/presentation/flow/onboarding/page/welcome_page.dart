@@ -64,7 +64,7 @@ class _WelcomePageState extends State<WelcomePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const SizedBox(height: 64),
+              const SizedBox(height: 32),
               Text(
                 'Savie',
                 style: AppTextStyles.title1.copyWith(
@@ -84,7 +84,7 @@ class _WelcomePageState extends State<WelcomePage> {
                     AnimatedPositioned(
                       duration: const Duration(seconds: 1),
                       curve: Curves.easeInOutCubic,
-                      bottom: _currentSlide == 4 ? 65 : 15,
+                      bottom: _currentSlide == 4 ? 90 : 40,
                       left: 0,
                       right: 0,
                       child: AnimatedSwitcher(
@@ -116,17 +116,17 @@ class _WelcomePageState extends State<WelcomePage> {
                       ),
                     ),
                     Positioned(
-                      top: 35,
+                      top: 30,
                       left: 0,
                       right: 0,
                       child: AnimatedScale(
                         alignment: const Alignment(0, 0.5),
-                        duration: const Duration(milliseconds: 1100),
-                        curve: Curves.linearToEaseOut,
+                        duration: const Duration(milliseconds: 1000),
+                        curve: Curves.easeInOutCubic,
                         scale: _currentSlide == 4 ? 1 : 0,
                         child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 1100),
-                          curve: Curves.linearToEaseOut,
+                          duration: const Duration(milliseconds: 1000),
+                          curve: Curves.easeInOutCubic,
                           opacity: _currentSlide == 4 ? 1 : 0,
                           child: Assets.images.spanishAudio.image(),
                         ),
@@ -287,23 +287,10 @@ class _TermsAndPolicy extends StatelessWidget {
         children: <InlineSpan>[
           const TextSpan(text: 'By continuing, you agree to the\n'),
           TextSpan(
-            text: 'privacy policy',
-            style: const TextStyle(
+            text: 'Terms of Use',
+            style: TextStyle(
               decoration: TextDecoration.underline,
-            ),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () {
-                launchUrl(Uri.parse('https://savie.ai/privacy'));
-                getIt
-                    .get<TrackUseActivityUseCase>()
-                    .execute(AppEvents.welcome.privacyPolicyPressed);
-              },
-          ),
-          const TextSpan(text: ' and '),
-          TextSpan(
-            text: 'terms of use',
-            style: const TextStyle(
-              decoration: TextDecoration.underline,
+              decorationColor: Colors.black.withOpacity(0.2),
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
@@ -311,6 +298,21 @@ class _TermsAndPolicy extends StatelessWidget {
                 getIt
                     .get<TrackUseActivityUseCase>()
                     .execute(AppEvents.welcome.termsOfUsePressed);
+              },
+          ),
+          const TextSpan(text: ' & '),
+          TextSpan(
+            text: 'Privacy Policy',
+            style: TextStyle(
+              decoration: TextDecoration.underline,
+              decorationColor: Colors.black.withOpacity(0.2),
+            ),
+            recognizer: TapGestureRecognizer()
+              ..onTap = () {
+                launchUrl(Uri.parse('https://savie.ai/privacy'));
+                getIt
+                    .get<TrackUseActivityUseCase>()
+                    .execute(AppEvents.welcome.privacyPolicyPressed);
               },
           ),
           const TextSpan(text: '.'),

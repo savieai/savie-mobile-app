@@ -9,6 +9,7 @@ import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
 import '../../chat/widget/widget.dart';
 import '../cubit/search_cubit.dart';
+import 'widget.dart';
 
 class SearchFiles extends StatelessWidget {
   const SearchFiles({super.key});
@@ -24,6 +25,12 @@ class SearchFiles extends StatelessWidget {
             child: CircularProgressIndicator.adaptive(),
           ),
           fetched: (List<SearchResult> data) {
+            if (data.isEmpty) {
+              return const Center(
+                child: NoResultsPlaceholder(),
+              );
+            }
+
             return ListView.separated(
               padding: EdgeInsets.fromLTRB(
                 20,

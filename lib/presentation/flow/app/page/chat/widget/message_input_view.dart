@@ -126,10 +126,25 @@ class _TextInputViewState extends State<_TextInputView> {
         widget.canRecordNotifier.value = _controller.text.isEmpty;
       }
     });
+
+    if (Platform.isMacOS) {
+      // ignore: deprecated_member_use
+      widget.focusNode.onKey = (FocusNode node, RawKeyEvent evt) {
+        // ignore: deprecated_member_use
+        if (!evt.isShiftPressed && evt.logicalKey.keyLabel == 'Enter') {
+          _onSend();
+          return KeyEventResult.handled;
+        } else {
+          return KeyEventResult.ignored;
+        }
+      };
+    }
   }
 
   @override
   void dispose() {
+    // ignore: deprecated_member_use
+    widget.focusNode.onKey = null;
     _controller.dispose();
     super.dispose();
   }

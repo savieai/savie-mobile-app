@@ -6,6 +6,7 @@ import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
 import '../../chat/widget/widget.dart';
 import '../cubit/search_cubit.dart';
+import 'no_results_placeholder.dart';
 
 class SearchAudioFiles extends StatelessWidget {
   const SearchAudioFiles({super.key});
@@ -21,6 +22,12 @@ class SearchAudioFiles extends StatelessWidget {
             child: CircularProgressIndicator.adaptive(),
           ),
           fetched: (List<SearchResult> data) {
+            if (data.isEmpty) {
+              return const Center(
+                child: NoResultsPlaceholder(),
+              );
+            }
+
             return ListView.separated(
               padding: EdgeInsets.fromLTRB(
                 20,

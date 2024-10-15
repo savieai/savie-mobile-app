@@ -7,6 +7,7 @@ import '../../../../../presentation.dart';
 import '../../../../../router/app_router.gr.dart';
 import '../cubit/search_cubit.dart';
 import 'images_scrollbar.dart';
+import 'widget.dart';
 
 class SearchImages extends StatefulWidget {
   const SearchImages({super.key});
@@ -29,6 +30,12 @@ class _SearchImagesState extends State<SearchImages> {
             child: CircularProgressIndicator.adaptive(),
           ),
           fetched: (List<SearchResult> data) {
+            if (data.isEmpty) {
+              return const Center(
+                child: NoResultsPlaceholder(),
+              );
+            }
+
             final List<ImageSearchResult> images =
                 data.cast<ImageSearchResult>();
 
