@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -21,7 +22,7 @@ class UserRepositoryImpl implements UserRepository {
       final UserDTO user = response.data;
       await _userStorage.saveUser(user);
       return UserMapper.toDomain(user);
-    } catch (_) {
+    } on DioException catch (_) {
       return getUser();
     }
   }

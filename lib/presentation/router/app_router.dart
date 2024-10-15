@@ -14,8 +14,13 @@ class AppRouter extends $AppRouter {
   @override
   List<AutoRoute> get routes => <AutoRoute>[
         AutoRoute(
-          page: AuthWrapperFlowRoute.page,
           initial: true,
+          page: SplashRoute.page,
+        ),
+        CustomRoute(
+          transitionsBuilder: TransitionsBuilders.fadeIn,
+          durationInMilliseconds: 500,
+          page: AuthWrapperFlowRoute.page,
           children: <AutoRoute>[
             _appFlow,
             _onboardingFlow,

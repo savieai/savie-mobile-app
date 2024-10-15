@@ -8,6 +8,10 @@ abstract class AuthRepository {
     required String email,
     required String otp,
   });
+  Future<bool> signInWithPassword({
+    required String email,
+    required String password,
+  });
   Future<bool> signInWithGoogle();
   Future<bool> signInWithApple();
   Stream<bool> watchAuthStatus();

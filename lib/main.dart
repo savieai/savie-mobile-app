@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,7 +18,9 @@ late final bool wasInitiallyLoggedIn;
 void main() async {
   runZonedGuarded(
     () async {
-      WidgetsFlutterBinding.ensureInitialized();
+      final WidgetsBinding widgetsBinding =
+          WidgetsFlutterBinding.ensureInitialized();
+      FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
       Hive.init((await getApplicationDocumentsDirectory()).path);
 
       await Firebase.initializeApp(

@@ -157,4 +157,17 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> logout() => Supabase.instance.client.auth.signOut();
+
+  @override
+  Future<bool> signInWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    await Supabase.instance.client.auth.signInWithPassword(
+      email: email,
+      password: password,
+    );
+
+    return getAuthStatus();
+  }
 }

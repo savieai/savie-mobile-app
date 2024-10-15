@@ -77,6 +77,7 @@ dependencies:
   open_file: ^3.3.2
   gal: ^2.3.0
   receive_sharing_intent: ^1.8.0
+  flutter_native_splash: ^2.4.1
 
 dev_dependencies:
   flutter_test:
@@ -92,11 +93,16 @@ dev_dependencies:
   json_serializable: ^6.8.0
   retrofit_generator: ^8.1.2
 
+
 flutter_gen:
   output: lib/presentation/shared/assets/
 
   integrations:
     flutter_svg: true
+
+
+flutter_native_splash:
+  background_image: "assets/splash.png"
 
 flutter:
   uses-material-design: true
@@ -104,6 +110,7 @@ flutter:
   assets:
     - assets/icons/
     - assets/images/
+    - assets/
 
   fonts:
     - family: New York Large

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
@@ -18,12 +20,31 @@ class WelcomePage extends StatefulWidget {
 }
 
 class _WelcomePageState extends State<WelcomePage> {
+  int _currentSlide = 0;
+  late Timer _timer;
+
   @override
   void initState() {
     super.initState();
     getIt
         .get<TrackUseActivityUseCase>()
         .execute(AppEvents.welcome.screenOpened);
+    _timer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
+      _currentSlide = _currentSlide + 1;
+      if (mounted && context.mounted) {
+        setState(() {});
+      }
+
+      if (_currentSlide == 4) {
+        _timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 
   @override
@@ -58,10 +79,60 @@ class _WelcomePageState extends State<WelcomePage> {
                 ),
               ),
               Expanded(
-                child: Container(
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 60 - 24),
-                  child: Assets.images.voiceMemo.image(),
+                child: Stack(
+                  children: <Widget>[
+                    AnimatedPositioned(
+                      duration: const Duration(seconds: 1),
+                      curve: Curves.easeInOutCubic,
+                      bottom: _currentSlide == 4 ? 65 : 15,
+                      left: 0,
+                      right: 0,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 500),
+                        switchInCurve: Curves.linearToEaseOut,
+                        switchOutCurve: Curves.easeIn,
+                        transitionBuilder: (
+                          Widget child,
+                          Animation<double> animation,
+                        ) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: ScaleTransition(
+                              scale: animation,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: switch (_currentSlide) {
+                          0 => Assets.images.audio
+                              .image(key: const ValueKey<int>(0)),
+                          1 => Assets.images.spanish
+                              .image(key: const ValueKey<int>(1)),
+                          2 => Assets.images.list
+                              .image(key: const ValueKey<int>(2)),
+                          _ => Assets.images.images
+                              .image(key: const ValueKey<int>(3)),
+                        },
+                      ),
+                    ),
+                    Positioned(
+                      top: 35,
+                      left: 0,
+                      right: 0,
+                      child: AnimatedScale(
+                        alignment: const Alignment(0, 0.5),
+                        duration: const Duration(milliseconds: 1100),
+                        curve: Curves.linearToEaseOut,
+                        scale: _currentSlide == 4 ? 1 : 0,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 1100),
+                          curve: Curves.linearToEaseOut,
+                          opacity: _currentSlide == 4 ? 1 : 0,
+                          child: Assets.images.spanishAudio.image(),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const _AppleSignInButton(),
