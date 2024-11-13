@@ -99,6 +99,9 @@ dev_dependencies:
   json_serializable: ^6.8.0
   retrofit_generator: ^8.1.2
 
+dependency_overrides:
+  # https://github.com/google/GoogleSignIn-iOS/issues/165
+  google_sign_in_ios: 5.7.5
 
 flutter_gen:
   output: lib/presentation/shared/assets/

@@ -32,6 +32,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>FLTEnableImpeller</key>
+	<false/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationCategoryType</key>
@@ -52,7 +54,5 @@
 	<string>This will allow you to attach media to your messages</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>FLTEnableImpeller</key>
-    <false />
 </dict>
 </plist>

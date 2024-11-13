@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
@@ -49,123 +50,133 @@ class _WelcomePageState extends State<WelcomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, AuthState>(
-      listener: (BuildContext context, AuthState state) {
-        // TODO: block ui when signing in
+    return SizedBox(
+      width: Platform.isMacOS ? 464 : double.infinity,
+      child: BlocListener<AuthCubit, AuthState>(
+        listener: (BuildContext context, AuthState state) {
+          // TODO: block ui when signing in
 
-        if (state is LoggedIn) {
-          context.router.replace(const ChatRoute());
-        }
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
-        body: SafeArea(
-          minimum: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const SizedBox(height: 32),
-              Text(
-                'Savie',
-                style: AppTextStyles.title1.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Unload your brain.\nChat with yourself.',
-                style: AppTextStyles.paragraph.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              Expanded(
-                child: SizedBox(
-                  width: MediaQuery.sizeOf(context).width,
-                  child: FittedBox(
-                    child: SizedBox(
-                      height: 324,
-                      width: 393,
-                      child: Stack(
-                        children: <Widget>[
-                          AnimatedPositioned(
-                            duration: const Duration(seconds: 1),
-                            curve: Curves.easeInOutCubic,
-                            top: _currentSlide == 4 ? -40 : 30,
-                            left: 0,
-                            right: 0,
-                            child: AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 500),
-                              switchInCurve: Curves.linearToEaseOut,
-                              switchOutCurve: Curves.easeIn,
-                              transitionBuilder: (
-                                Widget child,
-                                Animation<double> animation,
-                              ) {
-                                return FadeTransition(
-                                  opacity: animation,
-                                  child: ScaleTransition(
-                                    scale: animation,
-                                    child: child,
-                                  ),
-                                );
-                              },
-                              child: switch (_currentSlide) {
-                                0 => Assets.images.audio.image(
-                                    key: const ValueKey<int>(0),
-                                    width: 393,
-                                  ),
-                                1 => Assets.images.spanish.image(
-                                    key: const ValueKey<int>(1),
-                                    width: 393,
-                                  ),
-                                2 => Assets.images.list.image(
-                                    key: const ValueKey<int>(2),
-                                    width: 393,
-                                  ),
-                                _ => Assets.images.images.image(
-                                    key: const ValueKey<int>(3),
-                                    width: 393,
-                                  ),
-                              },
-                            ),
-                          ),
-                          Positioned(
-                            top: -10,
-                            left: 0,
-                            right: 0,
-                            child: AnimatedScale(
-                              alignment: const Alignment(0, 0.5),
-                              duration: const Duration(milliseconds: 1000),
-                              curve: Curves.easeInOutCubic,
-                              scale: _currentSlide == 4 ? 1 : 0,
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 1000),
-                                curve: Curves.easeInOutCubic,
-                                opacity: _currentSlide == 4 ? 1 : 0,
-                                child: Center(
-                                  child: Assets.images.spanishAudio.image(
-                                    width: 393,
-                                    fit: BoxFit.fitWidth,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+          if (state is LoggedIn) {
+            context.router.replace(const ChatRoute());
+          }
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundPrimary,
+          body: Center(
+            child: SizedBox(
+              width: Platform.isMacOS ? 464 : double.infinity,
+              child: SafeArea(
+                minimum: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const SizedBox(height: 32),
+                    Text(
+                      'Savie',
+                      style: AppTextStyles.title1.copyWith(
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Unload your brain.\nChat with yourself.',
+                      style: AppTextStyles.paragraph.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    Expanded(
+                      child: SizedBox(
+                        width: MediaQuery.sizeOf(context).width,
+                        child: FittedBox(
+                          child: SizedBox(
+                            height: 324,
+                            width: 393,
+                            child: Stack(
+                              children: <Widget>[
+                                AnimatedPositioned(
+                                  duration: const Duration(seconds: 1),
+                                  curve: Curves.easeInOutCubic,
+                                  top: _currentSlide == 4 ? -40 : 30,
+                                  left: 0,
+                                  right: 0,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 500),
+                                    switchInCurve: Curves.linearToEaseOut,
+                                    switchOutCurve: Curves.easeIn,
+                                    transitionBuilder: (
+                                      Widget child,
+                                      Animation<double> animation,
+                                    ) {
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: ScaleTransition(
+                                          scale: animation,
+                                          child: child,
+                                        ),
+                                      );
+                                    },
+                                    child: switch (_currentSlide) {
+                                      0 => Assets.images.audio.image(
+                                          key: const ValueKey<int>(0),
+                                          width: 393,
+                                        ),
+                                      1 => Assets.images.spanish.image(
+                                          key: const ValueKey<int>(1),
+                                          width: 393,
+                                        ),
+                                      2 => Assets.images.list.image(
+                                          key: const ValueKey<int>(2),
+                                          width: 393,
+                                        ),
+                                      _ => Assets.images.images.image(
+                                          key: const ValueKey<int>(3),
+                                          width: 393,
+                                        ),
+                                    },
+                                  ),
+                                ),
+                                Positioned(
+                                  top: -10,
+                                  left: 0,
+                                  right: 0,
+                                  child: AnimatedScale(
+                                    alignment: const Alignment(0, 0.5),
+                                    duration:
+                                        const Duration(milliseconds: 1000),
+                                    curve: Curves.easeInOutCubic,
+                                    scale: _currentSlide == 4 ? 1 : 0,
+                                    child: AnimatedOpacity(
+                                      duration:
+                                          const Duration(milliseconds: 1000),
+                                      curve: Curves.easeInOutCubic,
+                                      opacity: _currentSlide == 4 ? 1 : 0,
+                                      child: Center(
+                                        child: Assets.images.spanishAudio.image(
+                                          width: 393,
+                                          fit: BoxFit.fitWidth,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const _AppleSignInButton(),
+                    const SizedBox(height: 12),
+                    const _GoogleSignInButton(),
+                    const SizedBox(height: 12),
+                    const _EmailSignInButton(),
+                    const SizedBox(height: 12),
+                    const _TermsAndPolicy(),
+                    const SizedBox(height: 20),
+                  ],
                 ),
               ),
-              const _AppleSignInButton(),
-              const SizedBox(height: 12),
-              const _GoogleSignInButton(),
-              const SizedBox(height: 12),
-              const _EmailSignInButton(),
-              const SizedBox(height: 12),
-              const _TermsAndPolicy(),
-              const SizedBox(height: 20),
-            ],
+            ),
           ),
         ),
       ),
