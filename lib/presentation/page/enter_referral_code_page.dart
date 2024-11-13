@@ -130,7 +130,7 @@ class _EnterReferalCodeBox extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              "Almost there! We're currently in test mode and only allowing people with invites. You have an invite, right?",
+              'Almost there! Savie is invite-only for those who value a clear mind. Got your invite, right?',
               style: AppTextStyles.paragraph,
               textAlign: TextAlign.center,
             ),
