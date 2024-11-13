@@ -8,7 +8,7 @@ export 'router_builders.dart';
 
 @Singleton()
 @AutoRouterConfig()
-class AppRouter extends $AppRouter {
+class AppRouter extends RootStackRouter {
   AppRouter();
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:animated_list_plus/animated_list_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -116,9 +118,11 @@ class _MessageListViewState extends State<MessageListView> {
                   ...<Widget>[
                     const SliverToBoxAdapter(child: SizedBox(height: 16)),
                     if (widget.includeWelcomeMessages)
-                      const SliverPadding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        sliver: WelcomeMessageListView(),
+                      SliverPadding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: Platform.isMacOS ? 24 : 16,
+                        ),
+                        sliver: const WelcomeMessageListView(),
                       ),
                     SliverPadding(
                       key: _centerKey,
@@ -254,8 +258,14 @@ class _AnimatedChatItem extends StatelessWidget {
             : const AlwaysStoppedAnimation<double>(1),
         axisAlignment: -1,
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 8, top: 4)
-              .add(const EdgeInsets.symmetric(horizontal: 16)),
+          padding:
+              EdgeInsets.symmetric(horizontal: Platform.isMacOS ? 24 : 16) +
+                  (chatItem is MessageChatItem
+                      ? EdgeInsets.only(
+                          top: AppSpaces.space300 / 3,
+                          bottom: AppSpaces.space300 / 3 * 2,
+                        )
+                      : EdgeInsets.zero),
           child: chatItem.when(
             message: (Message message) => Builder(
               builder: (BuildContext context) {

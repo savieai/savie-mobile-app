@@ -14,7 +14,7 @@
       },
       "oauth_client": [
         {
-          "client_id": "256363804943-gg4lrq4itp5adkcc3vahpd13t67eet4g.apps.googleusercontent.com",
+          "client_id": "256363804943-pb25ftlk958hhtgb5u0ic08n75is51cn.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -29,6 +29,13 @@
             {
               "client_id": "256363804943-gg4lrq4itp5adkcc3vahpd13t67eet4g.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "256363804943-pj14l9af8j4p07n5mqluhor3khmggm3t.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "agency.galt.savie.app"
+              }
             }
           ]
         }

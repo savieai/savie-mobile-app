@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../presentation.dart';
@@ -16,7 +18,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Widget? trailing;
   final Color? backgroundColor;
 
-  static const double preferredHeight = 64;
+  static double get preferredHeight => Platform.isMacOS ? 52 : 64;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       color: backgroundColor ?? AppColors.backgroundPrimary,
       child: SafeArea(
         bottom: false,
-        minimum: const EdgeInsets.symmetric(horizontal: 12),
+        minimum: EdgeInsets.symmetric(horizontal: Platform.isMacOS ? 16 : 12),
         child: NavigationToolbar(
           leading: leading,
           middle: DefaultTextStyle(
@@ -40,5 +42,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(preferredHeight);
+  Size get preferredSize => Size.fromHeight(preferredHeight);
 }

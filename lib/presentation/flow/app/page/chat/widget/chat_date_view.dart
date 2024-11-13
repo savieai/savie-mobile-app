@@ -28,18 +28,12 @@ class ChatDateView extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.only(top: 24, bottom: 16),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.backgroundPrimary,
-            borderRadius: BorderRadius.circular(100),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
-          child: Text(
-            label,
-            style: AppTextStyles.callout.copyWith(
-              color: AppColors.textSecondary,
-            ),
+        padding: EdgeInsets.symmetric(vertical: AppSpaces.space400) +
+            EdgeInsets.only(top: AppSpaces.space300 / 3),
+        child: Text(
+          label,
+          style: AppTextStyles.callout.copyWith(
+            color: AppColors.textSecondary,
           ),
         ),
       ),

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:auto_route/auto_route.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -85,7 +87,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const Spacer(),
           const _GiftButton(),
-          const SizedBox(height: 32),
+          SizedBox(height: AppSpaces.space1000),
           RichText(
             text: TextSpan(
               style: AppTextStyles.caption.copyWith(
@@ -93,7 +95,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               children: <InlineSpan>[
                 TextSpan(
-                  text: 'Terms',
+                  text: 'Terms of Use',
                   style: const TextStyle(decoration: TextDecoration.underline),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {
@@ -102,7 +104,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const TextSpan(text: ' & '),
                 TextSpan(
-                  text: 'Privacy',
+                  text: 'Privacy Policy',
                   style: const TextStyle(decoration: TextDecoration.underline),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {
@@ -112,21 +114,33 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'App Version · 1.0',
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.textSecondary,
-            ),
+          const SizedBox(height: 10),
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (
+              BuildContext context,
+              AsyncSnapshot<PackageInfo> packageInfo,
+            ) {
+              return Text(
+                'App Version · ${packageInfo.data?.version ?? '...'}',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              );
+            },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             'Savie',
             style: AppTextStyles.callout.copyWith(
               color: AppColors.iconAccent,
             ),
           ),
-          SizedBox(height: 16 + MediaQuery.viewPaddingOf(context).bottom),
+          SizedBox(
+            height: Platform.isMacOS
+                ? 50
+                : 16 + MediaQuery.viewPaddingOf(context).bottom,
+          ),
         ],
       ),
     );
@@ -156,6 +170,7 @@ class _ProfileTile extends StatelessWidget {
         child: Row(
           children: <Widget>[
             icon.svg(
+              height: Platform.isMacOS ? 20 : 24,
               colorFilter: ColorFilter.mode(
                 color,
                 BlendMode.srcIn,
@@ -224,14 +239,16 @@ class _GiftButton extends StatelessWidget {
             end: Alignment.bottomCenter,
           ),
         ),
-        padding: const EdgeInsets.symmetric(
-          vertical: 24,
-          horizontal: 28,
+        padding: EdgeInsets.symmetric(
+          vertical: AppSpaces.space600,
+          horizontal: AppSpaces.space700,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Assets.icons.gift24.svg(),
+            Assets.icons.gift24.svg(
+              height: Platform.isMacOS ? 20 : 24,
+            ),
             const SizedBox(width: 12),
             Text(
               'Gift Savie',

@@ -11,6 +11,7 @@ import 'package:wave_blob/wave_blob.dart';
 import '../../../../../../application/application.dart';
 import '../../../../../../domain/domain.dart';
 import '../../../../../presentation.dart';
+import '../chat_page.dart';
 import '../chat_page_provider.dart';
 import '../cubit/cubit.dart';
 import 'message_view/sent_animation_text.dart';
@@ -19,7 +20,10 @@ import 'widget.dart';
 class MessageInputView extends StatefulWidget {
   const MessageInputView({
     super.key,
+    required this.textController,
   });
+
+  final TextEditingController textController;
 
   @override
   State<MessageInputView> createState() => _MessageInputViewState();
@@ -34,14 +38,18 @@ class _MessageInputViewState extends State<MessageInputView> {
     return Container(
       color: AppColors.backgroundPrimary,
       child: Container(
+        margin:
+            Platform.isMacOS ? const EdgeInsets.fromLTRB(24, 0, 24, 28) : null,
         padding: EdgeInsets.only(
           bottom: MediaQuery.viewPaddingOf(context).bottom,
         ),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.backgroundChatInput,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(24),
-          ),
+          borderRadius: Platform.isMacOS
+              ? const BorderRadius.all(Radius.circular(16))
+              : const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
         ),
         child: Stack(
           alignment: Alignment.bottomCenter,
@@ -49,6 +57,7 @@ class _MessageInputViewState extends State<MessageInputView> {
             _TextInputView(
               canRecordNotifier: _canRecordNotifier,
               focusNode: _textFocusNode,
+              textController: widget.textController,
             ),
             Positioned.fill(
               child: ValueListenableBuilder<bool>(
@@ -81,12 +90,13 @@ class SendButton extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(AppSpaces.space200),
         decoration: BoxDecoration(
           color: AppColors.backgroundSecondary,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Assets.icons.arrowUp24.svg(
+          height: Platform.isMacOS ? 20 : 24,
           colorFilter: const ColorFilter.mode(
             AppColors.iconAccent,
             BlendMode.srcIn,
@@ -101,18 +111,22 @@ class _TextInputView extends StatefulWidget {
   const _TextInputView({
     required this.canRecordNotifier,
     required this.focusNode,
+    required this.textController,
   });
 
   final ValueNotifier<bool> canRecordNotifier;
   final FocusNode focusNode;
+  final TextEditingController textController;
 
   @override
   State<_TextInputView> createState() => _TextInputViewState();
 }
 
 class _TextInputViewState extends State<_TextInputView> {
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _controller = widget.textController;
   ChatPagePorvider get _chatPagePorvider => ChatPagePorvider.of(context);
+
+  bool _metaPressed = false;
 
   @override
   void initState() {
@@ -129,14 +143,24 @@ class _TextInputViewState extends State<_TextInputView> {
 
     if (Platform.isMacOS) {
       // ignore: deprecated_member_use
-      widget.focusNode.onKey = (FocusNode node, RawKeyEvent evt) {
-        // ignore: deprecated_member_use
-        if (!evt.isShiftPressed && evt.logicalKey.keyLabel == 'Enter') {
-          _onSend();
+      widget.focusNode.onKeyEvent = (FocusNode node, KeyEvent value) {
+        if (value.logicalKey.keyLabel.contains('Meta') ||
+            value.logicalKey.keyLabel.contains('Shift')) {
+          _metaPressed = value is KeyDownEvent;
+
           return KeyEventResult.handled;
-        } else {
-          return KeyEventResult.ignored;
         }
+
+        if (value.logicalKey.keyLabel == 'Enter') {
+          if (!_metaPressed || value is KeyUpEvent) {
+            return KeyEventResult.ignored;
+          }
+
+          _controller.text += '\n';
+          return KeyEventResult.handled;
+        }
+
+        return KeyEventResult.ignored;
       };
     }
   }
@@ -145,7 +169,6 @@ class _TextInputViewState extends State<_TextInputView> {
   void dispose() {
     // ignore: deprecated_member_use
     widget.focusNode.onKey = null;
-    _controller.dispose();
     super.dispose();
   }
 
@@ -165,10 +188,12 @@ class _TextInputViewState extends State<_TextInputView> {
             widget.canRecordNotifier.value = _controller.text.isEmpty;
           },
           editingMessage: (TextMessage message) {
-            setState(() => _editingMessage = message);
+            widget.focusNode.unfocus();
             context.read<ChatPageCubit>().updatePreservedText(_controller.text);
             _controller.value = TextEditingValue(text: message.text ?? '');
             widget.canRecordNotifier.value = false;
+            widget.focusNode.requestFocus();
+            setState(() => _editingMessage = message);
           },
         );
         _lastChatPageState = state;
@@ -204,8 +229,10 @@ class _TextInputViewState extends State<_TextInputView> {
                 child: CupertinoTextField(
                   focusNode: widget.focusNode,
                   controller: _controller,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 20),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: Platform.isMacOS ? 15 : 20,
+                  ),
                   autofocus: true,
                   minLines: 1,
                   maxLines: 15,
@@ -226,15 +253,19 @@ class _TextInputViewState extends State<_TextInputView> {
                     child: IgnorePointer(
                       ignoring: _editingMessage != null,
                       child: Container(
+                        padding: EdgeInsets.fromLTRB(
+                          AppSpaces.space300,
+                          AppSpaces.space300,
+                          0,
+                          AppSpaces.space300,
+                        ),
                         alignment: Alignment.bottomCenter,
-                        padding: const EdgeInsets.fromLTRB(12, 12, 0, 12),
                         child: const FilePickerButton(),
                       ),
                     ),
                   ),
                   suffix: Container(
                     alignment: Alignment.bottomCenter,
-                    padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
                     child: ValueListenableBuilder<bool>(
                       valueListenable: widget.canRecordNotifier,
                       builder: (BuildContext context, bool canRecord, _) {
@@ -243,12 +274,27 @@ class _TextInputViewState extends State<_TextInputView> {
                           crossFadeState: canRecord
                               ? CrossFadeState.showSecond
                               : CrossFadeState.showFirst,
-                          firstChild: SendButton(
-                            onTap: _onSend,
+                          alignment: Alignment.center,
+                          firstChild: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              AppSpaces.space300,
+                              AppSpaces.space300,
+                              AppSpaces.space300,
+                              AppSpaces.space300,
+                            ),
+                            child: SendButton(
+                              onTap: _onSend,
+                            ),
                           ),
                           secondChild: Padding(
-                            padding: const EdgeInsets.all(8),
+                            padding: EdgeInsets.fromLTRB(
+                              Platform.isMacOS ? 14 : 20,
+                              Platform.isMacOS ? 14 : 20,
+                              Platform.isMacOS ? 14 : 20,
+                              Platform.isMacOS ? 14 : 20,
+                            ),
                             child: Assets.icons.mic24.svg(
+                              height: Platform.isMacOS ? 20 : 24,
                               colorFilter: const ColorFilter.mode(
                                 AppColors.iconSecodary,
                                 BlendMode.srcIn,
@@ -493,10 +539,14 @@ class _AudioInputViewState extends State<_AudioInputView>
                           return Opacity(
                             opacity: _backgroundOpacityAnimation.value,
                             child: Container(
-                              decoration: const BoxDecoration(
-                                borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(24),
-                                ),
+                              decoration: BoxDecoration(
+                                borderRadius: Platform.isMacOS
+                                    ? const BorderRadius.all(
+                                        Radius.circular(16),
+                                      )
+                                    : const BorderRadius.vertical(
+                                        top: Radius.circular(24),
+                                      ),
                                 color: AppColors.backgroundChatInput,
                               ),
                             ),
@@ -572,7 +622,7 @@ class _AudioInputViewState extends State<_AudioInputView>
                 duration: const Duration(milliseconds: 300),
                 child: Container(
                   alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 11),
+                  padding: EdgeInsets.only(right: Platform.isMacOS ? 8 : 11),
                   child: const OverflowBox(
                     maxHeight: 66,
                     alignment: Alignment.centerRight,
@@ -614,8 +664,8 @@ class _AudioInputViewState extends State<_AudioInputView>
                   );
                 },
                 child: Container(
-                  height: 64,
-                  width: 64,
+                  height: AppSpaces.space1500 + 4,
+                  width: AppSpaces.space1500 + 4,
                   alignment: Alignment.center,
                   child: OverflowBox(
                     maxWidth: 200,
@@ -641,7 +691,7 @@ class _AudioInputViewState extends State<_AudioInputView>
   }
 }
 
-class _ActiveRecordingButton extends StatelessWidget {
+class _ActiveRecordingButton extends StatefulWidget {
   const _ActiveRecordingButton({
     required this.horizontalSwipeAnimationController,
     required this.completeAnimationController,
@@ -655,6 +705,37 @@ class _ActiveRecordingButton extends StatelessWidget {
   final AnimationController scaleAnimationController;
   final AnimationController opacityAnimationController;
   final AnimationController verticalSwipeAnimationController;
+
+  @override
+  State<_ActiveRecordingButton> createState() => _ActiveRecordingButtonState();
+}
+
+class _ActiveRecordingButtonState extends State<_ActiveRecordingButton> {
+  @override
+  void initState() {
+    super.initState();
+    keyEnventNotifier.addListener(_keyEventListener);
+  }
+
+  void _keyEventListener() {
+    final KeyEvent? keyEvent = keyEnventNotifier.value;
+
+    if (keyEvent == null) {
+      return;
+    }
+
+    if (keyEvent.logicalKey.keyLabel == 'Enter') {
+      if (context.read<RecordingCubit>().state.isRecording) {
+        _onFinish(context);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    keyEnventNotifier.removeListener(_keyEventListener);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -711,10 +792,10 @@ class _ActiveRecordingButton extends StatelessWidget {
                 behavior: isRecording
                     ? HitTestBehavior.translucent
                     : HitTestBehavior.opaque,
-                onLongPressEnd: completeAnimationController.isAnimating
+                onLongPressEnd: widget.completeAnimationController.isAnimating
                     ? null
                     : () => _onLongPressEnd(context),
-                onLongPressMove: completeAnimationController.isAnimating
+                onLongPressMove: widget.completeAnimationController.isAnimating
                     ? null
                     : (MoveEvent details) =>
                         _onLongPressMoveUpdate(context, details),
@@ -722,14 +803,15 @@ class _ActiveRecordingButton extends StatelessWidget {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 700),
                   curve: Curves.elasticOut,
-                  height: 60 * (1 + state.peek * 0.3),
-                  width: 60 * (1 + state.peek * 0.3),
+                  height: AppSpaces.space1500 * (1 + state.peek * 0.3),
+                  width: AppSpaces.space1500 * (1 + state.peek * 0.3),
                   decoration: const BoxDecoration(
                     color: AppColors.backgroundChatVoice,
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
                   child: Assets.icons.arrowUp24.svg(
+                    height: Platform.isMacOS ? 20 : 24,
                     colorFilter: const ColorFilter.mode(
                       Colors.white,
                       BlendMode.srcIn,
@@ -748,29 +830,29 @@ class _ActiveRecordingButton extends StatelessWidget {
     state.when(
       idle: (RecordingResult result) {
         if (result == RecordingResult.cancel) {
-          opacityAnimationController.reverse();
-          verticalSwipeAnimationController.reverse();
-          if (horizontalSwipeAnimationController.value != 0) {
-            completeAnimationController.forward().then((_) {
-              completeAnimationController.value = 0;
-              horizontalSwipeAnimationController.value = 0;
+          widget.opacityAnimationController.reverse();
+          widget.verticalSwipeAnimationController.reverse();
+          if (widget.horizontalSwipeAnimationController.value != 0) {
+            widget.completeAnimationController.forward().then((_) {
+              widget.completeAnimationController.value = 0;
+              widget.horizontalSwipeAnimationController.value = 0;
             });
           }
-          scaleAnimationController.reverse().then((_) {
-            scaleAnimationController.value = 1;
+          widget.scaleAnimationController.reverse().then((_) {
+            widget.scaleAnimationController.value = 1;
           });
         } else if (result == RecordingResult.finish ||
             result == RecordingResult.none) {
-          opacityAnimationController.reverse();
-          scaleAnimationController.forward();
-          horizontalSwipeAnimationController.reverse();
+          widget.opacityAnimationController.reverse();
+          widget.scaleAnimationController.forward();
+          widget.horizontalSwipeAnimationController.reverse();
         }
 
-        verticalSwipeAnimationController.reverse();
+        widget.verticalSwipeAnimationController.reverse();
       },
       recording: (_, __, ___, ____) {
         HapticFeedback.lightImpact();
-        opacityAnimationController.forward();
+        widget.opacityAnimationController.forward();
       },
     );
   }
@@ -779,7 +861,7 @@ class _ActiveRecordingButton extends StatelessWidget {
     final bool isFixed = state.isFixed;
 
     if (isFixed) {
-      verticalSwipeAnimationController.reverse();
+      widget.verticalSwipeAnimationController.reverse();
     }
   }
 
@@ -809,13 +891,13 @@ class _ActiveRecordingButton extends StatelessWidget {
       return;
     }
 
-    if (horizontalSwipeAnimationController.value > 0.5) {
+    if (widget.horizontalSwipeAnimationController.value > 0.5) {
       return _onCancel(context);
     } else if (!context.read<RecordingCubit>().state.isFixed) {
       return _onFinish(context);
     } else {
-      scaleAnimationController.forward();
-      horizontalSwipeAnimationController.reverse();
+      widget.scaleAnimationController.forward();
+      widget.horizontalSwipeAnimationController.reverse();
     }
   }
 
@@ -830,11 +912,11 @@ class _ActiveRecordingButton extends StatelessWidget {
 
     final double newHorizonatalValue =
         (-details.localPos.dx / 2).clamp(0, 80) / 80;
-    horizontalSwipeAnimationController.value = newHorizonatalValue;
+    widget.horizontalSwipeAnimationController.value = newHorizonatalValue;
 
     final double newVerticalValue =
         (-details.localPos.dy / 2).clamp(0, 60) / 60;
-    verticalSwipeAnimationController.value = newVerticalValue;
+    widget.verticalSwipeAnimationController.value = newVerticalValue;
 
     if (newVerticalValue == 1) {
       HapticFeedback.lightImpact();
@@ -1026,7 +1108,9 @@ class _RecordingFixLabel extends StatelessWidget {
       ),
       child: Column(
         children: <Widget>[
-          Assets.icons.unlocked24.svg(),
+          Assets.icons.unlocked24.svg(
+            height: Platform.isMacOS ? 20 : 24,
+          ),
           const SizedBox(height: 4),
           Assets.icons.chevronUp16.svg(),
         ],

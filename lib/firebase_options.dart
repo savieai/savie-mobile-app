@@ -28,10 +28,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
@@ -63,6 +60,18 @@ class DefaultFirebaseOptions {
     messagingSenderId: '256363804943',
     projectId: 'savie-dev-428016',
     storageBucket: 'savie-dev-428016.appspot.com',
+    iosClientId: '256363804943-pj14l9af8j4p07n5mqluhor3khmggm3t.apps.googleusercontent.com',
     iosBundleId: 'agency.galt.savie.app',
   );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyA-UulpUjybHiU6alxxq0DavGw9QvrvofQ',
+    appId: '1:256363804943:ios:2d76f84fd9d2481609267a',
+    messagingSenderId: '256363804943',
+    projectId: 'savie-dev-428016',
+    storageBucket: 'savie-dev-428016.appspot.com',
+    iosClientId: '256363804943-c2adk6k2ovheffgn2na32n8u8un2ob61.apps.googleusercontent.com',
+    iosBundleId: 'agency.galt.savie.savie',
+  );
+
 }

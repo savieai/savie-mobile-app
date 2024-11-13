@@ -138,7 +138,7 @@ class MessageView extends StatelessWidget {
                 },
               ),
             ],
-            if (textMessage.images.isNotEmpty)
+            if (textMessage.images.isNotEmpty && !Platform.isMacOS)
               if (textMessage.images.length == 1)
                 ContextMenuItemData(
                   title: 'Save',
@@ -234,7 +234,7 @@ class _MessageAligner extends StatelessWidget {
     return Align(
       alignment: Alignment.centerRight,
       child: FractionallySizedBox(
-        widthFactor: 0.9,
+        widthFactor: Platform.isMacOS ? 0.8 : 0.9,
         child: Align(
           alignment: Alignment.centerRight,
           child: child,

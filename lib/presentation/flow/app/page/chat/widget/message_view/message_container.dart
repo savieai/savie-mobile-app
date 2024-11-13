@@ -4,17 +4,19 @@ class _MessageContainer extends StatelessWidget {
   const _MessageContainer({
     required this.child,
     this.decorationOpacity = 1,
+    this.animateSize = true,
   });
 
   final Widget child;
   final double decorationOpacity;
+  final bool animateSize;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: 12,
-        horizontal: 16,
+      padding: EdgeInsets.symmetric(
+        vertical: AppSpaces.space300,
+        horizontal: AppSpaces.space400,
       ),
       decoration: BoxDecoration(
         color: AppColors.backgroundChatBubble.withOpacity(decorationOpacity),
@@ -22,7 +24,7 @@ class _MessageContainer extends StatelessWidget {
           color: AppColors.strokeSecondaryAlpha
               .withOpacity(decorationOpacity * 0.06),
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppCorners.message),
         boxShadow: <BoxShadow>[
           BoxShadow(
             blurRadius: 9,
@@ -32,11 +34,13 @@ class _MessageContainer extends StatelessWidget {
           ),
         ],
       ),
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.linearToEaseOut,
-        child: child,
-      ),
+      child: animateSize
+          ? AnimatedSize(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.linearToEaseOut,
+              child: child,
+            )
+          : child,
     );
   }
 }

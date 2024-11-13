@@ -32,7 +32,8 @@ class RecordingCubit extends Cubit<RecordingState> {
   int _seconds = 0;
 
   Future<void> startRecording() async {
-    final bool hasPemrission = await Permission.microphone.isGranted;
+    final bool hasPemrission =
+        Platform.isMacOS || await Permission.microphone.isGranted;
 
     if (!hasPemrission) {
       await Permission.microphone.request();

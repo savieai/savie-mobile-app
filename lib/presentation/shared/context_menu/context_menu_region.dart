@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
@@ -46,14 +47,16 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
       ValueNotifier<bool>(false);
   final ValueNotifier<double> _scrollPositionNotifier =
       ValueNotifier<double>(0);
-  late ScrollController _scrollController;
+  ScrollController? _scrollController;
   late final ContextMenuCubit _contextMenuCubit;
+
+  final double horizontalPadding = Platform.isMacOS ? 24 : 16;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+      if (context.mounted) {
         _sizeNotifier.value = context.size;
       }
     });
@@ -63,7 +66,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   void didUpdateWidget(covariant ContextMenuRegion oldWidget) {
     super.didUpdateWidget(oldWidget);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && context.mounted) {
+      if (context.mounted) {
         _sizeNotifier.value = context.size;
       }
     });
@@ -93,8 +96,10 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   }
 
   void _showOverlay() {
+    _sizeNotifier.value = context.size;
     context.read<ContextMenuCubit>().setShown();
     _contextMenuShownNotifier.value = true;
+
     HapticFeedback.lightImpact();
 
     final RenderBox renderBox = context.findRenderObject()! as RenderBox;
@@ -134,8 +139,10 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     _scrollPositionNotifier.value = 0;
     _scrollController = ScrollController()
       ..addListener(() {
-        _scrollPositionNotifier.value = _scrollController.offset;
+        _scrollPositionNotifier.value = _scrollController?.offset ?? 0;
       });
+
+    bool canPop = false;
 
     Navigator.push(
       context,
@@ -146,108 +153,130 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
         transitionDuration: const Duration(milliseconds: 250),
         reverseTransitionDuration: const Duration(milliseconds: 250),
         pageBuilder: (BuildContext context, Animation<double> animation, ___) {
-          return Material(
-            type: MaterialType.transparency,
-            child: Stack(
-              children: <Widget>[
-                AnimatedBuilder(
-                  animation: animation,
-                  builder: (BuildContext _, Widget? child) {
-                    return Opacity(
-                      opacity: animation.value,
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(
-                          sigmaX: 15 + 15 * animation.value,
-                          sigmaY: 15 + 15 * animation.value,
-                          tileMode: TileMode.repeated,
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return PopScope(
+                canPop: canPop,
+                onPopInvokedWithResult: (bool didPop, dynamic result) {
+                  if (!didPop) {
+                    setState(() => canPop = true);
+                    _hideOverlay();
+                  }
+                },
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Stack(
+                    children: <Widget>[
+                      AnimatedBuilder(
+                        animation: animation,
+                        builder: (BuildContext _, Widget? child) {
+                          return Opacity(
+                            opacity: animation.value,
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(
+                                sigmaX: 15 + 15 * animation.value,
+                                sigmaY: 15 + 15 * animation.value,
+                                tileMode: TileMode.repeated,
+                              ),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Container(
+                          color: Colors.transparent,
                         ),
-                        child: child,
                       ),
-                    );
-                  },
-                  child: Container(
-                    color: Colors.transparent,
-                  ),
-                ),
-                Positioned.fill(
-                  child: TapRegion(
-                    onTapInside: (PointerDownEvent event) {
-                      final RenderBox renderBox = _childKey.currentContext!
-                          .findRenderObject()! as RenderBox;
-                      final Size size = renderBox.size;
-                      final Offset offset =
-                          renderBox.localToGlobal(Offset.zero);
-                      final Offset tapPosition = event.position;
+                      Positioned.fill(
+                        child: TapRegion(
+                          onTapInside: (PointerDownEvent event) {
+                            final RenderBox renderBox =
+                                _childKey.currentContext!.findRenderObject()!
+                                    as RenderBox;
+                            final Size size = renderBox.size;
+                            final Offset offset =
+                                renderBox.localToGlobal(Offset.zero);
+                            final Offset tapPosition = event.position;
 
-                      final Offset delta = tapPosition - offset;
+                            final Offset delta = tapPosition - offset;
 
-                      final bool hit = delta.dx >= 0 &&
-                          delta.dx <= size.width &&
-                          delta.dy >= 0 &&
-                          delta.dy <= size.height;
+                            final bool hit = delta.dx >= 0 &&
+                                delta.dx <= size.width &&
+                                delta.dy >= 0 &&
+                                delta.dy <= size.height;
 
-                      if (hit) {
-                        // TODO: on hit
-                      } else {
-                        _hideOverlay();
-                      }
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: const SizedBox(),
-                  ),
-                ),
-                Positioned(
-                  left: (posiiton.dx < 16
-                          ? 16
-                          : (MediaQuery.sizeOf(context).width -
-                                      (posiiton.dx + renderBox.size.width)) <
-                                  16
-                              ? posiiton.dx - 16
-                              : posiiton.dx) -
-                      20,
-                  width: renderBox.size.width + 40,
-                  child: SizedBox(
-                    height: screenHeight,
-                    child: SingleChildScrollView(
-                      controller: _scrollController,
-                      reverse: true,
-                      padding: EdgeInsets.zero,
-                      child: Column(
-                        children: <Widget>[
-                          GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: _hideOverlay,
-                            child: SizedBox(
-                              height: minOffsetDy,
-                              width: double.infinity,
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Hero(
-                              key: _childKey,
-                              tag: widget.heroTag,
-                              flightShuttleBuilder: flightShuttleBuilder,
-                              child: unconstrainedChild,
-                            ),
-                          ),
-                          GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: _hideOverlay,
-                            child: SizedBox(
-                              height: screenHeight -
-                                  posiiton.dy -
-                                  renderBox.size.height,
-                              width: double.infinity,
-                            ),
-                          ),
-                        ],
+                            if (hit) {
+                              // TODO: on hit
+                            } else {
+                              _hideOverlay();
+                            }
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: const SizedBox(),
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        left: (posiiton.dx < horizontalPadding
+                                ? horizontalPadding
+                                : (MediaQuery.sizeOf(context).width -
+                                            (posiiton.dx +
+                                                renderBox.size.width)) <
+                                        horizontalPadding
+                                    ? posiiton.dx - horizontalPadding
+                                    : posiiton.dx) -
+                            20,
+                        width: renderBox.size.width + 40,
+                        child: SizedBox(
+                          height: screenHeight,
+                          child: ScrollbarTheme(
+                            data: const ScrollbarThemeData(
+                              thickness: WidgetStatePropertyAll<double>(0),
+                            ),
+                            child: SingleChildScrollView(
+                              controller: _scrollController,
+                              reverse: true,
+                              padding: EdgeInsets.zero,
+                              child: Column(
+                                children: <Widget>[
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: _hideOverlay,
+                                    child: SizedBox(
+                                      height: minOffsetDy,
+                                      width: double.infinity,
+                                    ),
+                                  ),
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 20),
+                                    child: Hero(
+                                      key: _childKey,
+                                      tag: widget.heroTag,
+                                      flightShuttleBuilder:
+                                          flightShuttleBuilder,
+                                      child: unconstrainedChild,
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: _hideOverlay,
+                                    child: SizedBox(
+                                      height: screenHeight -
+                                          posiiton.dy -
+                                          renderBox.size.height,
+                                      width: double.infinity,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              );
+            },
           );
         },
       ),
@@ -268,8 +297,10 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
                     builder: (BuildContext context, double value, _) {
                       return Positioned(
                         width: width,
-                        right: shouldAttachToRight ? 16 : null,
-                        left: shouldAttachToRight ? null : max(16, posiiton.dx),
+                        right: shouldAttachToRight ? horizontalPadding : null,
+                        left: shouldAttachToRight
+                            ? null
+                            : max(horizontalPadding, posiiton.dx),
                         top: value + 4 + _scrollPositionNotifier.value,
                         child: FadeTransition(
                           opacity: _overlayAnimation,
@@ -312,12 +343,15 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
     Future<void>.delayed(const Duration(milliseconds: 600), () {
       _contextMenuCubit.setNotShown();
       _contextMenuShownNotifier.value = false;
-      _scrollController.dispose();
+      _scrollController?.dispose();
     });
+
     Navigator.of(context).pop();
     _overlayAnimationController.reverse().then((_) {
-      _overlayEntry?.remove();
-      _overlayEntry = null;
+      if (_overlayEntry?.mounted ?? false) {
+        _overlayEntry?.remove();
+        _overlayEntry = null;
+      }
     });
   }
 
@@ -368,47 +402,54 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onLongPressDown: (_) {
-        late final ChatHorizontalDragCubit? cubit;
-        try {
-          cubit = context.read<ChatHorizontalDragCubit>();
-        } catch (_) {
-          cubit = null;
-        }
-
-        _pressedDown = true;
-        Future<void>.delayed(const Duration(milliseconds: 200), () {
-          if (cubit != null && cubit.state != 0) {
-            _pressedDown = false;
-            return;
-          }
-
-          if (_pressedDown) {
-            _longPressAnimationController.forward().then((_) {
-              _longPressAnimationController.reverse();
-              _pressedDown = false;
-
-              if (cubit != null && cubit.state != 0) {
-                return;
+      onSecondaryTap: Platform.isMacOS ? _showOverlay : null,
+      onLongPressDown: Platform.isMacOS
+          ? null
+          : (_) {
+              late final ChatHorizontalDragCubit? cubit;
+              try {
+                cubit = context.read<ChatHorizontalDragCubit>();
+              } catch (_) {
+                cubit = null;
               }
 
-              _showOverlay();
-            });
-          }
-        });
-      },
-      onLongPressCancel: () {
-        if (_pressedDown) {
-          _pressedDown = false;
-          _longPressAnimationController.reverse();
-        }
-      },
-      onLongPressEnd: (_) {
-        if (_pressedDown) {
-          _pressedDown = false;
-          _longPressAnimationController.reverse();
-        }
-      },
+              _pressedDown = true;
+              Future<void>.delayed(const Duration(milliseconds: 200), () {
+                if (cubit != null && cubit.state != 0) {
+                  _pressedDown = false;
+                  return;
+                }
+
+                if (_pressedDown) {
+                  _longPressAnimationController.forward().then((_) {
+                    _longPressAnimationController.reverse();
+                    _pressedDown = false;
+
+                    if (cubit != null && cubit.state != 0) {
+                      return;
+                    }
+
+                    _showOverlay();
+                  });
+                }
+              });
+            },
+      onLongPressCancel: Platform.isMacOS
+          ? null
+          : () {
+              if (_pressedDown) {
+                _pressedDown = false;
+                _longPressAnimationController.reverse();
+              }
+            },
+      onLongPressEnd: Platform.isMacOS
+          ? null
+          : (_) {
+              if (_pressedDown) {
+                _pressedDown = false;
+                _longPressAnimationController.reverse();
+              }
+            },
       child: ValueListenableBuilder<bool>(
         valueListenable: _contextMenuShownNotifier,
         builder: (BuildContext context, bool value, _) {

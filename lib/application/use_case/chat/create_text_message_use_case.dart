@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../domain/domain.dart';
@@ -21,6 +22,8 @@ class CreateTextMessageUseCase {
   final ResizeImageUseCase _resizeImageUseCase;
 
   Future<void> execute(TextMessage message) async {
+    final Directory tempDir = await getTemporaryDirectory();
+
     final List<(String, String)> fileNames = await Future.wait(
       message.images.map((Attachment a) => a).nonNulls.map(
         (Attachment a) async {
@@ -32,8 +35,7 @@ class CreateTextMessageUseCase {
           );
 
           // Get the compressed bytes and save them to a temporary file
-          final String tempPath =
-              '${File(a.localFullPath!).parent.path}/compressed_$fileName';
+          final String tempPath = '${tempDir.path}/compressed_$fileName';
           final File compressedFile = File(tempPath)
             ..writeAsBytesSync(resizedImageBytes);
 

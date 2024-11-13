@@ -34,7 +34,7 @@ class _ProComingSoonPageState extends State<ProComingSoonPage> {
           Assets.images.saviePro.image(),
           const SizedBox(height: 4),
           ...<Widget>[
-            const Text(
+            Text(
               'Savie Pro',
               style: AppTextStyles.title2,
             ),

@@ -39,7 +39,7 @@ class CameraRollBottomBar extends StatelessWidget {
                 getIt
                     .get<TrackUseActivityUseCase>()
                     .execute(AppEvents.mediaSelection.filesClicked);
-                _pushFilePicker(context);
+                pushFilePicker(context);
               },
               child: _BottomBarButton(
                 svgGenImage: Assets.icons.folder24,
@@ -51,19 +51,6 @@ class CameraRollBottomBar extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Future<void> _pushFilePicker(BuildContext context) async {
-    final ChatCubit chatCubit = context.read<ChatCubit>();
-    context.router.maybePop();
-
-    final FilePickerResult? result = await FilePicker.platform.pickFiles();
-
-    if (result == null || result.files.isEmpty) {
-      return;
-    }
-
-    chatCubit.sendFile(result.files.firstOrNull?.path);
   }
 }
 
@@ -104,4 +91,17 @@ class _BottomBarButton extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> pushFilePicker(BuildContext context) async {
+  final ChatCubit chatCubit = context.read<ChatCubit>();
+  context.router.maybePop();
+
+  final FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+  if (result == null || result.files.isEmpty) {
+    return;
+  }
+
+  chatCubit.sendFile(result.files.firstOrNull?.path);
 }

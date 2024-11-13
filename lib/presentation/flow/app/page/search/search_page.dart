@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/cupertino.dart';
@@ -222,6 +224,7 @@ class _SearchFieldState extends State<_SearchField> {
       prefix: Padding(
         padding: const EdgeInsets.only(left: 8),
         child: Assets.icons.search24.svg(
+          height: Platform.isMacOS ? 20 : 24,
           colorFilter: const ColorFilter.mode(
             AppColors.iconSecodary,
             BlendMode.srcIn,

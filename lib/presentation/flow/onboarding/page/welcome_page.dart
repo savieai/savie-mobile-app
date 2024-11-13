@@ -79,60 +79,82 @@ class _WelcomePageState extends State<WelcomePage> {
                 ),
               ),
               Expanded(
-                child: Stack(
-                  children: <Widget>[
-                    AnimatedPositioned(
-                      duration: const Duration(seconds: 1),
-                      curve: Curves.easeInOutCubic,
-                      bottom: _currentSlide == 4 ? 90 : 40,
-                      left: 0,
-                      right: 0,
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 500),
-                        switchInCurve: Curves.linearToEaseOut,
-                        switchOutCurve: Curves.easeIn,
-                        transitionBuilder: (
-                          Widget child,
-                          Animation<double> animation,
-                        ) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: ScaleTransition(
-                              scale: animation,
-                              child: child,
+                child: SizedBox(
+                  width: MediaQuery.sizeOf(context).width,
+                  child: FittedBox(
+                    child: SizedBox(
+                      height: 324,
+                      width: 393,
+                      child: Stack(
+                        children: <Widget>[
+                          AnimatedPositioned(
+                            duration: const Duration(seconds: 1),
+                            curve: Curves.easeInOutCubic,
+                            top: _currentSlide == 4 ? -40 : 30,
+                            left: 0,
+                            right: 0,
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 500),
+                              switchInCurve: Curves.linearToEaseOut,
+                              switchOutCurve: Curves.easeIn,
+                              transitionBuilder: (
+                                Widget child,
+                                Animation<double> animation,
+                              ) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: ScaleTransition(
+                                    scale: animation,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: switch (_currentSlide) {
+                                0 => Assets.images.audio.image(
+                                    key: const ValueKey<int>(0),
+                                    width: 393,
+                                  ),
+                                1 => Assets.images.spanish.image(
+                                    key: const ValueKey<int>(1),
+                                    width: 393,
+                                  ),
+                                2 => Assets.images.list.image(
+                                    key: const ValueKey<int>(2),
+                                    width: 393,
+                                  ),
+                                _ => Assets.images.images.image(
+                                    key: const ValueKey<int>(3),
+                                    width: 393,
+                                  ),
+                              },
                             ),
-                          );
-                        },
-                        child: switch (_currentSlide) {
-                          0 => Assets.images.audio
-                              .image(key: const ValueKey<int>(0)),
-                          1 => Assets.images.spanish
-                              .image(key: const ValueKey<int>(1)),
-                          2 => Assets.images.list
-                              .image(key: const ValueKey<int>(2)),
-                          _ => Assets.images.images
-                              .image(key: const ValueKey<int>(3)),
-                        },
+                          ),
+                          Positioned(
+                            top: -10,
+                            left: 0,
+                            right: 0,
+                            child: AnimatedScale(
+                              alignment: const Alignment(0, 0.5),
+                              duration: const Duration(milliseconds: 1000),
+                              curve: Curves.easeInOutCubic,
+                              scale: _currentSlide == 4 ? 1 : 0,
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 1000),
+                                curve: Curves.easeInOutCubic,
+                                opacity: _currentSlide == 4 ? 1 : 0,
+                                child: Center(
+                                  child: Assets.images.spanishAudio.image(
+                                    width: 393,
+                                    fit: BoxFit.fitWidth,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Positioned(
-                      top: 30,
-                      left: 0,
-                      right: 0,
-                      child: AnimatedScale(
-                        alignment: const Alignment(0, 0.5),
-                        duration: const Duration(milliseconds: 1000),
-                        curve: Curves.easeInOutCubic,
-                        scale: _currentSlide == 4 ? 1 : 0,
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 1000),
-                          curve: Curves.easeInOutCubic,
-                          opacity: _currentSlide == 4 ? 1 : 0,
-                          child: Assets.images.spanishAudio.image(),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               const _AppleSignInButton(),

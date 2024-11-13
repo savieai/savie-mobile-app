@@ -19,6 +19,7 @@ class NoResultsPlaceholder extends StatelessWidget {
             style: AppTextStyles.paragraph.copyWith(
               color: AppColors.textSecondary,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

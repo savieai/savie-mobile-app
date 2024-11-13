@@ -11,6 +11,7 @@ class AudioMessageView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _MessageContainer(
+      animateSize: false,
       child: AudioView(
         audioMessage: audioMessage,
         expand: false,
@@ -60,8 +61,9 @@ class _AudioViewState extends State<AudioView> {
     }
   }
 
+  double? _processedMaxWidth;
   void _calculatePeeksIfNeeded(double maxWidth) {
-    if (_peeks == null) {
+    if (_processedMaxWidth != maxWidth) {
       if (widget.expand) {
         final int peeksLength = maxWidth ~/ 4;
         _peeks = resample(widget.audioMessage.audioInfo.peaks, peeksLength);
@@ -69,14 +71,18 @@ class _AudioViewState extends State<AudioView> {
         final int projectedPeeksLength =
             (widget.audioMessage.audioInfo.duration.inSeconds * 2)
                 .clamp(10, 60);
-        final double maxSpace =
-            (MediaQuery.sizeOf(context).width - 20 * 2) * 0.9 - 67 - 80;
+        final double maxSpace = (MediaQuery.sizeOf(context).width - 20 * 2) *
+                (Platform.isMacOS ? 0.8 : 0.9) -
+            67 -
+            80;
         // TODO: calculate text instead of 80;
         final int maxPeeksLength = maxSpace ~/ 4;
         final int acutalPeeksLength = min(maxPeeksLength, projectedPeeksLength);
         _peeks =
             resample(widget.audioMessage.audioInfo.peaks, acutalPeeksLength);
       }
+
+      _processedMaxWidth = maxWidth;
     }
   }
 

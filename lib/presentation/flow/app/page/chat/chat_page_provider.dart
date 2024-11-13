@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/widgets.dart';
 
 import '../../../../presentation.dart';
@@ -36,8 +38,9 @@ class ChatPagePorvider extends InheritedWidget {
   }
 
   bool get canRunSentMessageAnimation =>
+      !Platform.isMacOS &&
       scrollController.position.minScrollExtent ==
-      scrollController.position.pixels;
+          scrollController.position.pixels;
 
   void runSentMessageAnimation({
     required String text,

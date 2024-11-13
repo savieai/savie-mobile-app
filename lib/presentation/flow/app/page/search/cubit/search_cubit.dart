@@ -67,6 +67,10 @@ class SearchCubit extends Cubit<SearchState> {
       type: newType,
     );
 
+    if (isClosed) {
+      return;
+    }
+
     switch (newType) {
       case SearchResultType.image:
         emit(SearchState.initial.copyWith(

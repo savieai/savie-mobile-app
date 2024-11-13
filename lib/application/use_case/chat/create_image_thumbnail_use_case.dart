@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:injectable/injectable.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../../../domain/domain.dart';
@@ -27,9 +28,10 @@ class CreateImageThumbnailUseCase {
     final String placeholderName =
         '${const Uuid().v4()}.${image.name.split('.').last}';
 
+    final Directory tempDir = await getTemporaryDirectory();
+
     // Save the resized image (thumbnail) to a temporary file
-    final String tempPath =
-        '${File(imagePath).parent.path}/thumbnail_$placeholderName';
+    final String tempPath = '${tempDir.path}/thumbnail_$placeholderName';
     final File thumbnailFile = File(tempPath)
       ..writeAsBytesSync(resizedThumbnail);
 

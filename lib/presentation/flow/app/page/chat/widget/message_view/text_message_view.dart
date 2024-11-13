@@ -45,12 +45,15 @@ class _TextMessageViewState extends State<TextMessageView>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           if (!linkOnly)
-            SelectableText.rich(
-              TextSpan(children: spans),
-              enableInteractiveSelection: widget.contextMenuShown,
-              cursorWidth: 0,
-              style: AppTextStyles.paragraph.copyWith(
-                color: AppColors.textPrimary,
+            IgnorePointer(
+              ignoring: !widget.contextMenuShown,
+              child: SelectableText.rich(
+                TextSpan(children: spans),
+                enableInteractiveSelection: widget.contextMenuShown,
+                cursorWidth: 0,
+                style: AppTextStyles.paragraph.copyWith(
+                  color: AppColors.textPrimary,
+                ),
               ),
             ),
           if (links.length == 1)
@@ -101,6 +104,7 @@ class _TextMessageViewState extends State<TextMessageView>
           children: <InlineSpan>[
             if (addFavicon)
               WidgetSpan(
+                alignment: PlaceholderAlignment.middle,
                 child: Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: FavIcon(

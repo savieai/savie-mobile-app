@@ -118,25 +118,25 @@ class _EnterReferalCodeBox extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(32),
       ),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            SizedBox(height: 32),
-            Text(
+            const SizedBox(height: 32),
+            const Text(
               '👀',
               style: TextStyle(fontSize: 44),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               "Almost there! We're currently in test mode and only allowing people with invites. You have an invite, right?",
               style: AppTextStyles.paragraph,
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 20),
-            _EnterReferalCodeField(),
-            SizedBox(height: 14),
+            const SizedBox(height: 20),
+            const _EnterReferalCodeField(),
+            const SizedBox(height: 14),
           ],
         ),
       ),

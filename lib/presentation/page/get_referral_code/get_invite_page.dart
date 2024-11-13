@@ -37,23 +37,23 @@ class _GetInvitePageState extends State<GetInvitePage> {
   Widget build(BuildContext context) {
     return BlocProvider<GetInviteCubit>(
       create: (_) => getIt.get<GetInviteCubit>(),
-      child: const PopupTemplate(
+      child: PopupTemplate(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              SizedBox(height: 44),
-              _GiftWidget(),
-              SizedBox(height: 20),
+              const SizedBox(height: 44),
+              const _GiftWidget(),
+              const SizedBox(height: 20),
               Text(
                 'Gift Savie',
                 style: AppTextStyles.title2,
               ),
-              _InviteInfoBody(),
-              SizedBox(height: 24),
-              _ShareButton(),
-              SizedBox(height: 24),
+              const _InviteInfoBody(),
+              const SizedBox(height: 24),
+              const _ShareButton(),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -290,7 +290,7 @@ class _CopiedNotification extends StatelessWidget {
           ],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: const Text(
+        child: Text(
           'Copied',
           style: AppTextStyles.paragraph,
         ),

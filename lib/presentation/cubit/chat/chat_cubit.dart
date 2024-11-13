@@ -66,6 +66,11 @@ class ChatCubit extends Cubit<ChatState> {
   final Map<String, Message> _pendingMessages = <String, Message>{};
 
   Message? foundMessage;
+  TextMessage? get lastTextMessage => state.map(
+        loading: (_) => null,
+        fetched: (_) =>
+            _sentMessages.values.whereType<TextMessage>().lastOrNull,
+      );
 
   Future<void> _fetchMessages(int page, {required String? query}) async {
     final (Pagination pagination, List<Message> sentMessages) = query == null

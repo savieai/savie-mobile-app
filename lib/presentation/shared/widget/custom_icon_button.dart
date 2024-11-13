@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../presentation.dart';
@@ -26,8 +28,9 @@ class CustomIconButton extends StatelessWidget {
       onLongPressEnd: onLongPressEnd,
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.all(8),
+        padding: EdgeInsets.all(AppSpaces.space200),
         child: svgGenImage.svg(
+          height: Platform.isMacOS ? 20 : 24,
           colorFilter: color == null
               ? null
               : ColorFilter.mode(

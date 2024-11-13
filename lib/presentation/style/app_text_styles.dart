@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../presentation.dart';
@@ -10,35 +12,39 @@ sealed class AppTextStyles {
     height: 40 / 32,
   );
 
-  static const TextStyle title2 = TextStyle(
+  static TextStyle title2 = const TextStyle(
     fontFamily: FontFamily.newYorkLarge,
     fontWeight: FontWeight.w600,
-    fontSize: 26,
-    height: 32 / 26,
+  ).copyWith(
+    fontSize: Platform.isMacOS ? 20 : 24,
+    height: Platform.isMacOS ? 28 / 20 : 32 / 24,
   );
 
-  static const TextStyle paragraph = TextStyle(
+  static TextStyle paragraph = TextStyle(
     fontFamily: FontFamily.inter,
-    fontWeight: FontWeight.w500,
-    fontSize: 17,
-    height: 22 / 17,
+    fontWeight: Platform.isMacOS ? FontWeight.w400 : FontWeight.w500,
     letterSpacing: -0.4,
+  ).copyWith(
+    fontSize: Platform.isMacOS ? 14 : 17,
+    height: Platform.isMacOS ? 18 / 14 : 22 / 17,
   );
 
-  static const TextStyle caption = TextStyle(
+  static final TextStyle caption = TextStyle(
     fontFamily: FontFamily.inter,
-    fontWeight: FontWeight.w500,
-    fontSize: 13,
-    height: 16 / 13,
+    fontWeight: Platform.isMacOS ? FontWeight.w400 : FontWeight.w500,
     letterSpacing: -0.4,
+  ).copyWith(
+    fontSize: Platform.isMacOS ? 14 : 13,
+    height: Platform.isMacOS ? 14 / 11 : 16 / 13,
   );
 
-  static const TextStyle callout = TextStyle(
+  static final TextStyle callout = TextStyle(
     fontFamily: FontFamily.inter,
-    fontWeight: FontWeight.w500,
-    fontSize: 14,
-    height: 18 / 14,
+    fontWeight: Platform.isMacOS ? FontWeight.w400 : FontWeight.w500,
     letterSpacing: -0.4,
+  ).copyWith(
+    fontSize: Platform.isMacOS ? 12 : 14,
+    height: Platform.isMacOS ? 16 / 12 : 18 / 14,
   );
 
   static const TextStyle headline = TextStyle(

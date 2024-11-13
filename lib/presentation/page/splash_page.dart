@@ -49,10 +49,11 @@ class _SplashPageState extends State<SplashPage>
     return Material(
       color: const Color(0xFFFB5012),
       child: Stack(
+        fit: StackFit.expand,
         children: <Widget>[
           Image.asset(
             'assets/splash.png',
-            fit: BoxFit.cover,
+            fit: BoxFit.fitWidth,
           ),
           AnimatedBuilder(
             animation: _animation,
@@ -61,6 +62,7 @@ class _SplashPageState extends State<SplashPage>
                 scale: _animation.value * 10,
                 child: SvgPicture.asset(
                   'assets/splash_foreground.svg',
+                  fit: BoxFit.fitWidth,
                 ),
               );
             },

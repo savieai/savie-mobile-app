@@ -15,7 +15,7 @@ class CameraRollTopBar extends StatefulWidget implements PreferredSizeWidget {
   State<CameraRollTopBar> createState() => _CameraRollTopBarState();
 
   @override
-  Size get preferredSize => const Size.fromHeight(CustomAppBar.preferredHeight);
+  Size get preferredSize => Size.fromHeight(CustomAppBar.preferredHeight);
 }
 
 class _CameraRollTopBarState extends State<CameraRollTopBar> {
