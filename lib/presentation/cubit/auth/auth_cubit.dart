@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -9,9 +11,15 @@ part 'auth_cubit.freezed.dart';
 
 @Singleton()
 class AuthCubit extends Cubit<AuthState> {
-  AuthCubit(this._authRepository) : super(_initialState(_authRepository));
+  AuthCubit(this._authRepository) : super(_initialState(_authRepository)) {
+    _authStatusListener =
+        _authRepository.watchAuthStatus().listen((bool loggedIn) {
+      emit(loggedIn ? const AuthState.loggedIn() : const AuthState.loggedOut());
+    });
+  }
 
   final AuthRepository _authRepository;
+  late final StreamSubscription<bool> _authStatusListener;
 
   static AuthState _initialState(AuthRepository authRepository) {
     return _authStatusToState(authRepository.getAuthStatus());
@@ -59,9 +67,14 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> logOut() async {
     emit(const AuthState.loggingOut());
     await _authRepository.logout();
-    emit(const AuthState.loggedOut());
   }
 
   static AuthState _authStatusToState(bool value) =>
       value ? const AuthState.loggedIn() : const AuthState.loggedOut();
+
+  @override
+  Future<void> close() {
+    _authStatusListener.cancel();
+    return super.close();
+  }
 }

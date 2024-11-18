@@ -60,4 +60,18 @@ class UserRepositoryImpl implements UserRepository {
 
     return response.response.statusCode == 200;
   }
+
+  @override
+  Future<bool> deleteUser() async {
+    final UserDTO? dto = _userStorage.getUser();
+    if (dto == null) {
+      return false;
+    }
+
+    final HttpResponse<void> response = await _userApi.deleteUser(
+      userId: dto.userId,
+    );
+
+    return response.response.statusCode == 200;
+  }
 }

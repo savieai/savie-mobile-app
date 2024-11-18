@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../application/application.dart';
+import '../../../../cubit/user/user_cubit.dart';
 import '../../../../presentation.dart';
 import '../../../../router/app_router.gr.dart';
 
@@ -72,6 +73,7 @@ class _ProfilePageState extends State<ProfilePage> {
               getIt
                   .get<TrackUseActivityUseCase>()
                   .execute(AppEvents.profile.deleteProfileClicked);
+              context.read<UserCubit>().deleteAccount();
             },
           ),
           _ProfileTile(

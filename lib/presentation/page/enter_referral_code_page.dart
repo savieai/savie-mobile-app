@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -53,13 +55,16 @@ class _EnterReferralCodePageState extends State<EnterReferralCodePage> {
         ),
         body: SafeArea(
           child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxHeight: 385,
-              ),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 40),
-                child: _Body(),
+            child: SizedBox(
+              width: Platform.isMacOS ? 464 : double.infinity,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: 385,
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 40),
+                  child: _Body(),
+                ),
               ),
             ),
           ),

@@ -5,4 +5,5 @@ abstract class UserRepository {
   Stream<SavieUser?> watchUser();
   SavieUser? getUser();
   Future<bool> updateUser(SavieUser user);
+  Future<bool> deleteUser();
 }

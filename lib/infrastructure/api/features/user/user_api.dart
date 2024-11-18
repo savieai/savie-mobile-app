@@ -28,4 +28,9 @@ abstract class UserApi {
     @Path() required String id,
     @Body() required UpdateUserRequest request,
   });
+
+  @DELETE('/users/{userId}')
+  Future<HttpResponse<void>> deleteUser({
+    @Path() required String userId,
+  });
 }

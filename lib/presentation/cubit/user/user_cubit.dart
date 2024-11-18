@@ -56,5 +56,11 @@ class UserCubit extends Cubit<SavieUser?> {
     return super.close();
   }
 
+  Future<void> deleteAccount() async {
+    if (await _userRepository.deleteUser()) {
+      await _authRepository.logout();
+    }
+  }
+
   Future<void> joinWhiteList() => _joinWhitelistUseCase.execute();
 }

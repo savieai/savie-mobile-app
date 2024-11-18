@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_notification/in_app_notification.dart';
 import 'package:share_plus/share_plus.dart';
@@ -223,6 +224,7 @@ class _InviteCodeBox extends StatelessWidget {
                 curve: Curves.linearToEaseOut,
                 context: context,
               );
+              Clipboard.setData(ClipboardData(text: code));
               getIt
                   .get<TrackUseActivityUseCase>()
                   .execute(AppEvents.popupScreenEvents.copyClicked);
@@ -277,22 +279,25 @@ class _CopiedNotification extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(100),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 24,
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Text(
-          'Copied',
-          style: AppTextStyles.paragraph,
+    return SafeArea(
+      minimum: const EdgeInsets.only(top: 20),
+      child: Center(
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(100),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 24,
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Text(
+            'Copied',
+            style: AppTextStyles.paragraph,
+          ),
         ),
       ),
     );
