@@ -63,14 +63,7 @@ void main() async {
 }
 
 Future<void> _setupTray() async {
-  bool isLightMode() =>
-      WidgetsBinding.instance.platformDispatcher.platformBrightness ==
-      Brightness.light;
-
-  WidgetsBinding.instance.platformDispatcher.onPlatformBrightnessChanged =
-      () async => _setTrayIcon(isLightMode: isLightMode());
-
-  await _setTrayIcon(isLightMode: isLightMode());
+  await _setTrayIcon();
 
   trayManager.addListener(CustomTrayListener());
   WindowManager.instance.waitUntilReadyToShow(null, _updateContextMenu);
@@ -105,9 +98,9 @@ Future<void> _updateContextMenu() async {
   await trayManager.setContextMenu(menu);
 }
 
-Future<void> _setTrayIcon({required bool isLightMode}) async {
+Future<void> _setTrayIcon() async {
   await trayManager.setIcon(
-    isLightMode ? 'assets/tray_icon_light.svg' : 'assets/tray_icon_dark.svg',
+    'assets/tray_icon.svg',
     iconPosition: TrayIconPositon.right,
   );
 }
