@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:native_dialog_plus/native_dialog_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -69,23 +70,13 @@ class _ProfilePageState extends State<ProfilePage> {
             title: 'Delete Profile',
             icon: Assets.icons.delete24,
             color: AppColors.iconNegative,
-            onTap: () {
-              getIt
-                  .get<TrackUseActivityUseCase>()
-                  .execute(AppEvents.profile.deleteProfileClicked);
-              context.read<UserCubit>().deleteAccount();
-            },
+            onTap: _onDeleteTap,
           ),
           _ProfileTile(
             title: 'Log out',
             icon: Assets.icons.logOut24,
             color: AppColors.iconNegative,
-            onTap: () {
-              getIt
-                  .get<TrackUseActivityUseCase>()
-                  .execute(AppEvents.profile.logoutClicked);
-              context.read<AuthCubit>().logOut();
-            },
+            onTap: _onLogOutTap,
           ),
           const Spacer(),
           const _GiftButton(),
@@ -146,6 +137,55 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
     );
+  }
+
+  Future<void> _onDeleteTap() {
+    return NativeDialogPlus(
+      actions: <NativeDialogPlusAction>[
+        NativeDialogPlusAction(
+          text: 'Cancel',
+          style: NativeDialogPlusActionStyle.cancel,
+          onPressed: () {},
+        ),
+        NativeDialogPlusAction(
+          text: 'Delete',
+          onPressed: () {
+            getIt
+                .get<TrackUseActivityUseCase>()
+                .execute(AppEvents.profile.deleteProfileClicked);
+            context.read<UserCubit>().deleteAccount();
+          },
+          style: NativeDialogPlusActionStyle.destructive,
+        ),
+      ],
+      title: 'Delete Account',
+      message:
+          'All your data will be lost if you delete your account. Are you sure?',
+    ).show();
+  }
+
+  Future<void> _onLogOutTap() {
+    return NativeDialogPlus(
+      actions: <NativeDialogPlusAction>[
+        NativeDialogPlusAction(
+          text: 'Cancel',
+          style: NativeDialogPlusActionStyle.cancel,
+          onPressed: () {},
+        ),
+        NativeDialogPlusAction(
+          text: 'Log Out',
+          onPressed: () {
+            getIt
+                .get<TrackUseActivityUseCase>()
+                .execute(AppEvents.profile.logoutClicked);
+            context.read<AuthCubit>().logOut();
+          },
+          style: NativeDialogPlusActionStyle.destructive,
+        ),
+      ],
+      title: 'Log Out',
+      message: 'Are you sure you want to log out?',
+    ).show();
   }
 }
 

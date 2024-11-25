@@ -86,7 +86,10 @@ dependencies:
   package_info_plus: ^8.1.1
   window_manager: ^0.4.3
   tray_manager: ^0.3.0
-  
+  native_dialog_plus:
+    git:
+      url: git@github.com:galt-agency/native_dialog_plus.git
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1199,6 +1199,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
+  native_dialog_plus:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: HEAD
+      resolved-ref: "44c3204e0ae7549a26b89745917a838d837d4d47"
+      url: "git@github.com:galt-agency/native_dialog_plus.git"
+    source: git
+    version: "1.0.9"
   nested:
     dependency: transitive
     description:

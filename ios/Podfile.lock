@@ -159,6 +159,8 @@ PODS:
   - mixpanel_flutter (2.3.3):
     - Flutter
     - Mixpanel-swift (= 4.3.0)
+  - native_dialog_plus (0.0.1):
+    - Flutter
   - open_file_ios (0.0.1):
     - Flutter
   - package_info_plus (0.4.5):
@@ -210,6 +212,7 @@ DEPENDENCIES:
   - google_sign_in_ios (from `.symlinks/plugins/google_sign_in_ios/darwin`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
   - mixpanel_flutter (from `.symlinks/plugins/mixpanel_flutter/ios`)
+  - native_dialog_plus (from `.symlinks/plugins/native_dialog_plus/ios`)
   - open_file_ios (from `.symlinks/plugins/open_file_ios/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
@@ -283,6 +286,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/image_picker_ios/ios"
   mixpanel_flutter:
     :path: ".symlinks/plugins/mixpanel_flutter/ios"
+  native_dialog_plus:
+    :path: ".symlinks/plugins/native_dialog_plus/ios"
   open_file_ios:
     :path: ".symlinks/plugins/open_file_ios/ios"
   package_info_plus:
@@ -353,6 +358,7 @@ SPEC CHECKSUMS:
   KSCrash: 2ef7bd233b96efdafd7f9f6531e4d4f0eb9ba798
   Mixpanel-swift: 2192b9a24cf41b870749e4e0e10fbc9822bb2b4a
   mixpanel_flutter: 455c6c7906a0bd21b609b32fef390245187068a6
+  native_dialog_plus: 2569983aa751786faf8377ca0b8b7c4d434b4ba1
   open_file_ios: 461db5853723763573e140de3193656f91990d9e
   package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
