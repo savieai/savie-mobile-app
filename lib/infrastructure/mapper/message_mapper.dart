@@ -1,3 +1,7 @@
+// ignore_for_file: always_specify_types
+
+import 'package:flutter_quill/quill_delta.dart';
+
 import '../../domain/domain.dart';
 import '../infrastructure.dart';
 import 'link_mapper.dart';
@@ -40,7 +44,7 @@ sealed class MessageMapper {
       );
     }
 
-    if (dto.textContent != null) {
+    if (dto.deltaContent != null) {
       final List<FileAttachmentResponseDTO> imageDtos = dto.attachments.where(
         (FileAttachmentResponseDTO f) {
           return f.attachmentType == FileAttachmentTypeDTO.image;
@@ -55,7 +59,9 @@ sealed class MessageMapper {
         id: dto.id,
         tempId: dto.tempId,
         date: dto.createdAt.toLocal(),
-        text: dto.textContent,
+        textContents: dto.deltaContent == null
+            ? null
+            : TextContent.fromDelta(_parseDelta(dto.deltaContent!)),
         images: images,
         isPending: false,
         links: links,
@@ -67,7 +73,18 @@ sealed class MessageMapper {
       id: dto.id,
       tempId: dto.tempId,
       date: dto.createdAt,
-      text: dto.textContent ?? '',
+      textContents: dto.deltaContent == null
+          ? null
+          : TextContent.fromDelta(_parseDelta(dto.deltaContent!)),
     );
+  }
+
+  static Delta _parseDelta(Map<String, dynamic> deltaContent) {
+    final Delta delta = Delta.fromJson(deltaContent['ops'] as List<dynamic>);
+    if (!(delta.last.data! as String).endsWith('\n')) {
+      delta.insert('\n');
+    }
+
+    return delta;
   }
 }

@@ -4,6 +4,7 @@ import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_quill/quill_delta.dart';
 
 import '../../../../../application/application.dart';
 import '../../../../../domain/domain.dart';
@@ -31,7 +32,9 @@ class _ChatPageState extends State<ChatPage>
   late final Animation<double> _sentMessageAnimation;
   final FocusNode _focusNode = FocusNode()..requestFocus();
   final ChatPageCubit _chatPageCubit = ChatPageCubit();
-  final TextEditingController _textController = TextEditingController();
+  final ChatDropdownCubit _chatDropdownCubit = ChatDropdownCubit();
+  final LayerLink _layerLink = LayerLink();
+  final QuillControllerCubit _quillControllerCubit = QuillControllerCubit();
 
   @override
   void initState() {
@@ -45,6 +48,9 @@ class _ChatPageState extends State<ChatPage>
       parent: _sentMessageAnimationController,
       curve: Curves.linearToEaseOut,
     );
+    _quillControllerCubit.addListener(() {
+      _handleSingleCheckboxBackspace();
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).addListener(() {
         if (FocusScope.of(context).hasPrimaryFocus) {
@@ -59,55 +65,26 @@ class _ChatPageState extends State<ChatPage>
   @override
   void dispose() {
     _focusNode.dispose();
-    _textController.dispose();
     super.dispose();
   }
 
   bool _metaPressed = false;
   bool _fPressed = false;
+  bool _backSpacePressed = false;
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardListener(
-      focusNode: _focusNode,
-      onKeyEvent: (KeyEvent value) {
-        keyEnventNotifier.value = value;
-
-        if (value.logicalKey.keyLabel.contains('Meta')) {
-          _metaPressed = value is KeyDownEvent;
-        }
-
-        if (value.logicalKey.keyLabel == 'F') {
-          _fPressed = value is KeyDownEvent;
-          Future<void>.delayed(const Duration(milliseconds: 100), () {
-            _fPressed = false;
-          });
-        }
-
-        if (value.logicalKey.keyLabel == 'Escape' && value is KeyDownEvent) {
-          _chatPageCubit.state.whenOrNull(editingMessage: (_) {
-            _chatPageCubit.setIdle();
-          });
-        }
-
-        if (_metaPressed && _fPressed) {
-          if (getIt.get<AppRouter>().topRoute.name == ChatRoute.name) {
-            context.router.push(const SearchRoute());
-          }
-        }
-
-        if (value.logicalKey.keyLabel == 'Arrow Up' &&
-            value is KeyDownEvent &&
-            _textController.text.isEmpty) {
-          final TextMessage? lastMessage =
-              context.read<ChatCubit>().lastTextMessage;
-          if (lastMessage != null) {
-            _chatPageCubit.setEditingMessage(lastMessage);
-          }
-        }
-      },
-      child: BlocProvider<ChatPageCubit>(
-        create: (BuildContext context) => _chatPageCubit,
+    return MultiBlocProvider(
+      providers: <BlocProvider<void>>[
+        BlocProvider<ChatPageCubit>(create: (_) => _chatPageCubit),
+        BlocProvider<ChatDropdownCubit>(create: (_) => _chatDropdownCubit),
+        BlocProvider<QuillControllerCubit>(
+          create: (_) => _quillControllerCubit,
+        ),
+      ],
+      child: KeyboardListener(
+        focusNode: _focusNode,
+        onKeyEvent: _onKeyEvent,
         child: BlocListener<ChatCubit, ChatState>(
           listener: (BuildContext context, ChatState state) {
             setState(() {
@@ -124,24 +101,35 @@ class _ChatPageState extends State<ChatPage>
               appBar: const _ChatAppBar(),
               backgroundColor: AppColors.backgroundChatInput,
               body: DragAndDropWrapper(
-                child: Column(
+                child: Stack(
                   children: <Widget>[
-                    Expanded(
-                      child: HeroVisibleArea(
-                        child: MessagesHorizontalDragListener(
-                          child: MessageListView(
-                            scrollController: _scrollController,
-                          ),
-                        ),
-                      ),
-                    ),
                     Column(
                       children: <Widget>[
-                        const EditingMessageView(),
-                        MessageInputView(
-                          textController: _textController,
+                        Expanded(
+                          child: HeroVisibleArea(
+                            child: MessagesHorizontalDragListener(
+                              child: MessageListView(
+                                scrollController: _scrollController,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Column(
+                          children: <Widget>[
+                            const EditingMessageView(),
+                            CompositedTransformTarget(
+                              link: _layerLink,
+                              child: const MessageInputView(),
+                            ),
+                          ],
                         ),
                       ],
+                    ),
+                    CompositedTransformFollower(
+                      link: _layerLink,
+                      targetAnchor: Alignment.topCenter,
+                      followerAnchor: Alignment.bottomCenter,
+                      child: const ChatDropdownView(),
                     ),
                   ],
                 ),
@@ -151,6 +139,54 @@ class _ChatPageState extends State<ChatPage>
         ),
       ),
     );
+  }
+
+  void _onKeyEvent(KeyEvent value) {
+    keyEnventNotifier.value = value;
+
+    if (value.logicalKey.keyLabel.contains('Meta')) {
+      _metaPressed = value is KeyDownEvent;
+    }
+
+    if (value.logicalKey.keyLabel == 'F') {
+      _fPressed = value is KeyDownEvent;
+      Future<void>.delayed(const Duration(milliseconds: 100), () {
+        _fPressed = false;
+      });
+    }
+
+    if (value.logicalKey.keyLabel == 'Escape' && value is KeyDownEvent) {
+      _chatPageCubit.state.whenOrNull(editingMessage: (_) {
+        _chatPageCubit.setIdle();
+      });
+    }
+
+    if (_metaPressed && _fPressed) {
+      if (getIt.get<AppRouter>().topRoute.name == ChatRoute.name) {
+        context.router.push(const SearchRoute());
+      }
+    }
+
+    if (value.logicalKey.keyLabel == 'Arrow Up' &&
+        value is KeyDownEvent &&
+        _quillControllerCubit.isEmpty) {
+      final TextMessage? lastMessage =
+          context.read<ChatCubit>().lastTextMessage;
+      if (lastMessage != null) {
+        _chatPageCubit.setEditingMessage(lastMessage);
+      }
+    }
+
+    if (value.logicalKey.keyLabel == 'Backspace') {
+      _backSpacePressed = value is KeyDownEvent;
+      _handleSingleCheckboxBackspace();
+    }
+  }
+
+  void _handleSingleCheckboxBackspace() {
+    if (_backSpacePressed && _quillControllerCubit.isSingleCheckboxDisplayed) {
+      _quillControllerCubit.updateDelta(Delta()..insert('\n'));
+    }
   }
 }
 

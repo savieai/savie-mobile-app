@@ -63,7 +63,7 @@ class CreateTextMessageUseCase {
 
     await _chatRepository.createTextMessage(
       tempId: message.tempId!,
-      text: message.text,
+      deltaContent: message.deltaContent,
       images: fileNames.map(
         ((String, String) fileName) {
           return Attachment(

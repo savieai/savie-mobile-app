@@ -15,7 +15,7 @@ class MessageDTO with _$MessageDTO {
     required String id,
     required String? tempId,
     required DateTime createdAt,
-    required String? textContent,
+    required Map<String, dynamic>? deltaContent,
     required String userId,
     required List<VoiceMessageDTO>? voiceMessages,
     @Default(<LinkDTO>[]) List<LinkDTO> links,

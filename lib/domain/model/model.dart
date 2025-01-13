@@ -10,3 +10,4 @@ export 'message.dart';
 export 'pagination.dart';
 export 'savie_user.dart';
 export 'search_result.dart';
+export 'text_content.dart';

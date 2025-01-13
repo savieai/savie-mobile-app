@@ -1,3 +1,4 @@
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../domain/domain.dart';
@@ -11,7 +12,7 @@ class EditTextMessageUseCase {
   Future<void> execute(TextMessage message) async {
     await _chatRepository.editMessage(
       messageId: message.id,
-      textContent: message.text ?? '',
+      deltaContent: message.deltaContent ?? (Delta()..insert('')),
     );
   }
 }

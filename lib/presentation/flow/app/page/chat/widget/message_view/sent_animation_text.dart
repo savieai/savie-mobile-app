@@ -2,8 +2,9 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 
-import '../../../../../../../domain/model/message.dart';
+import '../../../../../../../domain/domain.dart';
 import '../../../../../../presentation.dart';
 import '../../chat_page_provider.dart';
 import 'message_view.dart';
@@ -11,10 +12,10 @@ import 'message_view.dart';
 class SentAnimationText extends StatefulWidget {
   const SentAnimationText({
     super.key,
-    required this.text,
+    required this.textContents,
   });
 
-  final String text;
+  final List<TextContent> textContents;
 
   @override
   State<SentAnimationText> createState() => _SentAnimationTextState();
@@ -31,7 +32,9 @@ class _SentAnimationTextState extends State<SentAnimationText> {
     if (!_textSizeInitialized) {
       textSize = (TextPainter(
         text: TextSpan(
-          text: widget.text,
+          text: Document.fromDelta(
+            TextContent.toDelta(widget.textContents),
+          ).toPlainText(),
           style: AppTextStyles.paragraph,
         ),
         textScaler: MediaQuery.textScalerOf(context),
@@ -76,7 +79,7 @@ class _SentAnimationTextState extends State<SentAnimationText> {
                 id: 'none',
                 tempId: 'none',
                 date: DateTime.now(),
-                text: widget.text,
+                textContents: widget.textContents,
               ),
               contextMenuShown: false,
               enableSentMessageAinmation: true,

@@ -16,7 +16,7 @@ class CreateMessageRequest with _$CreateMessageRequest {
     required String tempId,
     required List<FileAttachmentRequestDTO>? fileAttachments,
     required List<FileAttachmentRequestDTO>? images,
-    required String? textContent,
+    required Map<String, dynamic>? deltaContent,
     required VoiceMessageRequestDTO? voiceMessage,
     required String? placeholderUrl,
   }) = _CreateMessageRequest;

@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
+import '../../../domain/model/model.dart';
 import '../../../main.dart';
 import '../../../presentation/presentation.dart';
 
@@ -19,7 +20,11 @@ class ProcessSharingIntent {
                 break;
               case SharedMediaType.text:
               case SharedMediaType.url:
-                chatCubit.sendMessage(text: '');
+                chatCubit.sendMessage(
+                  textContents: <TextContent>[
+                    TextContent.plainText(text: file.path),
+                  ],
+                );
                 break;
             }
           }

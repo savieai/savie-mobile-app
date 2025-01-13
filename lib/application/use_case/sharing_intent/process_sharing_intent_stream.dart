@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../domain/domain.dart';
 import '../../../presentation/presentation.dart';
 
 @Injectable()
@@ -24,7 +25,11 @@ class ProcessSharingIntentStream {
               break;
             case SharedMediaType.text:
             case SharedMediaType.url:
-              chatCubit.sendMessage(text: file.path);
+              chatCubit.sendMessage(
+                textContents: <TextContent>[
+                  TextContent.plainText(text: file.path),
+                ],
+              );
               break;
           }
         }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';
 
@@ -55,7 +56,7 @@ class ChatRepositoryImpl implements ChatRepository {
       tempId: tempId,
       fileAttachments: null,
       images: null,
-      textContent: null,
+      deltaContent: null,
       voiceMessage: VoiceMessageRequestDTO(
         url: audioInfo.name,
         name: audioInfo.name,
@@ -80,7 +81,11 @@ class ChatRepositoryImpl implements ChatRepository {
         FileAttachmentMapper.toDto(file),
       ],
       images: null,
-      textContent: '',
+      deltaContent: <String, dynamic>{
+        'ops': <Map<String, String>>[
+          <String, String>{'insert': ''},
+        ],
+      },
       voiceMessage: null,
       placeholderUrl: placeholderUrl,
     );
@@ -90,7 +95,7 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<void> createTextMessage({
     required String tempId,
-    required String? text,
+    required Delta? deltaContent,
     required List<Attachment> images,
   }) async {
     final CreateMessageRequest request = CreateMessageRequest(
@@ -99,7 +104,11 @@ class ChatRepositoryImpl implements ChatRepository {
       images: images.isEmpty
           ? null
           : images.map(FileAttachmentMapper.toDto).toList(),
-      textContent: text ?? '',
+      deltaContent: deltaContent == null
+          ? null
+          : <String, dynamic>{
+              'ops': deltaContent.toJson(),
+            },
       voiceMessage: null,
       placeholderUrl: null,
     );
@@ -204,8 +213,13 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<void> editMessage({
     required String messageId,
-    required String textContent,
+    required Delta deltaContent,
   }) {
-    return _chatApi.updateMessage(messageId, textContent);
+    return _chatApi.updateMessage(
+      messageId,
+      <String, dynamic>{
+        'ops': deltaContent.toJson(),
+      },
+    );
   }
 }

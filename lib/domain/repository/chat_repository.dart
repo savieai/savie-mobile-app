@@ -1,3 +1,5 @@
+import 'package:flutter_quill/quill_delta.dart';
+
 import '../domain.dart';
 
 abstract class ChatRepository {
@@ -13,7 +15,7 @@ abstract class ChatRepository {
 
   Future<void> createTextMessage({
     required String tempId,
-    required String? text,
+    required Delta? deltaContent,
     required List<Attachment> images,
   });
 
@@ -45,6 +47,6 @@ abstract class ChatRepository {
 
   Future<void> editMessage({
     required String messageId,
-    required String textContent,
+    required Delta deltaContent,
   });
 }

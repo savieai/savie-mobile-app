@@ -225,7 +225,7 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   Future<void> sendMessage({
-    String? text,
+    List<TextContent>? textContents,
     List<String>? mediaPaths,
     bool hasFadeAnimation = false,
   }) async {
@@ -235,7 +235,7 @@ class ChatCubit extends Cubit<ChatState> {
       tempId: pendingUuid,
       id: pendingUuid,
       date: DateTime.now(),
-      text: text,
+      textContents: textContents,
       images: (mediaPaths ?? <String>[]).map(
         (String mediaPath) {
           final String ext = mediaPath.split('.').last;
@@ -260,11 +260,12 @@ class ChatCubit extends Cubit<ChatState> {
 
   Future<void> editMessage({
     required TextMessage textMessage,
-    required String newText,
+    required List<TextContent> textContents,
+    bool refetch = true,
   }) async {
     final TextMessage updatedMessage = textMessage.copyWith(
-      text: newText,
-      isPending: true,
+      textContents: textContents,
+      isPending: refetch,
     );
     _sentMessages[updatedMessage.currentId] = updatedMessage;
 
@@ -272,10 +273,13 @@ class ChatCubit extends Cubit<ChatState> {
     await _editTextMessageUseCase.execute(updatedMessage);
 
     // TODO: get result from backend
-    _sentMessages[updatedMessage.currentId] = updatedMessage.copyWith(
-      isPending: false,
-    );
-    _emitMessages();
+
+    if (refetch) {
+      _sentMessages[updatedMessage.currentId] = updatedMessage.copyWith(
+        isPending: false,
+      );
+      _emitMessages();
+    }
   }
 
   Future<void> sendAudio(AudioInfo? audioInfo) async {

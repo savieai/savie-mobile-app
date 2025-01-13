@@ -4,6 +4,7 @@ sealed class AppColors {
   static const Color textSecondary = Color(0xFF9E9393);
   static const Color textPrimary = Color(0xFF252322);
   static const Color textInvert = Color(0xFFFFFFFF);
+  static const Color textTertiary = Color(0xFFC2BFBF);
 
   static const Color iconAccent = Color(0xFFFB5012);
   static const Color iconNegative = Color(0xFFFF0000);

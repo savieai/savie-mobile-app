@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -55,7 +56,7 @@ class MessageView extends StatelessWidget {
                 return message.map(
                   text: (TextMessage textMessage) {
                     if (textMessage.images.isNotEmpty) {
-                      if (textMessage.text != null) {
+                      if (textMessage.textContents != null) {
                         return _TextWithMediaMessageView(
                           message: textMessage,
                           contextMenuShown: contextMenuShown,
@@ -116,7 +117,8 @@ class MessageView extends StatelessWidget {
           }
 
           return <ContextMenuItemData>[
-            if ((textMessage.text ?? '').isNotEmpty) ...<ContextMenuItemData>[
+            if ((textMessage.plainText ?? '')
+                .isNotEmpty) ...<ContextMenuItemData>[
               if (!message.isPending && hasChatPageCubit)
                 ContextMenuItemData(
                   title: 'Edit',
@@ -134,7 +136,8 @@ class MessageView extends StatelessWidget {
                 color: AppColors.textPrimary,
                 onTap: () {
                   Clipboard.setData(
-                      ClipboardData(text: textMessage.text ?? ''));
+                    ClipboardData(text: textMessage.plainText ?? ''),
+                  );
                 },
               ),
             ],
@@ -164,7 +167,7 @@ class MessageView extends StatelessWidget {
               onTap: () {
                 getIt.get<ShareFilesUseCase>().execute(
                       textMessage.images,
-                      text: textMessage.text,
+                      plainText: textMessage.plainText,
                     );
               },
             )

@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:wave_blob/wave_blob.dart';
 
@@ -14,16 +16,14 @@ import '../../../../../presentation.dart';
 import '../chat_page.dart';
 import '../chat_page_provider.dart';
 import '../cubit/cubit.dart';
+import 'message_input_view/message_quill_editor.dart';
 import 'message_view/sent_animation_text.dart';
 import 'widget.dart';
 
 class MessageInputView extends StatefulWidget {
   const MessageInputView({
     super.key,
-    required this.textController,
   });
-
-  final TextEditingController textController;
 
   @override
   State<MessageInputView> createState() => _MessageInputViewState();
@@ -57,7 +57,6 @@ class _MessageInputViewState extends State<MessageInputView> {
             _TextInputView(
               canRecordNotifier: _canRecordNotifier,
               focusNode: _textFocusNode,
-              textController: widget.textController,
             ),
             Positioned.fill(
               child: ValueListenableBuilder<bool>(
@@ -111,38 +110,29 @@ class _TextInputView extends StatefulWidget {
   const _TextInputView({
     required this.canRecordNotifier,
     required this.focusNode,
-    required this.textController,
   });
 
   final ValueNotifier<bool> canRecordNotifier;
   final FocusNode focusNode;
-  final TextEditingController textController;
 
   @override
   State<_TextInputView> createState() => _TextInputViewState();
 }
 
 class _TextInputViewState extends State<_TextInputView> {
-  late final TextEditingController _controller = widget.textController;
-  ChatPagePorvider get _chatPagePorvider => ChatPagePorvider.of(context);
+  final ScrollController _scrollController = ScrollController();
+  late final QuillControllerCubit _quillControllerCubit =
+      context.read<QuillControllerCubit>();
 
+  ChatPagePorvider get _chatPagePorvider => ChatPagePorvider.of(context);
   bool _metaPressed = false;
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(() {
-      if (_editingMessage != null) {
-        return;
-      }
-
-      if (widget.canRecordNotifier.value != _controller.text.isEmpty) {
-        widget.canRecordNotifier.value = _controller.text.isEmpty;
-      }
-    });
+    _quillControllerCubit.addListener(_listener);
 
     if (Platform.isMacOS) {
-      // ignore: deprecated_member_use
       widget.focusNode.onKeyEvent = (FocusNode node, KeyEvent value) {
         if (value.logicalKey.keyLabel.contains('Meta') ||
             value.logicalKey.keyLabel.contains('Shift')) {
@@ -156,7 +146,7 @@ class _TextInputViewState extends State<_TextInputView> {
             return KeyEventResult.ignored;
           }
 
-          _controller.text += '\n';
+          _quillControllerCubit.insertNewLine();
           return KeyEventResult.handled;
         }
 
@@ -165,16 +155,25 @@ class _TextInputViewState extends State<_TextInputView> {
     }
   }
 
+  void _listener() {
+    if (_editingMessage != null) {
+      return;
+    }
+
+    if (widget.canRecordNotifier.value != _quillControllerCubit.isEmpty) {
+      widget.canRecordNotifier.value = _quillControllerCubit.isEmpty;
+    }
+  }
+
   @override
   void dispose() {
-    // ignore: deprecated_member_use
-    widget.focusNode.onKey = null;
+    widget.focusNode.onKeyEvent = null;
     super.dispose();
   }
 
-  String _textForAnimation = '';
-  TextMessage? _editingMessage;
+  List<TextContent> _textContentsForAnimation = <TextContent>[];
 
+  TextMessage? _editingMessage;
   ChatPageState? _lastChatPageState;
 
   @override
@@ -182,15 +181,22 @@ class _TextInputViewState extends State<_TextInputView> {
     return BlocListener<ChatPageCubit, ChatPageState>(
       listener: (BuildContext context, ChatPageState state) {
         state.when(
-          idle: (String preservedText) {
+          idle: (Delta preservedDelta) {
             setState(() => _editingMessage = null);
-            _controller.value = TextEditingValue(text: preservedText);
-            widget.canRecordNotifier.value = _controller.text.isEmpty;
+            _quillControllerCubit.updateDelta(preservedDelta);
+            widget.canRecordNotifier.value = Document.fromDelta(preservedDelta)
+                .toPlainText()
+                .trimRight()
+                .isEmpty;
           },
           editingMessage: (TextMessage message) {
             widget.focusNode.unfocus();
-            context.read<ChatPageCubit>().updatePreservedText(_controller.text);
-            _controller.value = TextEditingValue(text: message.text ?? '');
+            context
+                .read<ChatPageCubit>()
+                .updatePreservedDelta(_quillControllerCubit.delta);
+            _quillControllerCubit.updateDelta(message.textContents == null
+                ? (Delta())
+                : TextContent.toDelta(message.textContents!));
             widget.canRecordNotifier.value = false;
             widget.focusNode.requestFocus();
             setState(() => _editingMessage = message);
@@ -226,86 +232,98 @@ class _TextInputViewState extends State<_TextInputView> {
                 applyHeightToLastDescent: false,
               ),
               child: IntrinsicHeight(
-                child: CupertinoTextField(
-                  focusNode: widget.focusNode,
-                  controller: _controller,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: Platform.isMacOS ? 15 : 20,
-                  ),
-                  autofocus: true,
-                  minLines: 1,
-                  maxLines: 15,
-                  cursorColor: AppColors.iconAccent,
-                  decoration: const BoxDecoration(),
-                  style: AppTextStyles.paragraph,
-                  placeholderStyle: AppTextStyles.paragraph.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  placeholder: 'Share anything...',
-                  onSubmitted: (_) => _onSend(),
-                  textInputAction: Platform.isMacOS
-                      ? TextInputAction.send
-                      : TextInputAction.newline,
-                  prefix: AnimatedOpacity(
-                    opacity: _editingMessage != null ? 0.4 : 1,
-                    duration: const Duration(milliseconds: 150),
-                    child: IgnorePointer(
-                      ignoring: _editingMessage != null,
-                      child: Container(
-                        padding: EdgeInsets.fromLTRB(
-                          AppSpaces.space300,
-                          AppSpaces.space300,
-                          0,
-                          AppSpaces.space300,
+                child: Row(
+                  children: <Widget>[
+                    AnimatedOpacity(
+                      opacity: _editingMessage != null ? 0.4 : 1,
+                      duration: const Duration(milliseconds: 150),
+                      child: IgnorePointer(
+                        ignoring: _editingMessage != null,
+                        child: Container(
+                          padding: EdgeInsets.fromLTRB(
+                            AppSpaces.space300,
+                            AppSpaces.space300,
+                            0,
+                            AppSpaces.space300,
+                          ),
+                          alignment: Alignment.bottomCenter,
+                          child: const FilePickerButton(),
                         ),
-                        alignment: Alignment.bottomCenter,
-                        child: const FilePickerButton(),
                       ),
                     ),
-                  ),
-                  suffix: Container(
-                    alignment: Alignment.bottomCenter,
-                    child: ValueListenableBuilder<bool>(
-                      valueListenable: widget.canRecordNotifier,
-                      builder: (BuildContext context, bool canRecord, _) {
-                        return AnimatedCrossFade(
-                          duration: const Duration(milliseconds: 200),
-                          crossFadeState: canRecord
-                              ? CrossFadeState.showSecond
-                              : CrossFadeState.showFirst,
-                          alignment: Alignment.center,
-                          firstChild: Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              AppSpaces.space300,
-                              AppSpaces.space300,
-                              AppSpaces.space300,
-                              AppSpaces.space300,
-                            ),
-                            child: SendButton(
-                              onTap: _onSend,
-                            ),
-                          ),
-                          secondChild: Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              Platform.isMacOS ? 14 : 20,
-                              Platform.isMacOS ? 14 : 20,
-                              Platform.isMacOS ? 14 : 20,
-                              Platform.isMacOS ? 14 : 20,
-                            ),
-                            child: Assets.icons.mic24.svg(
-                              height: Platform.isMacOS ? 20 : 24,
-                              colorFilter: const ColorFilter.mode(
-                                AppColors.iconSecodary,
-                                BlendMode.srcIn,
+                    Expanded(
+                      child: MessageQuillEditor(
+                        scrollController: _scrollController,
+                        focusNode: widget.focusNode,
+                      ),
+                    ),
+                    Container(
+                      alignment: Alignment.bottomCenter,
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: widget.canRecordNotifier,
+                        builder: (BuildContext context, bool canRecord, _) {
+                          return AnimatedCrossFade(
+                            duration: const Duration(milliseconds: 200),
+                            crossFadeState: canRecord
+                                ? CrossFadeState.showSecond
+                                : CrossFadeState.showFirst,
+                            alignment: Alignment.center,
+                            firstChild: Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                AppSpaces.space300,
+                                AppSpaces.space300,
+                                AppSpaces.space300,
+                                AppSpaces.space300,
+                              ),
+                              child: SendButton(
+                                onTap: _onSend,
                               ),
                             ),
-                          ),
-                        );
-                      },
+                            secondChild: Padding(
+                              padding: EdgeInsets.fromLTRB(
+                                Platform.isMacOS ? 14 : 20,
+                                Platform.isMacOS ? 14 : 20,
+                                Platform.isMacOS ? 14 : 20,
+                                Platform.isMacOS ? 14 : 20,
+                              ),
+                              child: Assets.icons.mic24.svg(
+                                height: Platform.isMacOS ? 20 : 24,
+                                colorFilter: const ColorFilter.mode(
+                                  AppColors.iconSecodary,
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
+                  ],
                 ),
+                // child: CupertinoTextField(
+                //   focusNode: widget.focusNode,
+                //   controller: _controller,
+                //   padding: EdgeInsets.symmetric(
+                //     horizontal: 8,
+                //     vertical: Platform.isMacOS ? 15 : 20,
+                //   ),
+                //   autofocus: true,
+                //   minLines: 1,
+                //   maxLines: 15,
+                //   cursorColor: AppColors.iconAccent,
+                //   decoration: const BoxDecoration(),
+                //   style: AppTextStyles.paragraph,
+                //   placeholderStyle: AppTextStyles.paragraph.copyWith(
+                //     color: AppColors.textSecondary,
+                //   ),
+                //   placeholder: 'Share anything...',
+                //   onSubmitted: (_) => _onSend(),
+                //   textInputAction: Platform.isMacOS
+                //       ? TextInputAction.send
+                //       : TextInputAction.newline,
+
+                //   ),
+                // ),
               ),
             ),
             AnimatedBuilder(
@@ -333,7 +351,7 @@ class _TextInputViewState extends State<_TextInputView> {
                         vertical: 20,
                       ),
                       child: SentAnimationText(
-                        text: _textForAnimation,
+                        textContents: _textContentsForAnimation,
                       ),
                     ),
                   ),
@@ -350,17 +368,19 @@ class _TextInputViewState extends State<_TextInputView> {
     if (_editingMessage != null) {
       context.read<ChatCubit>().editMessage(
             textMessage: _editingMessage!,
-            newText: _controller.text,
+            textContents: _quillControllerCubit.textContents,
           );
 
       context.read<ChatPageCubit>().setIdle();
     } else {
-      context.read<ChatCubit>().sendMessage(text: _controller.text);
-      _textForAnimation = _controller.text;
+      context.read<ChatCubit>().sendMessage(
+            textContents: _quillControllerCubit.textContents,
+          );
+      _textContentsForAnimation = _quillControllerCubit.textContents;
 
       if (ChatPagePorvider.of(context).canRunSentMessageAnimation) {
         ChatPagePorvider.of(context).runSentMessageAnimation(
-          text: _textForAnimation,
+          textContents: _textContentsForAnimation,
           context: context,
         );
       }
@@ -368,7 +388,7 @@ class _TextInputViewState extends State<_TextInputView> {
           .get<TrackUseActivityUseCase>()
           .execute(AppEvents.chat.sendButtonClicked);
 
-      _controller.value = TextEditingValue.empty;
+      _quillControllerCubit.clear();
     }
   }
 }

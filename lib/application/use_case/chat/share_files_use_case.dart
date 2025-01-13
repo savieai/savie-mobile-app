@@ -14,10 +14,10 @@ class ShareFilesUseCase {
 
   Future<void> execute(
     List<Attachment> attachments, {
-    String? text,
+    String? plainText,
   }) async {
-    if (attachments.isEmpty && (text ?? '').isNotEmpty) {
-      await Share.share(text ?? '');
+    if (attachments.isEmpty && (plainText ?? '').isNotEmpty) {
+      await Share.share(plainText!);
       return;
     }
 
@@ -33,7 +33,7 @@ class ShareFilesUseCase {
               .then((File f) => XFile(f.path)),
         ),
       ),
-      text: (text ?? '').isEmpty ? null : text,
+      text: (plainText ?? '').isEmpty ? null : plainText,
     );
   }
 }

@@ -23,7 +23,7 @@ class ChatDateView extends StatelessWidget {
     } else if (date.isThisYear) {
       label = DateFormat('MMMM dd').format(date);
     } else {
-      label = DateFormat('MMMM dd, YYYY').format(date);
+      label = DateFormat('MMMM dd, yyyy').format(date);
     }
 
     return Center(

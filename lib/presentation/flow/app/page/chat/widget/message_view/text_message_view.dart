@@ -18,14 +18,29 @@ class TextMessageView extends StatefulWidget {
 
 class _TextMessageViewState extends State<TextMessageView>
     with SingleTickerProviderStateMixin {
+  late TextMessage _textMessage = widget.textMessage;
+
+  @override
+  void didUpdateWidget(covariant TextMessageView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.textMessage != oldWidget.textMessage) {
+      setState(() {
+        _textMessage = widget.textMessage;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final String text = widget.textMessage.text ?? '';
+    final List<TextContent> textContents =
+        _textMessage.textContents ?? <TextContent>[];
+    final String plainText =
+        Document.fromDelta(TextContent.toDelta(textContents)).toPlainText();
 
-    final List<Link> links = widget.textMessage.links;
-    final List<InlineSpan> spans = _convertToSpans(text, false);
+    final List<Link> links = _textMessage.links;
+    final List<InlineSpan> spans = _processTextContents(textContents);
 
-    final bool linkOnly = text == links.firstOrNull?.url;
+    final bool linkOnly = plainText == links.firstOrNull?.url;
 
     final Animation<double> sentMessageAnimation =
         widget.enableSentMessageAinmation
@@ -45,15 +60,12 @@ class _TextMessageViewState extends State<TextMessageView>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           if (!linkOnly)
-            IgnorePointer(
-              ignoring: !widget.contextMenuShown,
-              child: SelectableText.rich(
-                TextSpan(children: spans),
-                enableInteractiveSelection: widget.contextMenuShown,
-                cursorWidth: 0,
-                style: AppTextStyles.paragraph.copyWith(
-                  color: AppColors.textPrimary,
-                ),
+            SelectableText.rich(
+              TextSpan(children: spans),
+              enableInteractiveSelection: widget.contextMenuShown,
+              cursorWidth: 0,
+              style: AppTextStyles.paragraph.copyWith(
+                color: AppColors.textPrimary,
               ),
             ),
           if (links.length == 1)
@@ -63,7 +75,12 @@ class _TextMessageViewState extends State<TextMessageView>
               children: <Widget>[
                 if (!linkOnly) const SizedBox(height: 6),
                 SelectableText.rich(
-                  TextSpan(children: _convertToSpans(links.first.url, true)),
+                  TextSpan(
+                    children: _processLinks(
+                      links.first.url,
+                      addFavicon: true,
+                    ),
+                  ),
                   enableInteractiveSelection: widget.contextMenuShown,
                   cursorWidth: 0,
                   style: AppTextStyles.paragraph.copyWith(
@@ -89,16 +106,96 @@ class _TextMessageViewState extends State<TextMessageView>
     return url;
   }
 
-  List<InlineSpan> _convertToSpans(String text, bool addFavicon) {
+  List<InlineSpan> _processTextContents(List<TextContent> textContents) {
+    final List<InlineSpan> spans = <InlineSpan>[];
+
+    for (int i = 0; i < textContents.length; i++) {
+      final TextContent content = textContents[i];
+
+      if (content is PlainTextContent) {
+        // Process plain text
+        spans.addAll(_processLinks(content.text));
+      } else if (content is ListItemContent) {
+        // Process list items
+        spans.addAll(<InlineSpan>[
+          WidgetSpan(
+            child: GestureDetector(
+              onTap: () {
+                final List<TextContent> newContents = textContents.toList();
+                newContents[i] = content.copyWith(
+                  isChecked: !content.isChecked,
+                );
+                context.read<ChatCubit>().editMessage(
+                      textMessage: _textMessage,
+                      textContents: newContents,
+                      refetch: false,
+                    );
+                setState(() {
+                  _textMessage = _textMessage.copyWith(
+                    textContents: newContents,
+                  );
+                });
+              },
+              child: Container(
+                height: 20,
+                width: 20,
+                alignment: Alignment.center,
+                child: content.isChecked
+                    ? Assets.icons.toDoSelected.svg()
+                    : Assets.icons.toDo.svg(),
+              ),
+            ),
+          ),
+          const WidgetSpan(child: SizedBox(width: 6)),
+        ]);
+
+        spans.addAll(
+          _processLinks('${content.text}\n').map(
+            (InlineSpan span) {
+              if (span is TextSpan) {
+                // Apply line-through style for checked items
+                return TextSpan(
+                  text: span.text,
+                  style: (span.style ?? const TextStyle()).copyWith(
+                    decoration:
+                        content.isChecked ? TextDecoration.lineThrough : null,
+                    decorationColor: AppColors.textTertiary,
+                    color: content.isChecked ? AppColors.textTertiary : null,
+                  ),
+                );
+              }
+              return span;
+            },
+          ),
+        );
+      }
+    }
+
+    // Trim any trailing text spans
+    if (spans.isNotEmpty && spans.last is TextSpan) {
+      final TextSpan lastSpan = spans.last as TextSpan;
+      spans.last = TextSpan(
+        text: lastSpan.text?.trimRight(),
+        style: lastSpan.style,
+      );
+    }
+
+    return spans;
+  }
+
+  List<InlineSpan> _processLinks(String text, {bool addFavicon = false}) {
     final List<InlineSpan> spans = <InlineSpan>[];
     final List<RegExpMatch> matches = _linkRegExp.allMatches(text).toList();
 
     int lastMatchEnd = 0;
+
     for (final RegExpMatch match in matches) {
       if (match.start > lastMatchEnd) {
         spans.add(TextSpan(text: text.substring(lastMatchEnd, match.start)));
       }
+
       final String url = match.group(0)!;
+
       spans.add(
         TextSpan(
           children: <InlineSpan>[
@@ -123,8 +220,8 @@ class _TextMessageViewState extends State<TextMessageView>
                 ..onTap = () {
                   getIt.get<TrackUseActivityUseCase>().execute(
                         AppEvents.chat.linkClicked(
-                          messageId: widget.textMessage.id,
-                          type: widget.textMessage.appEventMessageType,
+                          messageId: _textMessage.id,
+                          type: _textMessage.appEventMessageType,
                         ),
                       );
                   launchUrlString(_completeLink(url));
@@ -133,11 +230,14 @@ class _TextMessageViewState extends State<TextMessageView>
           ],
         ),
       );
+
       lastMatchEnd = match.end;
     }
+
     if (lastMatchEnd < text.length) {
       spans.add(TextSpan(text: text.substring(lastMatchEnd)));
     }
+
     return spans;
   }
 }

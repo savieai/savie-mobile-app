@@ -65,7 +65,7 @@ class _EditingMessageViewState extends State<EditingMessageView> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _displayedMessage?.text ?? '',
+                          _displayedMessage?.plainText ?? '',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.callout,
@@ -92,18 +92,18 @@ class _EditingMessageViewState extends State<EditingMessageView> {
         color: AppColors.backgroundPrimary,
         border: Border(
           top: BorderSide(
-            color: AppColors.strokePrimaryAlpha.withOpacity(
-              _isSrhink ? 0 : 0.06,
+            color: AppColors.strokePrimaryAlpha.withValues(
+              alpha: _isSrhink ? 0 : 0.06,
             ),
           ),
           left: BorderSide(
-            color: AppColors.strokePrimaryAlpha.withOpacity(
-              _isSrhink ? 0 : 0.06,
+            color: AppColors.strokePrimaryAlpha.withValues(
+              alpha: _isSrhink ? 0 : 0.06,
             ),
           ),
           right: BorderSide(
-            color: AppColors.strokePrimaryAlpha.withOpacity(
-              _isSrhink ? 0 : 0.06,
+            color: AppColors.strokePrimaryAlpha.withValues(
+              alpha: _isSrhink ? 0 : 0.06,
             ),
           ),
         ),

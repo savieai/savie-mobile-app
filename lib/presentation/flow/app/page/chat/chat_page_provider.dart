@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 
+import '../../../../../domain/domain.dart';
 import '../../../../presentation.dart';
 
 class ChatPagePorvider extends InheritedWidget {
@@ -43,12 +45,14 @@ class ChatPagePorvider extends InheritedWidget {
           scrollController.position.pixels;
 
   void runSentMessageAnimation({
-    required String text,
+    required List<TextContent> textContents,
     required BuildContext context,
   }) {
     final double height = (TextPainter(
       text: TextSpan(
-        text: text,
+        text: Document.fromDelta(
+          TextContent.toDelta(textContents),
+        ).toPlainText(),
         style: AppTextStyles.paragraph,
       ),
       textScaler: MediaQuery.textScalerOf(context),

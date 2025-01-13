@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_quill/quill_delta.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../../../domain/domain.dart';
@@ -8,7 +9,7 @@ part 'chat_page_cubit.freezed.dart';
 @freezed
 class ChatPageState with _$ChatPageState {
   const factory ChatPageState.idle({
-    required String preservedText,
+    required Delta preservedDelta,
   }) = _Idle;
   const factory ChatPageState.editingMessage({
     required TextMessage message,
@@ -16,17 +17,17 @@ class ChatPageState with _$ChatPageState {
 }
 
 class ChatPageCubit extends Cubit<ChatPageState> {
-  ChatPageCubit() : super(const _Idle(preservedText: ''));
+  ChatPageCubit() : super(_Idle(preservedDelta: Delta()));
 
-  String _preservedText = '';
-  String get preservedText => _preservedText;
+  Delta _preservedDelta = Delta();
+  Delta get preservedDelta => _preservedDelta;
 
   void setEditingMessage(TextMessage message) => emit(
         _EditingMessage(message: message),
       );
 
-  void setIdle() => emit(_Idle(preservedText: _preservedText));
+  void setIdle() => emit(_Idle(preservedDelta: _preservedDelta));
 
   // ignore: use_setters_to_change_properties
-  void updatePreservedText(String text) => _preservedText = text;
+  void updatePreservedDelta(Delta text) => _preservedDelta = text;
 }

@@ -56,7 +56,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   void didChangeDependencies() {
     super.didChangeDependencies();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (context.mounted) {
+      if (mounted && context.mounted) {
         _sizeNotifier.value = context.size;
       }
     });
@@ -66,7 +66,7 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   void didUpdateWidget(covariant ContextMenuRegion oldWidget) {
     super.didUpdateWidget(oldWidget);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (context.mounted) {
+      if (mounted && context.mounted) {
         _sizeNotifier.value = context.size;
       }
     });

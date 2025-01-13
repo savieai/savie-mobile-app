@@ -89,6 +89,10 @@ dependencies:
   native_dialog_plus:
     git:
       url: git@github.com:galt-agency/native_dialog_plus.git
+  flutter_quill: 
+    path: ../flutter-quill
+  flutter_localization: ^0.2.2
+  vsc_quill_delta_to_html: ^1.0.5
 
 dev_dependencies:
   flutter_test:
