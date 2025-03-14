@@ -56,8 +56,29 @@ class _ChatDropdownViewState extends State<ChatDropdownView> {
                       ),
                     ),
                   ),
-                  // TODO: provide extra data and make it a lsit
-                  const _DropdownItem(),
+                  StreamBuilder<ChatDropdownItem?>(
+                    stream: context
+                        .read<ChatDropdownCubit>()
+                        .hoveredDropdownItemStream,
+                    builder: (BuildContext context,
+                        AsyncSnapshot<ChatDropdownItem?> snapshot) {
+                      final ChatDropdownItem? hoveredItem = snapshot.data;
+
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          ...ChatDropdownItem.values.reversed.map(
+                            (ChatDropdownItem item) {
+                              return _DropdownItem(
+                                isHovered: hoveredItem == item,
+                                item: item,
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  )
                 ],
               ),
             ),
@@ -112,21 +133,29 @@ class _ChatDropdownViewState extends State<ChatDropdownView> {
 }
 
 class _DropdownItem extends StatefulWidget {
-  const _DropdownItem();
+  const _DropdownItem({
+    required this.isHovered,
+    required this.item,
+  });
+
+  final bool isHovered;
+  final ChatDropdownItem item;
 
   @override
   State<_DropdownItem> createState() => _DropdownItemState();
 }
 
 class _DropdownItemState extends State<_DropdownItem> {
-  bool _isHovered = false;
-
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: (_) => context.read<ChatDropdownCubit>().hoverDropdownItem(
+            widget.item,
+          ),
+      onExit: (_) => context.read<ChatDropdownCubit>().unhoverDropdownItem(
+            widget.item,
+          ),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () => context
@@ -135,7 +164,7 @@ class _DropdownItemState extends State<_DropdownItem> {
         child: Container(
           margin: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: _isHovered ? AppColors.strokeSecondaryAlpha : null,
+            color: widget.isHovered ? AppColors.strokeSecondaryAlpha : null,
             borderRadius: BorderRadius.circular(11),
           ),
           padding: EdgeInsets.all(Platform.isMacOS ? 8 : 12),
@@ -156,7 +185,9 @@ class _DropdownItemState extends State<_DropdownItem> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'To-do list',
+                    switch (widget.item) {
+                      ChatDropdownItem.todos => 'To-do list',
+                    },
                     style: AppTextStyles.paragraph,
                   ),
                 )

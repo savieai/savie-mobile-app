@@ -16,19 +16,19 @@ class MessageQuillEditor extends StatefulWidget {
     super.key,
     required this.scrollController,
     required this.focusNode,
-    required this.onEnterPressed,
+    required this.onSend,
   });
 
   final ScrollController scrollController;
   final FocusNode focusNode;
-  final VoidCallback onEnterPressed;
+  final VoidCallback onSend;
 
   @override
   State<MessageQuillEditor> createState() => _MessageQuillEditorState();
 }
 
 class _MessageQuillEditorState extends State<MessageQuillEditor> {
-  late final StreamSubscription<ChatDropdownItem> _chatDropDownSubscription;
+  late final StreamSubscription<ChatDropdownItem?> _chatDropDownSubscription;
   late final QuillControllerCubit _quillControllerCubit =
       context.read<QuillControllerCubit>();
 
@@ -73,17 +73,22 @@ class _MessageQuillEditorState extends State<MessageQuillEditor> {
     }
   }
 
-  void _chatDropDownListener(ChatDropdownItem item) {
+  void _chatDropDownListener(ChatDropdownItem? item) {
     _quillControllerCubit.applyBackspace();
 
     switch (item) {
       case ChatDropdownItem.todos:
         _quillControllerCubit.enableTodos();
+      case null:
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isDropdownVisible = context.select<ChatDropdownCubit, bool>(
+      (cubit) => cubit.state,
+    );
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: 8,
@@ -134,11 +139,39 @@ class _MessageQuillEditorState extends State<MessageQuillEditor> {
                   decoration: TextDecoration.lineThrough,
                 ),
               ),
-              customShortcuts: const {
-                SingleActivator(LogicalKeyboardKey.enter): SaveIntent(),
+              customShortcuts: {
+                const SingleActivator(LogicalKeyboardKey.enter):
+                    const EnterIntent(),
+                if (isDropdownVisible)
+                  const SingleActivator(LogicalKeyboardKey.arrowUp):
+                      const ArrowUpIntent(),
+                if (isDropdownVisible)
+                  const SingleActivator(LogicalKeyboardKey.arrowDown):
+                      const ArrowDownIntent(),
               },
               customActions: {
-                SaveIntent: SaveAction(onSave: widget.onEnterPressed),
+                EnterIntent: QuillAction(onInvoke: () {
+                  final ChatDropdownItem? hoveredItem =
+                      context.read<ChatDropdownCubit>().hoveredDropdownItem;
+                  if (isDropdownVisible && hoveredItem != null) {
+                    context
+                        .read<ChatDropdownCubit>()
+                        .selectHoveredDropdownItem();
+                  } else {
+                    widget.onSend();
+                    context.read<ChatDropdownCubit>().setInvisible();
+                  }
+                }),
+                ArrowUpIntent: QuillAction(onInvoke: () {
+                  if (isDropdownVisible) {
+                    context.read<ChatDropdownCubit>().hoverUpperDropdownItem();
+                  }
+                }),
+                ArrowDownIntent: QuillAction(onInvoke: () {
+                  if (isDropdownVisible) {
+                    context.read<ChatDropdownCubit>().hoverLowerDropdownItem();
+                  }
+                }),
               },
               enableSelectionToolbar: false,
               placeholder: _displayPlaceholder ? 'Share anything...' : null,
@@ -171,15 +204,23 @@ class CheckboxBuilder implements QuillCheckboxBuilder {
   }
 }
 
-class SaveIntent extends Intent {
-  const SaveIntent();
+class EnterIntent extends Intent {
+  const EnterIntent();
 }
 
-class SaveAction extends Action {
-  SaveAction({required this.onSave});
+class ArrowUpIntent extends Intent {
+  const ArrowUpIntent();
+}
 
-  final VoidCallback onSave;
+class ArrowDownIntent extends Intent {
+  const ArrowDownIntent();
+}
+
+class QuillAction extends Action {
+  QuillAction({required this.onInvoke});
+
+  final VoidCallback onInvoke;
 
   @override
-  void invoke(Intent intent) => onSave();
+  void invoke(Intent intent) => onInvoke();
 }

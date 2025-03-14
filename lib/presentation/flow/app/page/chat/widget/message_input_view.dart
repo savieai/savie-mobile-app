@@ -232,7 +232,7 @@ class _TextInputViewState extends State<_TextInputView> {
                       child: MessageQuillEditor(
                         scrollController: _scrollController,
                         focusNode: widget.focusNode,
-                        onEnterPressed: _onSend,
+                        onSend: _onSend,
                       ),
                     ),
                     Container(
