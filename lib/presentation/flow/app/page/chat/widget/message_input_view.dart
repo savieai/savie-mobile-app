@@ -125,34 +125,11 @@ class _TextInputViewState extends State<_TextInputView> {
       context.read<QuillControllerCubit>();
 
   ChatPagePorvider get _chatPagePorvider => ChatPagePorvider.of(context);
-  bool _metaPressed = false;
 
   @override
   void initState() {
     super.initState();
     _quillControllerCubit.addListener(_listener);
-
-    if (Platform.isMacOS) {
-      widget.focusNode.onKeyEvent = (FocusNode node, KeyEvent value) {
-        if (value.logicalKey.keyLabel.contains('Meta') ||
-            value.logicalKey.keyLabel.contains('Shift')) {
-          _metaPressed = value is KeyDownEvent;
-
-          return KeyEventResult.handled;
-        }
-
-        if (value.logicalKey.keyLabel == 'Enter') {
-          if (!_metaPressed || value is KeyUpEvent) {
-            return KeyEventResult.ignored;
-          }
-
-          _quillControllerCubit.insertNewLine();
-          return KeyEventResult.handled;
-        }
-
-        return KeyEventResult.ignored;
-      };
-    }
   }
 
   void _listener() {
@@ -255,6 +232,7 @@ class _TextInputViewState extends State<_TextInputView> {
                       child: MessageQuillEditor(
                         scrollController: _scrollController,
                         focusNode: widget.focusNode,
+                        onEnterPressed: _onSend,
                       ),
                     ),
                     Container(

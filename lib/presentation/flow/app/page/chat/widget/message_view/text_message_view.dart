@@ -40,7 +40,7 @@ class _TextMessageViewState extends State<TextMessageView>
     final List<Link> links = _textMessage.links;
     final List<InlineSpan> spans = _processTextContents(textContents);
 
-    final bool linkOnly = plainText == links.firstOrNull?.url;
+    final bool linkOnly = plainText.trim() == links.firstOrNull?.url.trim();
 
     final Animation<double> sentMessageAnimation =
         widget.enableSentMessageAinmation
@@ -55,41 +55,19 @@ class _TextMessageViewState extends State<TextMessageView>
           child: child!,
         );
       },
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          if (!linkOnly)
-            SelectableText.rich(
-              TextSpan(children: spans),
-              enableInteractiveSelection: widget.contextMenuShown,
-              cursorWidth: 0,
-              style: AppTextStyles.paragraph.copyWith(
-                color: AppColors.textPrimary,
-              ),
-            ),
-          if (links.length == 1)
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                if (!linkOnly) const SizedBox(height: 6),
-                SelectableText.rich(
-                  TextSpan(
-                    children: _processLinks(
-                      links.first.url,
-                      addFavicon: true,
-                    ),
-                  ),
-                  enableInteractiveSelection: widget.contextMenuShown,
-                  cursorWidth: 0,
-                  style: AppTextStyles.paragraph.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                )
-              ],
-            ),
-        ],
+      child: GestureDetector(
+        child: SelectableText.rich(
+          TextSpan(
+            children: linkOnly
+                ? _processLinks(links.first.url, addFavicon: true)
+                : spans,
+          ),
+          enableInteractiveSelection: widget.contextMenuShown,
+          cursorWidth: 0,
+          style: AppTextStyles.paragraph.copyWith(
+            color: AppColors.textPrimary,
+          ),
+        ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:in_app_notification/in_app_notification.dart';
 
 import '../../../application/application.dart';
 import '../../presentation.dart';
+import '../logs_wrapper_flow.dart';
 
 @RoutePage(name: 'AppFlowRoute')
 class AppFlow extends StatelessWidget {
@@ -26,11 +27,13 @@ class AppFlow extends StatelessWidget {
           create: (_) => getIt.get<RecordingCubit>(),
         ),
       ],
-      child: const InAppNotification(
-        child: ProgressHud(
-          child: ContextMenuListener(
-            child: ContextMenuScope(
-              child: AutoRouter(),
+      child: const LogsWrapper(
+        child: InAppNotification(
+          child: ProgressHud(
+            child: ContextMenuListener(
+              child: ContextMenuScope(
+                child: AutoRouter(),
+              ),
             ),
           ),
         ),

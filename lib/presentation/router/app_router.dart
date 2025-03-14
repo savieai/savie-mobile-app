@@ -17,7 +17,7 @@ class AppRouter extends RootStackRouter {
           initial: true,
           page: SplashRoute.page,
         ),
-        CustomRoute(
+        CustomRoute<dynamic>(
           transitionsBuilder: TransitionsBuilders.fadeIn,
           durationInMilliseconds: 500,
           page: AuthWrapperFlowRoute.page,
@@ -42,15 +42,15 @@ class AppRouter extends RootStackRouter {
           AutoRoute(
             page: ProfileRoute.page,
           ),
-          CustomRoute(
+          CustomRoute<dynamic>(
             customRouteBuilder: RouteBuilders.modalPopupSheet,
             page: GetInviteRoute.page,
           ),
-          CustomRoute(
+          CustomRoute<dynamic>(
             customRouteBuilder: RouteBuilders.modalPopupSheet,
             page: ProComingSoonRoute.page,
           ),
-          CustomRoute(
+          CustomRoute<dynamic>(
             page: PhotoCarouselRoute.page,
             fullscreenDialog: true,
             opaque: false,

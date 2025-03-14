@@ -23,6 +23,7 @@ class ChatCubit extends Cubit<ChatState> {
     this._deleteMessagesUseCase,
     this._findMessageUseCase,
     this._editTextMessageUseCase,
+    this._pasteImageUseCase,
     this._processSharingIntent,
     this._processSharingIntentStream, {
     @factoryParam String? query,
@@ -46,6 +47,7 @@ class ChatCubit extends Cubit<ChatState> {
   final DeleteMessagesUseCase _deleteMessagesUseCase;
   final FindMessageUseCase _findMessageUseCase;
   final EditTextMessageUseCase _editTextMessageUseCase;
+  final PasteImageUseCase _pasteImageUseCase;
 
   final ProcessSharingIntentStream _processSharingIntentStream;
   final ProcessSharingIntent _processSharingIntent;
@@ -279,6 +281,13 @@ class ChatCubit extends Cubit<ChatState> {
         isPending: false,
       );
       _emitMessages();
+    }
+  }
+
+  Future<void> pasteFiles() async {
+    final String? imageFilePath = await _pasteImageUseCase.execute();
+    if (imageFilePath != null) {
+      sendMessage(mediaPaths: <String>[imageFilePath]);
     }
   }
 

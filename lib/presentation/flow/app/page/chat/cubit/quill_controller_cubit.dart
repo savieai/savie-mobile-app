@@ -6,7 +6,19 @@ import 'package:flutter_quill/quill_delta.dart';
 import '../../../../../../domain/domain.dart';
 
 class QuillControllerCubit extends Cubit<QuillController> {
-  QuillControllerCubit() : super(QuillController.basic());
+  QuillControllerCubit()
+      : super(
+          QuillController.basic(
+            config: QuillControllerConfig(
+              clipboardConfig: QuillClipboardConfig(
+                enableExternalRichPaste: false,
+                onImagePaste: (_) async {
+                  return null;
+                },
+              ),
+            ),
+          ),
+        );
 
   QuillController get _quillController => state;
 

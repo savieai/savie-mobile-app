@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:animated_list_plus/animated_list_plus.dart';
 import 'package:flutter/material.dart';
@@ -252,7 +253,7 @@ class _AnimatedChatItem extends StatelessWidget {
 
     return FadeTransition(
       opacity: curvedAnimation,
-      child: SizeTransition(
+      child: UnclippedSizeTransition(
         sizeFactor: useSizeAnimation
             ? curvedAnimation
             : const AlwaysStoppedAnimation<double>(1),
@@ -288,6 +289,42 @@ class _AnimatedChatItem extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class UnclippedSizeTransition extends AnimatedWidget {
+  const UnclippedSizeTransition({
+    super.key,
+    this.axis = Axis.vertical,
+    required Animation<double> sizeFactor,
+    this.axisAlignment = 0.0,
+    this.fixedCrossAxisSizeFactor,
+    this.child,
+  })  : assert(fixedCrossAxisSizeFactor == null ||
+            fixedCrossAxisSizeFactor >= 0.0),
+        super(listenable: sizeFactor);
+
+  final Axis axis;
+  Animation<double> get sizeFactor => listenable as Animation<double>;
+  final double axisAlignment;
+  final double? fixedCrossAxisSizeFactor;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: switch (axis) {
+        Axis.horizontal => AlignmentDirectional(axisAlignment, -1.0),
+        Axis.vertical => AlignmentDirectional(-1.0, axisAlignment),
+      },
+      heightFactor: axis == Axis.vertical
+          ? max(sizeFactor.value, 0.0)
+          : fixedCrossAxisSizeFactor,
+      widthFactor: axis == Axis.horizontal
+          ? max(sizeFactor.value, 0.0)
+          : fixedCrossAxisSizeFactor,
+      child: child,
     );
   }
 }

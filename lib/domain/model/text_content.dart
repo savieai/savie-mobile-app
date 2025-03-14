@@ -96,6 +96,10 @@ class TextContent with _$TextContent {
       );
     }
 
+    if (delta.isEmpty) {
+      delta.insert('\n');
+    }
+
     return delta;
   }
 }

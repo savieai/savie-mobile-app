@@ -44,43 +44,36 @@ sealed class MessageMapper {
       );
     }
 
-    if (dto.deltaContent != null) {
-      final List<FileAttachmentResponseDTO> imageDtos = dto.attachments.where(
-        (FileAttachmentResponseDTO f) {
-          return f.attachmentType == FileAttachmentTypeDTO.image;
-        },
-      ).toList();
+    final List<FileAttachmentResponseDTO> imageDtos = dto.attachments.where(
+      (FileAttachmentResponseDTO f) {
+        return f.attachmentType == FileAttachmentTypeDTO.image;
+      },
+    ).toList();
 
-      final List<Attachment> images =
-          imageDtos.map(FileAttachmentMapper.toDomain).toList();
-      final List<Link> links = dto.links.map(LinkMapper.toDomain).toList();
+    final List<Attachment> images =
+        imageDtos.map(FileAttachmentMapper.toDomain).toList();
 
-      return Message.text(
-        id: dto.id,
-        tempId: dto.tempId,
-        date: dto.createdAt.toLocal(),
-        textContents: dto.deltaContent == null
-            ? null
-            : TextContent.fromDelta(_parseDelta(dto.deltaContent!)),
-        images: images,
-        isPending: false,
-        links: links,
-      );
-    }
+    final List<Link> links = dto.links.map(LinkMapper.toDomain).toList();
 
     return Message.text(
-      isPending: false,
       id: dto.id,
       tempId: dto.tempId,
-      date: dto.createdAt,
+      date: dto.createdAt.toLocal(),
       textContents: dto.deltaContent == null
           ? null
           : TextContent.fromDelta(_parseDelta(dto.deltaContent!)),
+      images: images,
+      isPending: false,
+      links: links,
     );
   }
 
   static Delta _parseDelta(Map<String, dynamic> deltaContent) {
     final Delta delta = Delta.fromJson(deltaContent['ops'] as List<dynamic>);
+    if (delta.isEmpty) {
+      return Delta()..insert('\n');
+    }
+
     if (!(delta.last.data! as String).endsWith('\n')) {
       delta.insert('\n');
     }

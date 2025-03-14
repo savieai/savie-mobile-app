@@ -5,6 +5,7 @@
 import FlutterMacOS
 import Foundation
 
+import accessing_security_scoped_resource
 import app_links
 import audioplayers_darwin
 import desktop_drop
@@ -16,6 +17,7 @@ import google_sign_in_ios
 import native_dialog_plus
 import open_file_mac
 import package_info_plus
+import pasteboard
 import path_provider_foundation
 import pdf_render
 import photo_manager
@@ -31,6 +33,7 @@ import url_launcher_macos
 import window_manager
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
+  AccessingSecurityScopedResourcePlugin.register(with: registry.registrar(forPlugin: "AccessingSecurityScopedResourcePlugin"))
   AppLinksMacosPlugin.register(with: registry.registrar(forPlugin: "AppLinksMacosPlugin"))
   AudioplayersDarwinPlugin.register(with: registry.registrar(forPlugin: "AudioplayersDarwinPlugin"))
   DesktopDropPlugin.register(with: registry.registrar(forPlugin: "DesktopDropPlugin"))
@@ -42,6 +45,7 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   NativeDialogPlusPlugin.register(with: registry.registrar(forPlugin: "NativeDialogPlusPlugin"))
   OpenFilePlugin.register(with: registry.registrar(forPlugin: "OpenFilePlugin"))
   FPPPackageInfoPlusPlugin.register(with: registry.registrar(forPlugin: "FPPPackageInfoPlusPlugin"))
+  PasteboardPlugin.register(with: registry.registrar(forPlugin: "PasteboardPlugin"))
   PathProviderPlugin.register(with: registry.registrar(forPlugin: "PathProviderPlugin"))
   SwiftPdfRenderPlugin.register(with: registry.registrar(forPlugin: "SwiftPdfRenderPlugin"))
   PhotoManagerPlugin.register(with: registry.registrar(forPlugin: "PhotoManagerPlugin"))

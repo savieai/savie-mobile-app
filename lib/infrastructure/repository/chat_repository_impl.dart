@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_quill/quill_delta.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/retrofit.dart';
@@ -23,6 +24,8 @@ class ChatRepositoryImpl implements ChatRepository {
       page: page,
       pageSize: pageSize,
     );
+
+    Clipboard.setData(ClipboardData(text: jsonEncode(response.response.data)));
 
     return (
       PaginationMapper.toDomain(response.data.data.pagination),

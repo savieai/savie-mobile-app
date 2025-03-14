@@ -1,7 +1,10 @@
+// ignore_for_file: non_constant_identifier_names, no_leading_underscores_for_local_identifiers, always_specify_types
+
 import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
@@ -13,10 +16,12 @@ class MessageQuillEditor extends StatefulWidget {
     super.key,
     required this.scrollController,
     required this.focusNode,
+    required this.onEnterPressed,
   });
 
   final ScrollController scrollController;
   final FocusNode focusNode;
+  final VoidCallback onEnterPressed;
 
   @override
   State<MessageQuillEditor> createState() => _MessageQuillEditorState();
@@ -92,6 +97,7 @@ class _MessageQuillEditorState extends State<MessageQuillEditor> {
             scrollController: widget.scrollController,
             config: QuillEditorConfig(
               maxHeight: 200,
+              disableClipboard: true,
               customStyles: DefaultStyles(
                 lists: DefaultListBlockStyle(
                   AppTextStyles.paragraph,
@@ -100,9 +106,9 @@ class _MessageQuillEditorState extends State<MessageQuillEditor> {
                   const VerticalSpacing(1, 1),
                   const BoxDecoration(),
                   const CheckboxBuilder(),
-                  indentWidthBuilder: (Block _0, BuildContext _1, int _2, _3) =>
+                  indentWidthBuilder: (_0, _1, _2, _3) =>
                       const HorizontalSpacing(24, 0),
-                  numberPointWidthBuilder: (double _0, int _1) => 0,
+                  numberPointWidthBuilder: (_0, _1) => 0,
                 ),
                 paragraph: DefaultTextBlockStyle(
                   AppTextStyles.paragraph.copyWith(
@@ -127,6 +133,13 @@ class _MessageQuillEditorState extends State<MessageQuillEditor> {
                   decoration: TextDecoration.lineThrough,
                 ),
               ),
+              customShortcuts: const {
+                SingleActivator(LogicalKeyboardKey.enter): SaveIntent(),
+              },
+              customActions: {
+                SaveIntent: SaveAction(onSave: widget.onEnterPressed),
+              },
+              enableSelectionToolbar: false,
               placeholder: _displayPlaceholder ? 'Share anything...' : null,
             ),
           );
@@ -155,4 +168,17 @@ class CheckboxBuilder implements QuillCheckboxBuilder {
       ),
     );
   }
+}
+
+class SaveIntent extends Intent {
+  const SaveIntent();
+}
+
+class SaveAction extends Action {
+  SaveAction({required this.onSave});
+
+  final VoidCallback onSave;
+
+  @override
+  void invoke(Intent intent) => onSave();
 }

@@ -70,6 +70,7 @@ class _ChatPageState extends State<ChatPage>
 
   bool _metaPressed = false;
   bool _fPressed = false;
+  bool _vPressed = false;
   bool _backSpacePressed = false;
 
   @override
@@ -129,7 +130,12 @@ class _ChatPageState extends State<ChatPage>
                       link: _layerLink,
                       targetAnchor: Alignment.topCenter,
                       followerAnchor: Alignment.bottomCenter,
-                      child: const ChatDropdownView(),
+                      child: Padding(
+                        padding: Platform.isMacOS
+                            ? const EdgeInsets.symmetric(horizontal: 24)
+                            : EdgeInsets.zero,
+                        child: const ChatDropdownView(),
+                      ),
                     ),
                   ],
                 ),
@@ -155,6 +161,13 @@ class _ChatPageState extends State<ChatPage>
       });
     }
 
+    if (value.logicalKey.keyLabel == 'V') {
+      _vPressed = value is KeyDownEvent;
+      Future<void>.delayed(const Duration(milliseconds: 100), () {
+        _vPressed = false;
+      });
+    }
+
     if (value.logicalKey.keyLabel == 'Escape' && value is KeyDownEvent) {
       _chatPageCubit.state.whenOrNull(editingMessage: (_) {
         _chatPageCubit.setIdle();
@@ -165,6 +178,10 @@ class _ChatPageState extends State<ChatPage>
       if (getIt.get<AppRouter>().topRoute.name == ChatRoute.name) {
         context.router.push(const SearchRoute());
       }
+    }
+
+    if (_metaPressed && _vPressed) {
+      context.read<ChatCubit>().pasteFiles();
     }
 
     if (value.logicalKey.keyLabel == 'Arrow Up' &&
