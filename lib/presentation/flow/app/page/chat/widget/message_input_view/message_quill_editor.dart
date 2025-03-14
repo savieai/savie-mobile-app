@@ -98,6 +98,7 @@ class _MessageQuillEditorState extends State<MessageQuillEditor> {
             config: QuillEditorConfig(
               maxHeight: 200,
               disableClipboard: true,
+              onTapOutsideEnabled: false,
               customStyles: DefaultStyles(
                 lists: DefaultListBlockStyle(
                   AppTextStyles.paragraph,
