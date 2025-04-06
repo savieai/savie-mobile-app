@@ -11,7 +11,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:open_file/open_file.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
@@ -30,7 +30,7 @@ part 'message_container.dart';
 part 'text_with_media_message_view.dart';
 part 'file_message_view.dart';
 
-class MessageView extends StatelessWidget {
+class MessageView extends StatefulWidget {
   const MessageView({
     super.key,
     required this.message,
@@ -39,73 +39,99 @@ class MessageView extends StatelessWidget {
   final Message message;
 
   @override
+  State<MessageView> createState() => _MessageViewState();
+}
+
+class _MessageViewState extends State<MessageView> {
+  late final MessageCubit _messageCubit;
+
+  @override
+  void initState() {
+    _messageCubit = MessageCubit(message: widget.message);
+    super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant MessageView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _messageCubit.updateMessage(widget.message);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        MessageTimeWrapper(
-          time: message.date,
-          child: _MessageAligner(
-            child: ContextMenuRegion(
-              heroTag: '${message.currentId}_context_menu',
-              data: _getContextMenuData(context),
-              builder: (
-                BuildContext context,
-                Animation<double> animtion,
-                bool contextMenuShown,
-              ) {
-                return message.map(
-                  text: (TextMessage textMessage) {
-                    if (textMessage.images.isNotEmpty) {
-                      if (textMessage.textContents != null) {
-                        return _TextWithMediaMessageView(
-                          message: textMessage,
-                          contextMenuShown: contextMenuShown,
+    return BlocProvider<MessageCubit>(
+      create: (_) => MessageCubit(message: widget.message),
+      child: Column(
+        children: <Widget>[
+          MessageTimeWrapper(
+            time: widget.message.date,
+            child: _MessageAligner(
+              child: ContextMenuRegion(
+                heroTag: '${widget.message.currentId}_context_menu',
+                data: _getContextMenuData(context),
+                builder: (
+                  BuildContext context,
+                  Animation<double> animtion,
+                  bool contextMenuShown,
+                ) {
+                  return BlocProvider<MessageCubit>.value(
+                    value: _messageCubit,
+                    child: widget.message.map(
+                      text: (TextMessage textMessage) {
+                        if (textMessage.images.isNotEmpty) {
+                          if (textMessage.textContents != null) {
+                            return _TextWithMediaMessageView(
+                              message: textMessage,
+                              contextMenuShown: contextMenuShown,
+                            );
+                          } else {
+                            return MediaMessageView(
+                              message: textMessage,
+                              contextMenuShown: contextMenuShown,
+                            );
+                          }
+                        } else {
+                          return MessagePendingWrapper(
+                            isPending: widget.message.isPending,
+                            isNew: widget.message.isNew,
+                            child: TextMessageView(
+                              textMessage: textMessage,
+                              contextMenuShown: contextMenuShown,
+                            ),
+                          );
+                        }
+                      },
+                      audio: (AudioMessage audioMessage) {
+                        return MessagePendingWrapper(
+                          isPending: widget.message.isPending,
+                          isNew: widget.message.isNew,
+                          child: AudioMessageView(
+                            audioMessage: audioMessage,
+                            contextMenuShown: contextMenuShown,
+                          ),
                         );
-                      } else {
-                        return MediaMessageView(
-                          message: textMessage,
-                          contextMenuShown: contextMenuShown,
-                        );
-                      }
-                    } else {
-                      return MessagePendingWrapper(
-                        isPending: message.isPending,
-                        isNew: message.isNew,
-                        child: TextMessageView(
-                          textMessage: textMessage,
-                          contextMenuShown: contextMenuShown,
+                      },
+                      file: (FileMessage fileMessage) => MessagePendingWrapper(
+                        isPending: widget.message.isPending,
+                        isNew: widget.message.isNew,
+                        child: FileMessageView(
+                          fileMessage: fileMessage,
                         ),
-                      );
-                    }
-                  },
-                  audio: (AudioMessage audioMessage) {
-                    return MessagePendingWrapper(
-                      isPending: message.isPending,
-                      isNew: message.isNew,
-                      child: AudioMessageView(
-                        audioMessage: audioMessage,
                       ),
-                    );
-                  },
-                  file: (FileMessage fileMessage) => MessagePendingWrapper(
-                    isPending: message.isPending,
-                    isNew: message.isNew,
-                    child: FileMessageView(
-                      fileMessage: fileMessage,
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   List<ContextMenuItemData> _getContextMenuData(BuildContext context) {
     return <ContextMenuItemData>[
-      ...message.map(
+      ...widget.message.map(
         text: (TextMessage textMessage) {
           late final bool hasChatPageCubit;
 
@@ -119,7 +145,7 @@ class MessageView extends StatelessWidget {
           return <ContextMenuItemData>[
             if ((textMessage.plainText ?? '')
                 .isNotEmpty) ...<ContextMenuItemData>[
-              if (!message.isPending && hasChatPageCubit)
+              if (!widget.message.isPending && hasChatPageCubit)
                 ContextMenuItemData(
                   title: 'Edit',
                   icon: Assets.icons.edit16,
@@ -170,6 +196,18 @@ class MessageView extends StatelessWidget {
                       plainText: textMessage.plainText,
                     );
               },
+            ),
+            ContextMenuItemData(
+              title: 'Improve Text',
+              icon: Assets.icons.listSparkle,
+              color: AppColors.textPrimary,
+              onTap: () {
+                Future<void>.delayed(const Duration(milliseconds: 350), () {
+                  if (context.mounted) {
+                    context.read<ChatCubit>().improveText(textMessage);
+                  }
+                });
+              },
             )
           ];
         },
@@ -208,7 +246,7 @@ class MessageView extends StatelessWidget {
           ];
         },
       ),
-      if (!message.isPending)
+      if (!widget.message.isPending)
         ContextMenuItemData(
           title: 'Delete',
           icon: Assets.icons.delete16,
@@ -216,7 +254,9 @@ class MessageView extends StatelessWidget {
           onTap: () {
             Future<void>.delayed(const Duration(milliseconds: 250), () {
               if (context.mounted) {
-                context.read<ChatCubit>().deleteMessage(messageId: message.id);
+                context
+                    .read<ChatCubit>()
+                    .deleteMessage(messageId: widget.message.id);
               }
             });
           },

@@ -80,6 +80,7 @@ class _SentAnimationTextState extends State<SentAnimationText> {
                 tempId: 'none',
                 date: DateTime.now(),
                 textContents: widget.textContents,
+                improvedText: null,
               ),
               contextMenuShown: false,
               enableSentMessageAinmation: true,

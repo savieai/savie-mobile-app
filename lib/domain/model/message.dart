@@ -18,6 +18,8 @@ class Message with _$Message implements Comparable<Message> {
     required List<TextContent>? textContents,
     @Default(<Attachment>[]) List<Attachment> images,
     @Default(<Link>[]) List<Link> links,
+    required String? improvedText,
+    @Default(false) bool improvementFailed,
   }) = TextMessage;
 
   const factory Message.audio({

@@ -1,3 +1,4 @@
+export 'ai_repository.dart';
 export 'auth_repository.dart';
 export 'cache_repository.dart';
 export 'chat_repository.dart';

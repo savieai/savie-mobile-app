@@ -32,8 +32,22 @@ class _TextMessageViewState extends State<TextMessageView>
 
   @override
   Widget build(BuildContext context) {
-    final List<TextContent> textContents =
-        _textMessage.textContents ?? <TextContent>[];
+    final bool isImproving = context.select(
+      (ChatCubit cubit) => cubit.state.maybeMap(
+        fetched: (ChatFetched value) =>
+            value.improvingTextMessageIds.contains(_textMessage.currentId),
+        orElse: () => false,
+      ),
+    );
+    final bool improvementFailed = _textMessage.improvementFailed;
+    final String? improvedText = _textMessage.improvedText;
+
+    final List<TextContent> textContents = _textMessage.improvedText != null
+        ? <TextContent>[
+            TextContent.plainText(text: '${_textMessage.improvedText!}\n')
+          ]
+        : _textMessage.textContents ?? <TextContent>[];
+
     final String plainText =
         Document.fromDelta(TextContent.toDelta(textContents)).toPlainText();
 
@@ -55,19 +69,58 @@ class _TextMessageViewState extends State<TextMessageView>
           child: child!,
         );
       },
-      child: GestureDetector(
-        child: SelectableText.rich(
-          TextSpan(
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final TextSpan textSpan = TextSpan(
             children: linkOnly
                 ? _processLinks(links.first.url, addFavicon: true)
                 : spans,
-          ),
-          enableInteractiveSelection: widget.contextMenuShown,
-          cursorWidth: 0,
-          style: AppTextStyles.paragraph.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
+          );
+
+          late final Size textSize;
+
+          try {
+            textSize = (TextPainter(
+              text: textSpan,
+              textScaler: MediaQuery.textScalerOf(context),
+              textDirection: TextDirection.ltr,
+            )..layout(maxWidth: constraints.maxWidth - AppSpaces.space300 * 2))
+                .size;
+          } catch (_) {
+            textSize = Size.zero;
+          }
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              SelectableText.rich(
+                textSpan,
+                enableInteractiveSelection: widget.contextMenuShown,
+                cursorWidth: 0,
+                style: AppTextStyles.paragraph.copyWith(
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.linearToEaseOut,
+                alignment: Alignment.topLeft,
+                child: _ImprovingView(
+                  minSize: textSize.width,
+                  isImproving: isImproving,
+                  oldText: (_textMessage.plainText ?? '').trim(),
+                  improvementFailed: improvementFailed,
+                  isImproved: improvedText != null,
+                  onRetry: () {
+                    context.read<ChatCubit>().improveText(widget.textMessage);
+                  },
+                  contextMenuShown: widget.contextMenuShown,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -313,6 +366,268 @@ class _FavIconState extends State<FavIcon> {
           AppColors.iconAccent,
           BlendMode.srcIn,
         ),
+      ),
+    );
+  }
+}
+
+class _ImprovingView extends StatefulWidget {
+  const _ImprovingView({
+    required this.isImproving,
+    required this.oldText,
+    required this.isImproved,
+    required this.improvementFailed,
+    required this.onRetry,
+    required this.minSize,
+    required this.contextMenuShown,
+  });
+
+  final bool isImproving;
+  final String? oldText;
+  final bool isImproved;
+  final bool improvementFailed;
+  final VoidCallback onRetry;
+  final double minSize;
+  final bool contextMenuShown;
+
+  @override
+  State<_ImprovingView> createState() => _ImprovingViewState();
+}
+
+class _ImprovingViewState extends State<_ImprovingView> {
+  bool _justImproved = false;
+
+  @override
+  void didUpdateWidget(covariant _ImprovingView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.isImproved && !oldWidget.isImproved) {
+      setState(() {
+        _justImproved = true;
+      });
+
+      Future<void>.delayed(const Duration(seconds: 2), () {
+        setState(() {
+          _justImproved = false;
+        });
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 500),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      child: _justImproved
+          ? const _TextHasBeenImproved()
+          : widget.isImproving
+              ? const _ImprovingText()
+              : widget.improvementFailed
+                  ? _RetryImproving(onRetry: widget.onRetry)
+                  : widget.isImproved
+                      ? _OriginalText(
+                          text: widget.oldText ?? '',
+                          minSize: widget.minSize,
+                          contextMenuShown: widget.contextMenuShown,
+                        )
+                      : const SizedBox(),
+    );
+  }
+}
+
+class _RetryImproving extends StatelessWidget {
+  const _RetryImproving({
+    required this.onRetry,
+  });
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        children: <InlineSpan>[
+          WidgetSpan(
+            child: Assets.icons.triangleExclamation.svg(),
+            alignment: PlaceholderAlignment.middle,
+          ),
+          const TextSpan(text: ' Oops! I couldn’t improve this one. '),
+          TextSpan(
+            text: 'Retry',
+            recognizer: TapGestureRecognizer()..onTap = onRetry,
+            style: const TextStyle(
+              color: AppColors.iconAccent,
+            ),
+          ),
+        ],
+      ),
+      style: AppTextStyles.footnote.copyWith(
+        color: AppColors.textSecondary,
+      ),
+    );
+  }
+}
+
+class _ImprovingText extends StatelessWidget {
+  const _ImprovingText();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Center(
+            child: Stack(
+              children: <Widget>[
+                Container(
+                  height: 10,
+                  width: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      width: 2,
+                      color: const Color(0x4DAE9999),
+                      strokeAlign: 0,
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 10,
+                  width: 10,
+                  child: FittedBox(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 4,
+                      color: Color(0xFFAE9999),
+                      strokeCap: StrokeCap.round,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Improving your text',
+            style: AppTextStyles.footnote.copyWith(
+              color: const Color(0xFFAE9999),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TextHasBeenImproved extends StatelessWidget {
+  const _TextHasBeenImproved();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Assets.icons.checkmark1.svg(height: 16, width: 16),
+          const SizedBox(width: 6),
+          Text(
+            'Your text has been improved',
+            style: AppTextStyles.footnote.copyWith(
+              color: AppColors.textSuccess,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OriginalText extends StatelessWidget {
+  const _OriginalText({
+    required this.text,
+    required this.minSize,
+    required this.contextMenuShown,
+  });
+
+  final String text;
+  final double minSize;
+  final bool contextMenuShown;
+
+  @override
+  Widget build(BuildContext context) {
+    final double minSizeConstrained = max(minSize, 60);
+    final bool isExpanded = context.select(
+      (MessageCubit cubit) => cubit.state.isImprovedTextExpanded,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          GestureDetector(
+            onTap: context.read<MessageCubit>().toggleImprovedTextExpansion,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                AnimatedRotation(
+                  turns: isExpanded ? 0 : 0.5,
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.linearToEaseOut,
+                  child:
+                      Assets.icons.chevronTopSmall.svg(height: 16, width: 16),
+                ),
+                const SizedBox(width: 6),
+                ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: minSizeConstrained),
+                  child: AnimatedCrossFade(
+                    duration: const Duration(milliseconds: 150),
+                    alignment: Alignment.centerLeft,
+                    firstChild: Text(
+                      'Hide original',
+                      style: AppTextStyles.footnote.copyWith(
+                        color: AppColors.iconAccent,
+                      ),
+                    ),
+                    secondChild: Text(
+                      'Show original',
+                      style: AppTextStyles.footnote.copyWith(
+                        color: AppColors.iconAccent,
+                      ),
+                    ),
+                    crossFadeState: isExpanded
+                        ? CrossFadeState.showFirst
+                        : CrossFadeState.showSecond,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 350),
+            sizeCurve: Curves.linearToEaseOut,
+            alignment: Alignment.centerLeft,
+            firstChild: SizedBox(width: minSizeConstrained),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: SelectableText(
+                text,
+                style: AppTextStyles.paragraph.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                enableInteractiveSelection: contextMenuShown,
+              ),
+            ),
+            crossFadeState: isExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+          ),
+        ],
       ),
     );
   }

@@ -1,21 +1,285 @@
 part of 'message_view.dart';
 
-class AudioMessageView extends StatelessWidget {
+class AudioMessageView extends StatefulWidget {
   const AudioMessageView({
     super.key,
     required this.audioMessage,
+    required this.contextMenuShown,
   });
 
   final AudioMessage audioMessage;
+  final bool contextMenuShown;
+
+  @override
+  State<AudioMessageView> createState() => _AudioMessageViewState();
+}
+
+class _AudioMessageViewState extends State<AudioMessageView> {
+  double? _audioViewWidth;
 
   @override
   Widget build(BuildContext context) {
+    final MessageCubit messageCubit = context.read<MessageCubit>();
+
+    final bool isTranscribing = _isTranscribing(context);
+    final bool isAudioTranscriptionExpanded =
+        _isAudioTranscriptionExpanded(context);
+    final bool isTranscriptionFailed =
+        widget.audioMessage.audioInfo.transcriptionFailed;
+    final bool hasTranscription =
+        widget.audioMessage.audioInfo.transcription != null;
+
     return _MessageContainer(
       animateSize: false,
-      child: AudioView(
-        audioMessage: audioMessage,
-        expand: false,
-        previewInfo: false,
+      child: LayoutBuilder(builder: (
+        BuildContext context,
+        BoxConstraints constraints,
+      ) {
+        final Size textSize =
+            _calculateTextSize(context, constraints, isTranscriptionFailed);
+        final Duration animationDuration =
+            _calculateAnimationDuration(textSize, isAudioTranscriptionExpanded);
+        final Curve animationCurve =
+            _calculateAnimationCurve(isAudioTranscriptionExpanded);
+
+        return AnimatedContainer(
+          duration: animationDuration,
+          curve: animationCurve,
+          constraints: BoxConstraints(
+            minWidth: _calculateMinWidth(isAudioTranscriptionExpanded,
+                hasTranscription, isTranscriptionFailed, textSize),
+          ),
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  _buildAudioRow(
+                    context,
+                    constraints,
+                    messageCubit,
+                    isTranscribing,
+                    isAudioTranscriptionExpanded,
+                    isTranscriptionFailed,
+                    hasTranscription,
+                  ),
+                  _buildTranscriptionContainer(
+                    context,
+                    constraints,
+                    textSize,
+                    animationDuration,
+                    animationCurve,
+                    isAudioTranscriptionExpanded,
+                    isTranscriptionFailed,
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      }),
+    );
+  }
+
+  bool _isTranscribing(BuildContext context) {
+    return context.select(
+      (ChatCubit cubit) => cubit.state.maybeMap(
+        fetched: (ChatFetched value) => value.transcribingAudioMessageIds
+            .contains(widget.audioMessage.currentId),
+        orElse: () => false,
+      ),
+    );
+  }
+
+  bool _isAudioTranscriptionExpanded(BuildContext context) {
+    return context.select(
+      (MessageCubit cubit) => cubit.state.isAudioTranscriptionExpanded,
+    );
+  }
+
+  Size _calculateTextSize(
+    BuildContext context,
+    BoxConstraints constraints,
+    bool isTranscriptionFailed,
+  ) {
+    final TextSpan textSpan = isTranscriptionFailed
+        ? TextSpan(
+            text: 'Something went wrong while\nprocessing the audio.',
+            style:
+                AppTextStyles.footnote.copyWith(color: AppColors.textSecondary),
+          )
+        : TextSpan(
+            text: widget.audioMessage.audioInfo.transcription?.trim() ?? '',
+            style: AppTextStyles.paragraph,
+          );
+
+    final TextPainter textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    );
+
+    final Size size =
+        (textPainter..layout(maxWidth: constraints.maxWidth)).size;
+
+    return Size(size.width + 4, size.height);
+  }
+
+  Duration _calculateAnimationDuration(
+    Size textSize,
+    bool isAudioTranscriptionExpanded,
+  ) {
+    return isAudioTranscriptionExpanded
+        ? Duration(milliseconds: 200 + textSize.width.toInt() ~/ 1.5)
+        : Duration(milliseconds: 300 + textSize.width.toInt() ~/ 1.5);
+  }
+
+  Curve _calculateAnimationCurve(bool isAudioTranscriptionExpanded) {
+    return isAudioTranscriptionExpanded
+        ? Curves.linearToEaseOut
+        : Curves.easeOut;
+  }
+
+  double _calculateMinWidth(
+    bool isAudioTranscriptionExpanded,
+    bool hasTranscription,
+    bool isTranscriptionFailed,
+    Size textSize,
+  ) {
+    return isAudioTranscriptionExpanded && hasTranscription ||
+            isTranscriptionFailed
+        ? textSize.width
+        : 0;
+  }
+
+  Widget _buildAudioRow(
+    BuildContext context,
+    BoxConstraints constraints,
+    MessageCubit messageCubit,
+    bool isTranscribing,
+    bool isAudioTranscriptionExpanded,
+    bool isTranscriptionFailed,
+    bool hasTranscription,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Builder(
+          builder: (BuildContext context) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _audioViewWidth ??=
+                  (context.findRenderObject()! as RenderBox).size.width;
+            });
+
+            return AudioView(
+              audioMessage: widget.audioMessage,
+              expand: false,
+              previewInfo: false,
+              width: max(constraints.minWidth, 150),
+            );
+          },
+        ),
+        const SizedBox(width: 12),
+        IgnorePointer(
+          ignoring: widget.contextMenuShown,
+          child: _TranscriptionButton(
+            isTranscribing: isTranscribing,
+            isExpanded: isAudioTranscriptionExpanded,
+            isTranscriptionFailed: isTranscriptionFailed,
+            hasTranscription: hasTranscription,
+            onTap: () async {
+              if (isTranscribing) {
+                return;
+              }
+
+              if (!hasTranscription) {
+                final bool result = await context
+                    .read<ChatCubit>()
+                    .transcribeAudioMessage(widget.audioMessage);
+
+                if (result && !isAudioTranscriptionExpanded) {
+                  messageCubit.toggleAudioTranscriptionExpansion();
+                }
+              } else {
+                setState(() {
+                  messageCubit.toggleAudioTranscriptionExpansion();
+                });
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTranscriptionContainer(
+    BuildContext context,
+    BoxConstraints constraints,
+    Size textSize,
+    Duration animationDuration,
+    Curve animationCurve,
+    bool isAudioTranscriptionExpanded,
+    bool isTranscriptionFailed,
+  ) {
+    return SizedBox(
+      width: max(constraints.minWidth, 150),
+      child: ClipRect(
+        child: AnimatedOpacity(
+          duration: animationDuration,
+          curve: isAudioTranscriptionExpanded || isTranscriptionFailed
+              ? Curves.easeIn
+              : Curves.easeOutCubic,
+          opacity:
+              isAudioTranscriptionExpanded || isTranscriptionFailed ? 1 : 0,
+          child: AnimatedContainer(
+            alignment: Alignment.bottomRight,
+            margin: EdgeInsets.only(
+                top: isAudioTranscriptionExpanded || isTranscriptionFailed
+                    ? 12
+                    : 0),
+            duration: animationDuration,
+            curve: Curves.linearToEaseOut,
+            width: isAudioTranscriptionExpanded || isTranscriptionFailed
+                ? textSize.width
+                : 0,
+            height: isAudioTranscriptionExpanded || isTranscriptionFailed
+                ? textSize.height
+                : 0,
+            child: OverflowBox(
+              alignment: Alignment.bottomLeft,
+              minHeight: textSize.height,
+              minWidth: textSize.width,
+              maxWidth: textSize.width,
+              maxHeight: textSize.height,
+              child: isTranscriptionFailed
+                  ? Text.rich(
+                      TextSpan(
+                        text:
+                            'Something went wrong while\nprocessing the audio.',
+                        style: AppTextStyles.footnote
+                            .copyWith(color: AppColors.textSecondary),
+                      ),
+                    )
+                  : AnimatedSlide(
+                      offset: isAudioTranscriptionExpanded
+                          ? Offset.zero
+                          : const Offset(0, 1.5),
+                      curve: animationCurve,
+                      duration: animationDuration,
+                      child: SelectableText.rich(
+                        TextSpan(
+                          text: widget.audioMessage.audioInfo.transcription
+                                  ?.trim() ??
+                              '',
+                          style: AppTextStyles.paragraph,
+                        ),
+                        enableInteractiveSelection: widget.contextMenuShown,
+                      ),
+                    ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -27,11 +291,13 @@ class AudioView extends StatefulWidget {
     required this.audioMessage,
     required this.expand,
     required this.previewInfo,
+    required this.width,
   });
 
   final AudioMessage audioMessage;
   final bool expand;
   final bool previewInfo;
+  final double width;
 
   @override
   State<AudioView> createState() => _AudioViewState();
@@ -41,7 +307,7 @@ class _AudioViewState extends State<AudioView> {
   late final Duration _totalDuration = widget.audioMessage.audioInfo.duration;
   late Duration _currentDuration;
   bool _isPlaying = false;
-  List<double>? _peeks;
+  late List<double>? _peeks;
 
   @override
   void didChangeDependencies() {
@@ -61,38 +327,24 @@ class _AudioViewState extends State<AudioView> {
     }
   }
 
-  double? _processedMaxWidth;
-  void _calculatePeeksIfNeeded(double maxWidth) {
-    if (_processedMaxWidth != maxWidth) {
-      if (widget.expand) {
-        final int peeksLength = maxWidth ~/ 4;
-        _peeks = resample(widget.audioMessage.audioInfo.peaks, peeksLength);
-      } else {
-        final int projectedPeeksLength =
-            (widget.audioMessage.audioInfo.duration.inSeconds * 2)
-                .clamp(10, 60);
-        final double maxSpace = (MediaQuery.sizeOf(context).width - 20 * 2) *
-                (Platform.isMacOS ? 0.8 : 0.9) -
-            67 -
-            80;
-        // TODO: calculate text instead of 80;
-        final int maxPeeksLength = maxSpace ~/ 4;
-        final int acutalPeeksLength = min(maxPeeksLength, projectedPeeksLength);
-        _peeks =
-            resample(widget.audioMessage.audioInfo.peaks, acutalPeeksLength);
-      }
-
-      _processedMaxWidth = maxWidth;
-    }
+  void _calculatePeeksIfNeeded(double width) {
+    final int peeksLength = (width - 40 - 15 - AppSpaces.space400 * 2) ~/ 4;
+    _peeks = resample(widget.audioMessage.audioInfo.peaks, peeksLength);
   }
 
   @override
   Widget build(BuildContext context) {
-    final Widget waveForms = LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        _calculatePeeksIfNeeded(constraints.maxWidth);
-        return SizedBox(
-          height: 20,
+    _calculatePeeksIfNeeded(widget.width);
+
+    final Widget waveForms = SizedBox(
+      width: (widget.width - 40 - 15 - AppSpaces.space400 * 2) - 4,
+      child: AnimatedSize(
+        curve: Curves.linearToEaseOut,
+        duration: const Duration(milliseconds: 100),
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          width: max(0, (4 * (_peeks?.length ?? 0).toDouble()) - 2),
+          height: 12,
           child: ListView.separated(
             itemCount: _peeks!.length,
             shrinkWrap: true,
@@ -104,7 +356,7 @@ class _AudioViewState extends State<AudioView> {
                 child: Container(
                   width: 2,
                   decoration: BoxDecoration(
-                    color: AppColors.voiceTint,
+                    color: AppColors.bgChatTimelineInactive,
                     borderRadius: BorderRadius.circular(1),
                   ),
                 ),
@@ -114,8 +366,8 @@ class _AudioViewState extends State<AudioView> {
               return const SizedBox(width: 2);
             },
           ),
-        );
-      },
+        ),
+      ),
     );
 
     return BlocListener<PlayerCubit, PlayerState>(
@@ -138,7 +390,7 @@ class _AudioViewState extends State<AudioView> {
               height: 40,
               width: 40,
               decoration: const BoxDecoration(
-                color: AppColors.backgroundChatVoice,
+                color: AppColors.iconAccent,
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
@@ -190,53 +442,60 @@ class _AudioViewState extends State<AudioView> {
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const Spacer(),
                         Text(
                           formatDuration(_totalDuration),
-                          style: AppTextStyles.caption.copyWith(
+                          style: AppTextStyles.callout.copyWith(
                             color: AppColors.textSecondary,
                           ),
                         ),
                       ],
                     ),
                   )
-                : Stack(
-                    children: <Widget>[
-                      waveForms,
-                      Positioned.fill(
-                        child: FractionallySizedBox(
-                          widthFactor: (_currentDuration.inMilliseconds /
-                                  _totalDuration.inMilliseconds)
-                              .clamp(0, 1),
+                : SizedBox(
+                    height: 40,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        const SizedBox(height: 2),
+                        Stack(
                           alignment: Alignment.centerLeft,
-                          child: ColorFiltered(
-                            colorFilter: const ColorFilter.mode(
-                              AppColors.backgroundChatVoice,
-                              BlendMode.srcATop,
+                          children: <Widget>[
+                            waveForms,
+                            Positioned.fill(
+                              child: FractionallySizedBox(
+                                widthFactor: (_currentDuration.inMilliseconds /
+                                        _totalDuration.inMilliseconds)
+                                    .clamp(0, 1),
+                                alignment: Alignment.centerLeft,
+                                child: ColorFiltered(
+                                  colorFilter: const ColorFilter.mode(
+                                    AppColors.iconAccent,
+                                    BlendMode.srcATop,
+                                  ),
+                                  child: waveForms,
+                                ),
+                              ),
                             ),
-                            child: waveForms,
-                          ),
+                          ],
                         ),
-                      ),
-                    ],
+                        const Spacer(),
+                        if (!widget.previewInfo || _isPlaying) ...<Widget>[
+                          const SizedBox(width: 7),
+                          Text(
+                            formatDuration(
+                              _isPlaying ? _currentDuration : _totalDuration,
+                            ),
+                            style: AppTextStyles.callout.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 2),
+                      ],
+                    ),
                   ),
           ),
-          if (!widget.previewInfo || _isPlaying) ...<Widget>[
-            const SizedBox(width: 7),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.voiceTint,
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: Text(
-                formatDuration(_totalDuration - _currentDuration),
-                style: AppTextStyles.callout.copyWith(
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -257,43 +516,115 @@ class _AudioViewState extends State<AudioView> {
   }
 
   List<double> resample(List<double> list, int newLength) {
-    if (list.isEmpty) {
-      return List<double>.generate(newLength, (_) => 0);
+    if (list.isEmpty || newLength <= 0) {
+      return <double>[];
     }
 
-    if (newLength < 0) {
-      throw ArgumentError('newLength must be non-negative');
-    }
-
-    if (newLength == 0) {
-      return List<double>.generate(newLength, (_) => 0);
+    if (list.length == 1 || newLength == 1) {
+      return List<double>.filled(newLength, list.first);
     }
 
     final List<double> result = <double>[];
-    final double factor = (list.length - 1) / (newLength - 1);
+    final double scale = (list.length - 1) / (newLength - 1);
 
     for (int i = 0; i < newLength; i++) {
-      final double index = i * factor;
+      final double index = i * scale;
       final int leftIndex = index.floor();
-      final int rightIndex = index.ceil().clamp(0, newLength - 1);
+      final int rightIndex = index.ceil();
 
       if (leftIndex == rightIndex) {
         result.add(list[leftIndex]);
       } else {
-        final double leftValue = list[leftIndex];
-        final double rightValue = list[rightIndex];
-        final double interpolatedValue =
-            leftValue + (rightValue - leftValue) * (index - leftIndex);
-        result.add(interpolatedValue);
+        final double t = index - leftIndex;
+        final double interpolated =
+            list[leftIndex] * (1 - t) + list[rightIndex] * t;
+        result.add(interpolated);
       }
     }
 
-    final double max = result.max;
+    return result;
+  }
+}
 
-    if (max == 0) {
-      return result;
-    }
+class _TranscriptionButton extends StatelessWidget {
+  const _TranscriptionButton({
+    required this.isTranscribing,
+    required this.isTranscriptionFailed,
+    required this.hasTranscription,
+    required this.isExpanded,
+    required this.onTap,
+  });
 
-    return result.map((double e) => e / max).toList();
+  final bool isTranscribing;
+  final bool isTranscriptionFailed;
+  final bool hasTranscription;
+  final bool isExpanded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 28,
+        width: 28,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundChatAccentMuted,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: isTranscribing
+            ? const _LoadingIndicator()
+            : isTranscriptionFailed
+                ? Assets.icons.arrowRotateLeftRight.svg()
+                : !hasTranscription
+                    ? Assets.icons.titleCase.svg()
+                    : AnimatedRotation(
+                        turns: isExpanded ? 0 : 0.5,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.linearToEaseOut,
+                        child: Assets.icons.chevronTopSmall.svg(),
+                      ),
+      ),
+    );
+  }
+}
+
+class _LoadingIndicator extends StatelessWidget {
+  const _LoadingIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Stack(
+        children: <Widget>[
+          Container(
+            height: 15,
+            width: 15,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                width: 2.5,
+                color: AppColors.iconAccent.withValues(
+                  alpha: 0.3,
+                ),
+                strokeAlign: 0,
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 15,
+            width: 15,
+            child: FittedBox(
+              child: CircularProgressIndicator(
+                strokeWidth: 5,
+                color: AppColors.iconAccent,
+                strokeCap: StrokeCap.round,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -28,5 +28,7 @@ class ChatState with _$ChatState {
     @Default(<Message>[]) List<Message> pendingMessages,
     @Default(false) bool fetchingPrevious,
     @Default(false) bool fetchingNext,
+    @Default(<String>[]) List<String> transcribingAudioMessageIds,
+    @Default(<String>[]) List<String> improvingTextMessageIds,
   }) = ChatFetched;
 }

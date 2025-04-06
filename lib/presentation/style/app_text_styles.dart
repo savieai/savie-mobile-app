@@ -29,6 +29,14 @@ sealed class AppTextStyles {
     height: Platform.isMacOS ? 18 / 14 : 22 / 17,
   );
 
+  static const TextStyle footnote = TextStyle(
+    fontFamily: FontFamily.inter,
+    fontWeight: FontWeight.w500,
+    letterSpacing: -0.4,
+    fontSize: 14,
+    height: 20 / 14,
+  );
+
   static final TextStyle caption = TextStyle(
     fontFamily: FontFamily.inter,
     fontWeight: Platform.isMacOS ? FontWeight.w400 : FontWeight.w500,

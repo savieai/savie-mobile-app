@@ -34,12 +34,20 @@ void main() async {
 
       await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform);
+
       await Supabase.initialize(
         url: 'https://dluwcbfoyzaweccmahye.supabase.co',
         anonKey:
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsdXdjYmZveXphd2VjY21haHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTkzODkyNjQsImV4cCI6MjAzNDk2NTI2NH0.F-NoFb0zV5QaaM_S4VhiDA9lf7ShNo6GYIPCCi9XQSQ',
         debug: kDebugMode,
       );
+
+      // await Supabase.initialize(
+      //   url: 'https://lfekwuvenhpwcckxyfkk.supabase.co',
+      //   anonKey:
+      //       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmZWt3dXZlbmhwd2Nja3h5ZmtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjgzMDQyMjQsImV4cCI6MjA0Mzg4MDIyNH0.yAn4U07_rPmy3VXmj6LHXo8AbfqETbJ1m6uz3y3HkeE',
+      //   debug: kDebugMode,
+      // );
 
       wasInitiallyLoggedIn =
           Supabase.instance.client.auth.currentSession != null;

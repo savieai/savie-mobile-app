@@ -21,6 +21,7 @@ sealed class MessageMapper {
           messageId: dto.voiceMessages!.first.messageId,
           duration: Duration(seconds: dto.voiceMessages!.first.duration),
           peaks: dto.voiceMessages!.first.peaks,
+          transcription: null,
         ),
       );
     }
@@ -65,6 +66,7 @@ sealed class MessageMapper {
       images: images,
       isPending: false,
       links: links,
+      improvedText: null,
     );
   }
 

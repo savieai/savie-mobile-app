@@ -56,13 +56,21 @@ class SearchAudioFiles extends StatelessWidget {
                     ),
                   ],
                   heroTag: '${audio.hashCode}',
-                  builder: (_, __, ___) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: AudioView(
-                      expand: true,
-                      previewInfo: true,
-                      audioMessage: audio.audioMessage,
-                    ),
+                  builder: (_, __, ___) => LayoutBuilder(
+                    builder: (
+                      BuildContext context,
+                      BoxConstraints constraints,
+                    ) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: AudioView(
+                          expand: true,
+                          previewInfo: true,
+                          audioMessage: audio.audioMessage,
+                          width: constraints.maxWidth,
+                        ),
+                      );
+                    },
                   ),
                 );
               },

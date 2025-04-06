@@ -45,8 +45,12 @@ abstract class ChatRepository {
     required String messageId,
   });
 
-  Future<void> editMessage({
+  Future<void> editMessageTextContent({
     required String messageId,
     required Delta deltaContent,
+  });
+
+  Future<void> editMessahe({
+    required Message message,
   });
 }

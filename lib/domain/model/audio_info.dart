@@ -11,5 +11,7 @@ class AudioInfo with _$AudioInfo {
     required String? localFullPath,
     required Duration duration,
     required List<double> peaks,
+    required String? transcription,
+    @Default(false) bool transcriptionFailed,
   }) = _AudioInfo;
 }

@@ -12,7 +12,7 @@ class FileMessageView extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MessageContainer(
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: StreamBuilder<(double?, File?)>(
           stream: getIt
               .get<GetFileStreamUseCase>()

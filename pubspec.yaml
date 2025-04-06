@@ -72,7 +72,6 @@ dependencies:
   positioned_scroll_observer: ^2.2.2
   sortedmap: ^0.5.4
   animated_size_and_fade: ^4.0.0
-  cached_network_svg_image: ^1.0.0
   percent_indicator: ^4.2.3
   open_file: ^3.3.2
   gal: ^2.3.0
@@ -95,6 +94,7 @@ dependencies:
   vsc_quill_delta_to_html: ^1.0.5
   pasteboard: ^0.3.0
   accessing_security_scoped_resource: ^3.2.0
+  measured_size: ^1.0.0
 
 dev_dependencies:
   flutter_test:

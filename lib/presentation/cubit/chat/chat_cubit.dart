@@ -25,7 +25,9 @@ class ChatCubit extends Cubit<ChatState> {
     this._editTextMessageUseCase,
     this._pasteImageUseCase,
     this._processSharingIntent,
-    this._processSharingIntentStream, {
+    this._processSharingIntentStream,
+    this._transcribeAudioMessageUseCase,
+    this._improveTextUseCase, {
     @factoryParam String? query,
     @factoryParam required bool processSharingIntent,
   })  : _query = query,
@@ -48,6 +50,8 @@ class ChatCubit extends Cubit<ChatState> {
   final FindMessageUseCase _findMessageUseCase;
   final EditTextMessageUseCase _editTextMessageUseCase;
   final PasteImageUseCase _pasteImageUseCase;
+  final TranscribeAudioMessageUseCase _transcribeAudioMessageUseCase;
+  final ImproveTextUseCase _improveTextUseCase;
 
   final ProcessSharingIntentStream _processSharingIntentStream;
   final ProcessSharingIntent _processSharingIntent;
@@ -252,6 +256,7 @@ class ChatCubit extends Cubit<ChatState> {
           );
         },
       ).toList(),
+      improvedText: null,
     );
 
     _pendingMessages[pendingUuid] = message;
@@ -310,6 +315,7 @@ class ChatCubit extends Cubit<ChatState> {
         localFullPath: audioInfo.localFullPath,
         duration: audioInfo.duration,
         peaks: audioInfo.peaks,
+        transcription: null,
       ),
     );
 
@@ -368,6 +374,97 @@ class ChatCubit extends Cubit<ChatState> {
         _emitMessages();
       },
     );
+  }
+
+  Future<bool> transcribeAudioMessage(AudioMessage audioMessage) async {
+    audioMessage = audioMessage.copyWith(
+      audioInfo: audioMessage.audioInfo.copyWith(
+        transcriptionFailed: false,
+      ),
+    );
+
+    _sentMessages[audioMessage.currentId] = audioMessage;
+    _emitMessages();
+
+    state.mapOrNull(
+      fetched: (ChatFetched fetched) => emit(
+        fetched.copyWith(
+          transcribingAudioMessageIds:
+              fetched.transcribingAudioMessageIds.toList()
+                ..add(audioMessage.currentId),
+        ),
+      ),
+    );
+
+    try {
+      final AudioMessage transcribedAudioMessage =
+          await _transcribeAudioMessageUseCase.execute(audioMessage);
+
+      if (_sentMessages.containsKey(audioMessage.currentId)) {
+        _sentMessages[audioMessage.currentId] = transcribedAudioMessage;
+      }
+
+      return true;
+    } catch (_) {
+      if (_sentMessages.containsKey(audioMessage.currentId)) {
+        _sentMessages[audioMessage.currentId] = audioMessage.copyWith(
+          audioInfo: audioMessage.audioInfo.copyWith(
+            transcriptionFailed: true,
+          ),
+        );
+      }
+      return false;
+    } finally {
+      state.mapOrNull(
+        fetched: (ChatFetched fetched) => emit(
+          fetched.copyWith(
+            transcribingAudioMessageIds:
+                fetched.transcribingAudioMessageIds.toList()
+                  ..remove(audioMessage.currentId),
+          ),
+        ),
+      );
+      _emitMessages();
+    }
+  }
+
+  Future<bool> improveText(TextMessage textMessage) async {
+    state.mapOrNull(
+      fetched: (ChatFetched fetched) => emit(
+        fetched.copyWith(
+          improvingTextMessageIds: fetched.improvingTextMessageIds.toList()
+            ..add(textMessage.currentId),
+        ),
+      ),
+    );
+
+    try {
+      final TextMessage improvedMessage =
+          await _improveTextUseCase.execute(textMessage);
+
+      if (_sentMessages.containsKey(improvedMessage.currentId)) {
+        _sentMessages[improvedMessage.currentId] = improvedMessage;
+      }
+
+      return true;
+    } catch (_) {
+      if (_sentMessages.containsKey(textMessage.currentId)) {
+        _sentMessages[textMessage.currentId] = textMessage.copyWith(
+          improvementFailed: true,
+        );
+      }
+      return false;
+    } finally {
+      state.mapOrNull(
+        fetched: (ChatFetched fetched) => emit(
+          fetched.copyWith(
+            improvingTextMessageIds: fetched.improvingTextMessageIds.toList()
+              ..remove(textMessage.currentId),
+          ),
+        ),
+      );
+      _emitMessages();
+    }
   }
 
   // Helper method to clean up date headers if no messages remain for a specific date

@@ -1,4 +1,7 @@
 PODS:
+  - accessing_security_scoped_resource (0.0.1):
+    - Flutter
+    - FlutterMacOS
   - app_links (0.0.2):
     - Flutter
   - AppAuth (1.7.5):
@@ -169,6 +172,8 @@ PODS:
     - Flutter
   - package_info_plus (0.4.5):
     - Flutter
+  - pasteboard (0.0.1):
+    - Flutter
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -206,6 +211,7 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
+  - accessing_security_scoped_resource (from `.symlinks/plugins/accessing_security_scoped_resource/darwin`)
   - app_links (from `.symlinks/plugins/app_links/ios`)
   - appmetrica_plugin (from `.symlinks/plugins/appmetrica_plugin/ios`)
   - audioplayers_darwin (from `.symlinks/plugins/audioplayers_darwin/ios`)
@@ -223,6 +229,7 @@ DEPENDENCIES:
   - native_dialog_plus (from `.symlinks/plugins/native_dialog_plus/ios`)
   - open_file_ios (from `.symlinks/plugins/open_file_ios/ios`)
   - package_info_plus (from `.symlinks/plugins/package_info_plus/ios`)
+  - pasteboard (from `.symlinks/plugins/pasteboard/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - pdf_render (from `.symlinks/plugins/pdf_render/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
@@ -271,6 +278,8 @@ SPEC REPOS:
     - SwiftyGif
 
 EXTERNAL SOURCES:
+  accessing_security_scoped_resource:
+    :path: ".symlinks/plugins/accessing_security_scoped_resource/darwin"
   app_links:
     :path: ".symlinks/plugins/app_links/ios"
   appmetrica_plugin:
@@ -305,6 +314,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/open_file_ios/ios"
   package_info_plus:
     :path: ".symlinks/plugins/package_info_plus/ios"
+  pasteboard:
+    :path: ".symlinks/plugins/pasteboard/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   pdf_render:
@@ -333,9 +344,10 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
-  app_links: 3da4c36b46cac3bf24eb897f1a6ce80bda109874
+  accessing_security_scoped_resource: 3a05a5065d3be96d3369f719c522e626f16d173c
+  app_links: e7a6750a915a9e161c58d91bc610e8cd1d4d0ad0
   AppAuth: 501c04eda8a8d11f179dbe8637b7a91bb7e5d2fa
-  appmetrica_plugin: 8d5de20b95c9a6589cfc1aba21c8bee7d8ff200d
+  appmetrica_plugin: d5b67180992259ecfa040189027808915101b893
   AppMetricaAdSupport: 6fd6e54fc9d330f152e97c38cd92775071e353b8
   AppMetricaAnalytics: 93374c9f748f85f4d62f2ed2714eeb058eee1d33
   AppMetricaCore: bf95c826ec74260b8c81cca9fc21efb8aea52a70
@@ -352,47 +364,48 @@ SPEC CHECKSUMS:
   AppMetricaProtobufUtils: 2e4134f486620a27306940347265c824784c906c
   AppMetricaStorageUtils: d4b1470acba258fe9a07d9860defdeb93096b89b
   AppMetricaWebKit: 900bc1bdc8c35d0605a3dfe9ba8b8b69a77f73b8
-  audioplayers_darwin: ccf9c770ee768abb07e26d90af093f7bab1c12ab
-  camera_avfoundation: 04b44aeb14070126c6529e5ab82cc7c9fca107cf
+  audioplayers_darwin: 877d9a4d06331c5c374595e46e16453ac7eafa40
+  camera_avfoundation: dd002b0330f4981e1bbcb46ae9b62829237459a4
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
-  file_picker: 9b3292d7c8bc68c8a7bf8eb78f730e49c8efc517
+  file_picker: 09aa5ec1ab24135ccd7a1621c46c84134bfd6655
   Firebase: 98e6bf5278170668a7983e12971a66b2cd57fc8c
-  firebase_core: 085320ddfaacb80d1a96eac3a87857afcc150db1
+  firebase_core: 2bedc3136ec7c7b8561c6123ed0239387b53f2af
   FirebaseCore: a282032ae9295c795714ded2ec9c522fc237f8da
   FirebaseCoreInternal: f47dd28ae7782e6a4738aad3106071a8fe0af604
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
-  flutter_keyboard_visibility_temp_fork: 95b2d534bacf6ac62e7fcbe5c2a9e2c2a17ce06f
-  flutter_localization: 72299fb6cb4e51cae587bd953ed0b958040b71e6
-  flutter_native_splash: 35ddbc7228eafcb3969dcc5f1fbbe27c1145a4f0
-  gal: 44e5b10dbd347c8247a2851acee6c1fbe282c1d3
-  google_sign_in_ios: 39f46834c156be9a4dfef914258e0145b7117725
+  flutter_keyboard_visibility_temp_fork: 8a8809c4129e31d25fca77446e0f3fd548122ced
+  flutter_localization: f43b18844a2b3d2c71fd64f04ffd6b1e64dd54d4
+  flutter_native_splash: edf599c81f74d093a4daf8e17bd7a018854bc778
+  gal: 61e868295d28fe67ffa297fae6dacebf56fd53e1
+  google_sign_in_ios: 7c205d44fdc266640375c6ac33d96ba3983dbe02
   GoogleSignIn: b232380cf495a429b8095d3178a8d5855b42e842
   GoogleUtilities: 26a3abef001b6533cf678d3eb38fd3f614b7872d
   GTMAppAuth: 99fb010047ba3973b7026e45393f51f27ab965ae
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
-  image_picker_ios: 7fe1ff8e34c1790d6fff70a32484959f563a928a
+  image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
   KSCrash: 2ef7bd233b96efdafd7f9f6531e4d4f0eb9ba798
   Mixpanel-swift: 2192b9a24cf41b870749e4e0e10fbc9822bb2b4a
-  mixpanel_flutter: d84097a22c87f32fbe1c7f4991c8c357f18016c1
-  native_dialog_plus: 6579cb8aa89a9866649c821ca42557f514f31e3f
-  open_file_ios: 5ff7526df64e4394b4fe207636b67a95e83078bb
-  package_info_plus: af8e2ca6888548050f16fa2f1938db7b5a5df499
-  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
-  pdf_render: 5f9586e5fd49519bf59ea14a6da4851616e91c81
-  permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
-  photo_manager: d2fbcc0f2d82458700ee6256a15018210a81d413
-  quill_native_bridge_ios: f47af4b14e7757968486641656c5d23250cee521
-  receive_sharing_intent: 222384f00ffe7e952bbfabaa9e3967cb87e5fe00
-  record_darwin: 1630616226de4038fa17cec21b11403ca510ec3e
+  mixpanel_flutter: 455c6c7906a0bd21b609b32fef390245187068a6
+  native_dialog_plus: 2569983aa751786faf8377ca0b8b7c4d434b4ba1
+  open_file_ios: 461db5853723763573e140de3193656f91990d9e
+  package_info_plus: c0502532a26c7662a62a356cebe2692ec5fe4ec4
+  pasteboard: 982969ebaa7c78af3e6cc7761e8f5e77565d9ce0
+  path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
+  pdf_render: 0b4e1a615aab83ce88b26c57753049424908a755
+  permission_handler_apple: 9878588469a2b0d0fc1e048d9f43605f92e6cec2
+  photo_manager: ff695c7a1dd5bc379974953a2b5c0a293f7c4c8a
+  quill_native_bridge_ios: 2b01d585fcc73d0f5eed78c0bd244ee564b06f5a
+  receive_sharing_intent: 79c848f5b045674ad60b9fea3bafea59962ad2c1
+  record_darwin: df0a677188e5fed18472550298e675f19ddaffbe
   SDWebImage: 73c6079366fea25fa4bb9640d5fb58f0893facd8
-  share_plus: 50da8cb520a8f0f65671c6c6a99b3617ed10a58a
-  shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
-  sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
-  sqflite_darwin: 44bb54cc302bff1fbe5752293aba1820b157cf1c
-  status_bar_control: fe3e1813ad6f09b5e06271df7e0e1e35fd356461
+  share_plus: 8b6f8b3447e494cca5317c8c3073de39b3600d1f
+  shared_preferences_foundation: fcdcbc04712aee1108ac7fda236f363274528f78
+  sign_in_with_apple: f3bf75217ea4c2c8b91823f225d70230119b8440
+  sqflite_darwin: a553b1fd6fe66f53bbb0fe5b4f5bab93f08d7a13
+  status_bar_control: 7c84146799e6a076315cc1550f78ef53aae3e446
   SwiftyGif: 706c60cf65fa2bc5ee0313beece843c8eb8194d4
-  url_launcher_ios: 694010445543906933d732453a59da0a173ae33d
+  url_launcher_ios: 5334b05cef931de560670eeae103fd3e431ac3fe
 
 PODFILE CHECKSUM: 5c10c3f3e664ee72ee79770b225fcf97c0619685
 

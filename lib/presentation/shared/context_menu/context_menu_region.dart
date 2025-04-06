@@ -96,7 +96,12 @@ class _ContextMenuRegionState extends State<ContextMenuRegion>
   }
 
   void _showOverlay() {
-    _sizeNotifier.value = context.size;
+    try {
+      _sizeNotifier.value = context.size;
+    } catch (_) {
+      // ignore, really
+    }
+
     context.read<ContextMenuCubit>().setShown();
     _contextMenuShownNotifier.value = true;
 
