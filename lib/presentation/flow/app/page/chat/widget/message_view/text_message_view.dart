@@ -680,7 +680,9 @@ class _OriginalText extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           GestureDetector(
-            onTap: context.read<MessageCubit>().toggleImprovedTextExpansion,
+            onTap: contextMenuShown
+                ? null
+                : context.read<MessageCubit>().toggleImprovedTextExpansion,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
