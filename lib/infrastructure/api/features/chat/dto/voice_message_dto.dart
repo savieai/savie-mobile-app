@@ -15,6 +15,7 @@ class VoiceMessageDTO with _$VoiceMessageDTO {
     required List<double> peaks,
     required DateTime createdAt,
     required String messageId,
+    required String? transcriptionText,
   }) = _VoiceMessageDTO;
 
   factory VoiceMessageDTO.fromJson(Map<String, Object?> json) =>

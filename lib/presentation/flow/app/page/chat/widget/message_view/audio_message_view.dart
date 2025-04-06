@@ -24,10 +24,8 @@ class _AudioMessageViewState extends State<AudioMessageView> {
     final bool isTranscribing = _isTranscribing(context);
     final bool isAudioTranscriptionExpanded =
         _isAudioTranscriptionExpanded(context);
-    final bool isTranscriptionFailed =
-        widget.audioMessage.audioInfo.transcriptionFailed;
-    final bool hasTranscription =
-        widget.audioMessage.audioInfo.transcription != null;
+    final bool isTranscriptionFailed = widget.audioMessage.transcriptionFailed;
+    final bool hasTranscription = widget.audioMessage.transcription != null;
 
     return _MessageContainer(
       animateSize: false,
@@ -110,7 +108,7 @@ class _AudioMessageViewState extends State<AudioMessageView> {
                 AppTextStyles.footnote.copyWith(color: AppColors.textSecondary),
           )
         : TextSpan(
-            text: widget.audioMessage.audioInfo.transcription?.trim() ?? '',
+            text: widget.audioMessage.transcription?.trim() ?? '',
             style: AppTextStyles.paragraph,
           );
 
@@ -269,9 +267,7 @@ class _AudioMessageViewState extends State<AudioMessageView> {
                       duration: animationDuration,
                       child: SelectableText.rich(
                         TextSpan(
-                          text: widget.audioMessage.audioInfo.transcription
-                                  ?.trim() ??
-                              '',
+                          text: widget.audioMessage.transcription?.trim() ?? '',
                           style: AppTextStyles.paragraph,
                         ),
                         enableInteractiveSelection: widget.contextMenuShown,

@@ -30,6 +30,8 @@ class Message with _$Message implements Comparable<Message> {
     required String? tempId,
     required DateTime date,
     required AudioInfo audioInfo,
+    required String? transcription,
+    @Default(false) bool transcriptionFailed,
   }) = AudioMessage;
 
   const factory Message.file({

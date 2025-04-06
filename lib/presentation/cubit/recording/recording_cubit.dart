@@ -96,7 +96,6 @@ class RecordingCubit extends Cubit<RecordingState> {
         name: remoteStorageName,
         duration: Duration(seconds: _seconds),
         signedUrl: null,
-        transcription: null,
       );
     }
 

@@ -315,8 +315,8 @@ class ChatCubit extends Cubit<ChatState> {
         localFullPath: audioInfo.localFullPath,
         duration: audioInfo.duration,
         peaks: audioInfo.peaks,
-        transcription: null,
       ),
+      transcription: null,
     );
 
     _pendingMessages[pendingUuid] = message;
@@ -378,9 +378,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   Future<bool> transcribeAudioMessage(AudioMessage audioMessage) async {
     audioMessage = audioMessage.copyWith(
-      audioInfo: audioMessage.audioInfo.copyWith(
-        transcriptionFailed: false,
-      ),
+      transcriptionFailed: false,
     );
 
     _sentMessages[audioMessage.currentId] = audioMessage;
@@ -408,9 +406,7 @@ class ChatCubit extends Cubit<ChatState> {
     } catch (_) {
       if (_sentMessages.containsKey(audioMessage.currentId)) {
         _sentMessages[audioMessage.currentId] = audioMessage.copyWith(
-          audioInfo: audioMessage.audioInfo.copyWith(
-            transcriptionFailed: true,
-          ),
+          transcriptionFailed: true,
         );
       }
       return false;

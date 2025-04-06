@@ -13,9 +13,14 @@ class AiRepositoryImpl implements AiRepository {
   final AiApi _api;
 
   @override
-  Future<String> transcribe(File audioFile) async {
-    final HttpResponse<TranscribeResponse> response =
-        await _api.transcribe(file: audioFile);
+  Future<String> transcribe({
+    required File audioFile,
+    required String messageId,
+  }) async {
+    final HttpResponse<TranscribeResponse> response = await _api.transcribe(
+      file: audioFile,
+      messageId: messageId,
+    );
 
     return response.data.transcription;
   }

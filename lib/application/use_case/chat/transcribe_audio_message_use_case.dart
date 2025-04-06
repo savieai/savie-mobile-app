@@ -30,13 +30,13 @@ class TranscribeAudioMessageUseCase {
       }
     }
 
-    final String transcription =
-        await _aiRepository.transcribe(File(audioFile.path));
+    final String transcription = await _aiRepository.transcribe(
+      audioFile: File(audioFile.path),
+      messageId: message.id,
+    );
 
     final AudioMessage updatedAudioMessage = message.copyWith(
-      audioInfo: message.audioInfo.copyWith(
-        transcription: transcription,
-      ),
+      transcription: transcription,
     );
 
     return updatedAudioMessage;

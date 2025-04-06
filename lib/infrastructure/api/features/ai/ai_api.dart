@@ -25,6 +25,7 @@ abstract class AiApi {
   @MultiPart()
   Future<HttpResponse<TranscribeResponse>> transcribe({
     @Part() required File file,
+    @Part(name: 'message_id') required String messageId,
   });
 
   @POST('/ai/enhance')
