@@ -1,10 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/dio.dart';
 
-import '../../domain/repository/repository.dart';
+import '../../domain/domain.dart';
 import '../api/features/ai/ai_api.dart';
+import '../mapper/mapper.dart';
 
 @Singleton(as: AiRepository)
 class AiRepositoryImpl implements AiRepository {
@@ -26,11 +28,20 @@ class AiRepositoryImpl implements AiRepository {
   }
 
   @override
-  Future<String> improveText(String text) async {
+  Future<List<TextContent>> improveText({
+    required List<TextContent> textContents,
+    required String messageId,
+  }) async {
     final HttpResponse<EnhanceResponse> response = await _api.enhance(
-      body: EnhanceRequest(content: text).toJson(),
+      body: EnhanceRequest(
+        content: jsonEncode(TextContent.toDelta(textContents).toJson()),
+        format: 'delta',
+        messageId: messageId,
+      ).toJson(),
     );
 
-    return response.data.enhanced;
+    return TextContent.fromDelta(
+      MessageMapper.parseDelta(response.data.enhanced),
+    );
   }
 }

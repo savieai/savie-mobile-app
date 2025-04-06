@@ -79,7 +79,7 @@ class _MessageViewState extends State<MessageView> {
                     child: widget.message.map(
                       text: (TextMessage textMessage) {
                         if (textMessage.images.isNotEmpty) {
-                          if (textMessage.textContents != null) {
+                          if (textMessage.currentPlainText != null) {
                             return _TextWithMediaMessageView(
                               message: textMessage,
                               contextMenuShown: contextMenuShown,
@@ -107,7 +107,6 @@ class _MessageViewState extends State<MessageView> {
                           isNew: widget.message.isNew,
                           child: AudioMessageView(
                             audioMessage: audioMessage,
-                            contextMenuShown: contextMenuShown,
                           ),
                         );
                       },
@@ -142,8 +141,9 @@ class _MessageViewState extends State<MessageView> {
             hasChatPageCubit = false;
           }
 
+          // TODO: think on editing
           return <ContextMenuItemData>[
-            if ((textMessage.plainText ?? '')
+            if ((textMessage.originalPlainText ?? '')
                 .isNotEmpty) ...<ContextMenuItemData>[
               if (!widget.message.isPending && hasChatPageCubit)
                 ContextMenuItemData(
@@ -162,7 +162,7 @@ class _MessageViewState extends State<MessageView> {
                 color: AppColors.textPrimary,
                 onTap: () {
                   Clipboard.setData(
-                    ClipboardData(text: textMessage.plainText ?? ''),
+                    ClipboardData(text: textMessage.currentPlainText ?? ''),
                   );
                 },
               ),
@@ -193,7 +193,7 @@ class _MessageViewState extends State<MessageView> {
               onTap: () {
                 getIt.get<ShareFilesUseCase>().execute(
                       textMessage.images,
-                      plainText: textMessage.plainText,
+                      plainText: textMessage.currentPlainText,
                     );
               },
             ),

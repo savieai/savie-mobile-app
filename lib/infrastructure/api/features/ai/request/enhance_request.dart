@@ -5,8 +5,11 @@ part 'enhance_request.g.dart';
 
 @freezed
 class EnhanceRequest with _$EnhanceRequest {
+  @JsonSerializable(fieldRename: FieldRename.snake)
   const factory EnhanceRequest({
     required String content,
+    required String? format,
+    required String messageId,
   }) = _EnhanceRequest;
 
   factory EnhanceRequest.fromJson(Map<String, Object?> json) =>

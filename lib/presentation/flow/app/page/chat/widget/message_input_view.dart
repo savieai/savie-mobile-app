@@ -171,9 +171,10 @@ class _TextInputViewState extends State<_TextInputView> {
             context
                 .read<ChatPageCubit>()
                 .updatePreservedDelta(_quillControllerCubit.delta);
-            _quillControllerCubit.updateDelta(message.textContents == null
-                ? (Delta())
-                : TextContent.toDelta(message.textContents!));
+            _quillControllerCubit.updateDelta(
+                message.originalTextContents == null
+                    ? (Delta())
+                    : TextContent.toDelta(message.originalTextContents!));
             widget.canRecordNotifier.value = false;
             widget.focusNode.requestFocus();
             setState(() => _editingMessage = message);

@@ -28,7 +28,7 @@ class MediaMessageView extends StatelessWidget {
               context.router.push(
                 PhotoCarouselRoute(
                   images: message.images,
-                  caption: message.plainText,
+                  caption: message.currentPlainText,
                   initialBorderRadius: 20,
                   initialIndex: 0,
                   heroTagPredicate: (Attachment image) => '${image.name}_chat',

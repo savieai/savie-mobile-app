@@ -4,11 +4,9 @@ class AudioMessageView extends StatefulWidget {
   const AudioMessageView({
     super.key,
     required this.audioMessage,
-    required this.contextMenuShown,
   });
 
   final AudioMessage audioMessage;
-  final bool contextMenuShown;
 
   @override
   State<AudioMessageView> createState() => _AudioMessageViewState();
@@ -21,10 +19,20 @@ class _AudioMessageViewState extends State<AudioMessageView> {
   Widget build(BuildContext context) {
     final MessageCubit messageCubit = context.read<MessageCubit>();
 
-    final bool isTranscribing = _isTranscribing(context);
-    final bool isAudioTranscriptionExpanded =
-        _isAudioTranscriptionExpanded(context);
+    final bool isTranscribing = context.select(
+      (ChatCubit cubit) => cubit.state.maybeMap(
+        fetched: (ChatFetched value) => value.transcribingAudioMessageIds
+            .contains(widget.audioMessage.currentId),
+        orElse: () => false,
+      ),
+    );
+
+    final bool isAudioTranscriptionExpanded = context.select(
+      (MessageCubit cubit) => cubit.state.isAudioTranscriptionExpanded,
+    );
+
     final bool isTranscriptionFailed = widget.audioMessage.transcriptionFailed;
+
     final bool hasTranscription = widget.audioMessage.transcription != null;
 
     return _MessageContainer(
@@ -33,19 +41,56 @@ class _AudioMessageViewState extends State<AudioMessageView> {
         BuildContext context,
         BoxConstraints constraints,
       ) {
+        final TextSpan transcriptionSpan = TextSpan(
+          text: widget.audioMessage.transcription?.trim() ?? '',
+          style: AppTextStyles.paragraph,
+        );
+
+        final TextPainter transcriptionPainter = TextPainter(
+          text: transcriptionSpan,
+          textDirection: TextDirection.ltr,
+          textScaler: MediaQuery.textScalerOf(context),
+        );
+
+        final Size transcriptionSize =
+            (transcriptionPainter..layout(maxWidth: constraints.maxWidth)).size;
+
+        final TextSpan errorSpan = TextSpan(
+          text: 'Something went wrong while\nprocessing the audio.',
+          style: AppTextStyles.footnote.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        );
+
+        final TextPainter errorPainter = TextPainter(
+          text: errorSpan,
+          textDirection: TextDirection.ltr,
+          textScaler: MediaQuery.textScalerOf(context),
+        );
+
+        final Size errorSize =
+            (errorPainter..layout(maxWidth: constraints.maxWidth)).size;
+
         final Size textSize =
-            _calculateTextSize(context, constraints, isTranscriptionFailed);
-        final Duration animationDuration =
-            _calculateAnimationDuration(textSize, isAudioTranscriptionExpanded);
-        final Curve animationCurve =
-            _calculateAnimationCurve(isAudioTranscriptionExpanded);
+            isTranscriptionFailed ? errorSize : transcriptionSize;
+        final TextSpan textSpan =
+            isTranscriptionFailed ? errorSpan : transcriptionSpan;
+
+        final Duration animationDuration = isAudioTranscriptionExpanded
+            ? Duration(milliseconds: 200 + textSize.width.toInt() ~/ 1.5)
+            : Duration(milliseconds: 300 + textSize.width.toInt() ~/ 1.5);
+        final Curve animationCurve = isAudioTranscriptionExpanded
+            ? Curves.linearToEaseOut
+            : Curves.easeOut;
 
         return AnimatedContainer(
           duration: animationDuration,
           curve: animationCurve,
           constraints: BoxConstraints(
-            minWidth: _calculateMinWidth(isAudioTranscriptionExpanded,
-                hasTranscription, isTranscriptionFailed, textSize),
+            minWidth: isAudioTranscriptionExpanded && hasTranscription ||
+                    isTranscriptionFailed
+                ? textSize.width
+                : 0,
           ),
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
@@ -53,23 +98,105 @@ class _AudioMessageViewState extends State<AudioMessageView> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: <Widget>[
-                  _buildAudioRow(
-                    context,
-                    constraints,
-                    messageCubit,
-                    isTranscribing,
-                    isAudioTranscriptionExpanded,
-                    isTranscriptionFailed,
-                    hasTranscription,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Builder(
+                        builder: (BuildContext context) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            _audioViewWidth ??=
+                                (context.findRenderObject()! as RenderBox)
+                                    .size
+                                    .width;
+                          });
+
+                          return AudioView(
+                            audioMessage: widget.audioMessage,
+                            expand: false,
+                            previewInfo: false,
+                            width: max(constraints.minWidth, 150),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      _TranscriptionButton(
+                        isTranscribing: isTranscribing,
+                        isExpanded: isAudioTranscriptionExpanded,
+                        isTranscriptionFailed: isTranscriptionFailed,
+                        hasTranscription: hasTranscription,
+                        onTap: () async {
+                          if (isTranscribing) {
+                            return;
+                          }
+
+                          if (!hasTranscription) {
+                            final bool result = await context
+                                .read<ChatCubit>()
+                                .transcribeAudioMessage(widget.audioMessage);
+
+                            if (result && !isAudioTranscriptionExpanded) {
+                              messageCubit.toggleAudioTranscriptionExpansion();
+                            }
+                          } else {
+                            setState(() {
+                              messageCubit.toggleAudioTranscriptionExpansion();
+                            });
+                          }
+                        },
+                      ),
+                    ],
                   ),
-                  _buildTranscriptionContainer(
-                    context,
-                    constraints,
-                    textSize,
-                    animationDuration,
-                    animationCurve,
-                    isAudioTranscriptionExpanded,
-                    isTranscriptionFailed,
+                  SizedBox(
+                    width: max(constraints.minWidth, 150),
+                    child: ClipRect(
+                      child: AnimatedOpacity(
+                        duration: animationDuration,
+                        curve: isAudioTranscriptionExpanded ||
+                                isTranscriptionFailed
+                            ? Curves.easeIn
+                            : Curves.easeOutCubic,
+                        opacity: isAudioTranscriptionExpanded ||
+                                isTranscriptionFailed
+                            ? 1
+                            : 0,
+                        child: AnimatedContainer(
+                          alignment: Alignment.bottomRight,
+                          margin: EdgeInsets.only(
+                            top: isAudioTranscriptionExpanded ||
+                                    isTranscriptionFailed
+                                ? 12
+                                : 0,
+                          ),
+                          duration: animationDuration,
+                          curve: Curves.linearToEaseOut,
+                          width: isAudioTranscriptionExpanded ||
+                                  isTranscriptionFailed
+                              ? textSize.width
+                              : 0,
+                          height: isAudioTranscriptionExpanded ||
+                                  isTranscriptionFailed
+                              ? textSize.height
+                              : 0,
+                          child: OverflowBox(
+                            alignment: Alignment.bottomLeft,
+                            minHeight: textSize.height,
+                            minWidth: textSize.width,
+                            maxWidth: textSize.width,
+                            maxHeight: textSize.height,
+                            child: isTranscriptionFailed
+                                ? Text.rich(textSpan)
+                                : AnimatedSlide(
+                                    offset: isAudioTranscriptionExpanded
+                                        ? Offset.zero
+                                        : const Offset(0, 1.5),
+                                    curve: animationCurve,
+                                    duration: animationDuration,
+                                    child: Text.rich(textSpan),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               );
@@ -77,206 +204,6 @@ class _AudioMessageViewState extends State<AudioMessageView> {
           ),
         );
       }),
-    );
-  }
-
-  bool _isTranscribing(BuildContext context) {
-    return context.select(
-      (ChatCubit cubit) => cubit.state.maybeMap(
-        fetched: (ChatFetched value) => value.transcribingAudioMessageIds
-            .contains(widget.audioMessage.currentId),
-        orElse: () => false,
-      ),
-    );
-  }
-
-  bool _isAudioTranscriptionExpanded(BuildContext context) {
-    return context.select(
-      (MessageCubit cubit) => cubit.state.isAudioTranscriptionExpanded,
-    );
-  }
-
-  Size _calculateTextSize(
-    BuildContext context,
-    BoxConstraints constraints,
-    bool isTranscriptionFailed,
-  ) {
-    final TextSpan textSpan = isTranscriptionFailed
-        ? TextSpan(
-            text: 'Something went wrong while\nprocessing the audio.',
-            style:
-                AppTextStyles.footnote.copyWith(color: AppColors.textSecondary),
-          )
-        : TextSpan(
-            text: widget.audioMessage.transcription?.trim() ?? '',
-            style: AppTextStyles.paragraph,
-          );
-
-    final TextPainter textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-      textScaler: MediaQuery.textScalerOf(context),
-    );
-
-    final Size size =
-        (textPainter..layout(maxWidth: constraints.maxWidth)).size;
-
-    return Size(size.width + 4, size.height);
-  }
-
-  Duration _calculateAnimationDuration(
-    Size textSize,
-    bool isAudioTranscriptionExpanded,
-  ) {
-    return isAudioTranscriptionExpanded
-        ? Duration(milliseconds: 200 + textSize.width.toInt() ~/ 1.5)
-        : Duration(milliseconds: 300 + textSize.width.toInt() ~/ 1.5);
-  }
-
-  Curve _calculateAnimationCurve(bool isAudioTranscriptionExpanded) {
-    return isAudioTranscriptionExpanded
-        ? Curves.linearToEaseOut
-        : Curves.easeOut;
-  }
-
-  double _calculateMinWidth(
-    bool isAudioTranscriptionExpanded,
-    bool hasTranscription,
-    bool isTranscriptionFailed,
-    Size textSize,
-  ) {
-    return isAudioTranscriptionExpanded && hasTranscription ||
-            isTranscriptionFailed
-        ? textSize.width
-        : 0;
-  }
-
-  Widget _buildAudioRow(
-    BuildContext context,
-    BoxConstraints constraints,
-    MessageCubit messageCubit,
-    bool isTranscribing,
-    bool isAudioTranscriptionExpanded,
-    bool isTranscriptionFailed,
-    bool hasTranscription,
-  ) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Builder(
-          builder: (BuildContext context) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _audioViewWidth ??=
-                  (context.findRenderObject()! as RenderBox).size.width;
-            });
-
-            return AudioView(
-              audioMessage: widget.audioMessage,
-              expand: false,
-              previewInfo: false,
-              width: max(constraints.minWidth, 150),
-            );
-          },
-        ),
-        const SizedBox(width: 12),
-        IgnorePointer(
-          ignoring: widget.contextMenuShown,
-          child: _TranscriptionButton(
-            isTranscribing: isTranscribing,
-            isExpanded: isAudioTranscriptionExpanded,
-            isTranscriptionFailed: isTranscriptionFailed,
-            hasTranscription: hasTranscription,
-            onTap: () async {
-              if (isTranscribing) {
-                return;
-              }
-
-              if (!hasTranscription) {
-                final bool result = await context
-                    .read<ChatCubit>()
-                    .transcribeAudioMessage(widget.audioMessage);
-
-                if (result && !isAudioTranscriptionExpanded) {
-                  messageCubit.toggleAudioTranscriptionExpansion();
-                }
-              } else {
-                setState(() {
-                  messageCubit.toggleAudioTranscriptionExpansion();
-                });
-              }
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTranscriptionContainer(
-    BuildContext context,
-    BoxConstraints constraints,
-    Size textSize,
-    Duration animationDuration,
-    Curve animationCurve,
-    bool isAudioTranscriptionExpanded,
-    bool isTranscriptionFailed,
-  ) {
-    return SizedBox(
-      width: max(constraints.minWidth, 150),
-      child: ClipRect(
-        child: AnimatedOpacity(
-          duration: animationDuration,
-          curve: isAudioTranscriptionExpanded || isTranscriptionFailed
-              ? Curves.easeIn
-              : Curves.easeOutCubic,
-          opacity:
-              isAudioTranscriptionExpanded || isTranscriptionFailed ? 1 : 0,
-          child: AnimatedContainer(
-            alignment: Alignment.bottomRight,
-            margin: EdgeInsets.only(
-                top: isAudioTranscriptionExpanded || isTranscriptionFailed
-                    ? 12
-                    : 0),
-            duration: animationDuration,
-            curve: Curves.linearToEaseOut,
-            width: isAudioTranscriptionExpanded || isTranscriptionFailed
-                ? textSize.width
-                : 0,
-            height: isAudioTranscriptionExpanded || isTranscriptionFailed
-                ? textSize.height
-                : 0,
-            child: OverflowBox(
-              alignment: Alignment.bottomLeft,
-              minHeight: textSize.height,
-              minWidth: textSize.width,
-              maxWidth: textSize.width,
-              maxHeight: textSize.height,
-              child: isTranscriptionFailed
-                  ? Text.rich(
-                      TextSpan(
-                        text:
-                            'Something went wrong while\nprocessing the audio.',
-                        style: AppTextStyles.footnote
-                            .copyWith(color: AppColors.textSecondary),
-                      ),
-                    )
-                  : AnimatedSlide(
-                      offset: isAudioTranscriptionExpanded
-                          ? Offset.zero
-                          : const Offset(0, 1.5),
-                      curve: animationCurve,
-                      duration: animationDuration,
-                      child: SelectableText.rich(
-                        TextSpan(
-                          text: widget.audioMessage.transcription?.trim() ?? '',
-                          style: AppTextStyles.paragraph,
-                        ),
-                        enableInteractiveSelection: widget.contextMenuShown,
-                      ),
-                    ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -479,9 +406,7 @@ class _AudioViewState extends State<AudioView> {
                         if (!widget.previewInfo || _isPlaying) ...<Widget>[
                           const SizedBox(width: 7),
                           Text(
-                            formatDuration(
-                              _isPlaying ? _currentDuration : _totalDuration,
-                            ),
+                            formatDuration(_currentDuration),
                             style: AppTextStyles.callout.copyWith(
                               color: AppColors.textSecondary,
                             ),

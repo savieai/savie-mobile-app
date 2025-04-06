@@ -40,21 +40,8 @@ class _TextMessageViewState extends State<TextMessageView>
       ),
     );
     final bool improvementFailed = _textMessage.improvementFailed;
-    final String? improvedText = _textMessage.improvedText;
-
-    final List<TextContent> textContents = _textMessage.improvedText != null
-        ? <TextContent>[
-            TextContent.plainText(text: '${_textMessage.improvedText!}\n')
-          ]
-        : _textMessage.textContents ?? <TextContent>[];
-
-    final String plainText =
-        Document.fromDelta(TextContent.toDelta(textContents)).toPlainText();
-
-    final List<Link> links = _textMessage.links;
-    final List<InlineSpan> spans = _processTextContents(textContents);
-
-    final bool linkOnly = plainText.trim() == links.firstOrNull?.url.trim();
+    final List<TextContent>? improvedTextContents =
+        _textMessage.improvedTextContents;
 
     final Animation<double> sentMessageAnimation =
         widget.enableSentMessageAinmation
@@ -71,47 +58,40 @@ class _TextMessageViewState extends State<TextMessageView>
       },
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-          final TextSpan textSpan = TextSpan(
-            children: linkOnly
-                ? _processLinks(links.first.url, addFavicon: true)
-                : spans,
+          final _SelectableMessageText currentText = _SelectableMessageText(
+            textContentsToDisplay: widget.textMessage.improvedTextContents ??
+                widget.textMessage.originalTextContents ??
+                <TextContent>[],
+            contextMenuShown: widget.contextMenuShown,
+            textMessage: widget.textMessage,
+            onMessageChanged: (TextMessage updatedMessage) {
+              // TODO: think on editing
+              context.read<ChatCubit>().editMessage(
+                    textMessage: _textMessage,
+                    textContents:
+                        updatedMessage.originalTextContents ?? <TextContent>[],
+                    refetch: false,
+                  );
+              setState(() => _textMessage = updatedMessage);
+            },
           );
-
-          late final Size textSize;
-
-          try {
-            textSize = (TextPainter(
-              text: textSpan,
-              textScaler: MediaQuery.textScalerOf(context),
-              textDirection: TextDirection.ltr,
-            )..layout(maxWidth: constraints.maxWidth - AppSpaces.space300 * 2))
-                .size;
-          } catch (_) {
-            textSize = Size.zero;
-          }
 
           return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              SelectableText.rich(
-                textSpan,
-                enableInteractiveSelection: widget.contextMenuShown,
-                cursorWidth: 0,
-                style: AppTextStyles.paragraph.copyWith(
-                  color: AppColors.textPrimary,
-                ),
-              ),
+              currentText,
               AnimatedSize(
                 duration: const Duration(milliseconds: 350),
                 curve: Curves.linearToEaseOut,
                 alignment: Alignment.topLeft,
                 child: _ImprovingView(
-                  minSize: textSize.width,
+                  minSize: currentText.getSize(context, constraints).width,
                   isImproving: isImproving,
-                  oldText: (_textMessage.plainText ?? '').trim(),
+                  oldTextContents: _textMessage.originalTextContents,
                   improvementFailed: improvementFailed,
-                  isImproved: improvedText != null,
+                  isImproved: improvedTextContents != null,
+                  textMessage: _textMessage,
                   onRetry: () {
                     context.read<ChatCubit>().improveText(widget.textMessage);
                   },
@@ -124,20 +104,130 @@ class _TextMessageViewState extends State<TextMessageView>
       ),
     );
   }
+}
 
-  static final RegExp _linkRegExp = RegExp(
-    r'\b(?:(?:https?)://)?(?:www\.)?(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(?:/[^\s]*)?\b',
-    caseSensitive: false,
-  );
+class _SelectableMessageText extends StatefulWidget {
+  const _SelectableMessageText({
+    required this.textContentsToDisplay,
+    required this.contextMenuShown,
+    required this.textMessage,
+    required this.onMessageChanged,
+  });
 
-  static String _completeLink(String url) {
-    if (!url.startsWith(RegExp(r'https?://'))) {
-      return 'http://$url';
-    }
-    return url;
+  final List<TextContent> textContentsToDisplay;
+  final bool contextMenuShown;
+  final TextMessage textMessage;
+  final ValueChanged<TextMessage> onMessageChanged;
+
+  TextSpan getTextSpan() {
+    final String plainText =
+        Document.fromDelta(TextContent.toDelta(textContentsToDisplay))
+            .toPlainText();
+
+    final List<InlineSpan> spans =
+        _SelectableMessageTextState._processTextContents(
+      textContentsToDisplay,
+      onMessageChanged,
+      textMessage,
+    );
+
+    final bool linkOnly =
+        plainText.trim() == textMessage.links.firstOrNull?.url.trim();
+
+    final TextSpan textSpan = TextSpan(
+      children: linkOnly
+          ? _SelectableMessageTextState._processLinks(
+              textMessage.links.first.url,
+              addFavicon: true,
+              message: textMessage,
+            )
+          : spans,
+    );
+
+    return textSpan;
   }
 
-  List<InlineSpan> _processTextContents(List<TextContent> textContents) {
+  Size getSize(
+    BuildContext context,
+    BoxConstraints constraints,
+  ) {
+    late final Size textSize;
+
+    try {
+      textSize = (TextPainter(
+        text: getTextSpan(),
+        textScaler: MediaQuery.textScalerOf(context),
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: constraints.maxWidth - AppSpaces.space300 * 2))
+          .size;
+    } catch (_) {
+      textSize = Size.zero;
+    }
+
+    return textSize;
+  }
+
+  @override
+  State<_SelectableMessageText> createState() => _SelectableMessageTextState();
+}
+
+class _SelectableMessageTextState extends State<_SelectableMessageText> {
+  late TextMessage _textMessage = widget.textMessage;
+
+  @override
+  void didUpdateWidget(covariant _SelectableMessageText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.textMessage != oldWidget.textMessage) {
+      setState(() {
+        _textMessage = widget.textMessage;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String plainText =
+        Document.fromDelta(TextContent.toDelta(widget.textContentsToDisplay))
+            .toPlainText();
+
+    final List<InlineSpan> spans = _processTextContents(
+      widget.textContentsToDisplay,
+      widget.onMessageChanged,
+      widget.textMessage,
+    );
+
+    final bool linkOnly =
+        plainText.trim() == _textMessage.links.firstOrNull?.url.trim();
+
+    final TextSpan textSpan = TextSpan(
+      children: linkOnly
+          ? _processLinks(
+              _textMessage.links.first.url,
+              addFavicon: true,
+              message: widget.textMessage,
+            )
+          : spans,
+    );
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        return SelectableText.rich(
+          textSpan,
+          enableInteractiveSelection: widget.contextMenuShown,
+          cursorWidth: 0,
+          style: AppTextStyles.paragraph.copyWith(
+            color: AppColors.textPrimary,
+          ),
+        );
+      },
+    );
+  }
+
+  static List<InlineSpan> _processTextContents(
+    List<TextContent> textContents,
+    ValueChanged<TextMessage> onMessageChanged,
+    TextMessage textMessage,
+  ) {
     final List<InlineSpan> spans = <InlineSpan>[];
 
     for (int i = 0; i < textContents.length; i++) {
@@ -145,27 +235,22 @@ class _TextMessageViewState extends State<TextMessageView>
 
       if (content is PlainTextContent) {
         // Process plain text
-        spans.addAll(_processLinks(content.text));
+        spans.addAll(_processLinks(content.text, message: textMessage));
       } else if (content is ListItemContent) {
         // Process list items
         spans.addAll(<InlineSpan>[
           WidgetSpan(
             child: GestureDetector(
               onTap: () {
+                // TODO: think on editing
                 final List<TextContent> newContents = textContents.toList();
                 newContents[i] = content.copyWith(
                   isChecked: !content.isChecked,
                 );
-                context.read<ChatCubit>().editMessage(
-                      textMessage: _textMessage,
-                      textContents: newContents,
-                      refetch: false,
-                    );
-                setState(() {
-                  _textMessage = _textMessage.copyWith(
-                    textContents: newContents,
-                  );
-                });
+                final TextMessage updatedMessage = textMessage.copyWith(
+                  originalTextContents: newContents,
+                );
+                onMessageChanged(updatedMessage);
               },
               child: Container(
                 height: 20,
@@ -181,7 +266,7 @@ class _TextMessageViewState extends State<TextMessageView>
         ]);
 
         spans.addAll(
-          _processLinks('${content.text}\n').map(
+          _processLinks('${content.text}\n', message: textMessage).map(
             (InlineSpan span) {
               if (span is TextSpan) {
                 // Apply line-through style for checked items
@@ -214,7 +299,11 @@ class _TextMessageViewState extends State<TextMessageView>
     return spans;
   }
 
-  List<InlineSpan> _processLinks(String text, {bool addFavicon = false}) {
+  static List<InlineSpan> _processLinks(
+    String text, {
+    required TextMessage message,
+    bool addFavicon = false,
+  }) {
     final List<InlineSpan> spans = <InlineSpan>[];
     final List<RegExpMatch> matches = _linkRegExp.allMatches(text).toList();
 
@@ -251,8 +340,8 @@ class _TextMessageViewState extends State<TextMessageView>
                 ..onTap = () {
                   getIt.get<TrackUseActivityUseCase>().execute(
                         AppEvents.chat.linkClicked(
-                          messageId: _textMessage.id,
-                          type: _textMessage.appEventMessageType,
+                          messageId: message.id,
+                          type: message.appEventMessageType,
                         ),
                       );
                   launchUrlString(_completeLink(url));
@@ -271,6 +360,18 @@ class _TextMessageViewState extends State<TextMessageView>
 
     return spans;
   }
+
+  static String _completeLink(String url) {
+    if (!url.startsWith(RegExp(r'https?://'))) {
+      return 'http://$url';
+    }
+    return url;
+  }
+
+  static final RegExp _linkRegExp = RegExp(
+    r'\b(?:(?:https?)://)?(?:www\.)?(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(?:/[^\s]*)?\b',
+    caseSensitive: false,
+  );
 }
 
 class FavIcon extends StatefulWidget {
@@ -374,7 +475,8 @@ class _FavIconState extends State<FavIcon> {
 class _ImprovingView extends StatefulWidget {
   const _ImprovingView({
     required this.isImproving,
-    required this.oldText,
+    required this.textMessage,
+    required this.oldTextContents,
     required this.isImproved,
     required this.improvementFailed,
     required this.onRetry,
@@ -383,7 +485,8 @@ class _ImprovingView extends StatefulWidget {
   });
 
   final bool isImproving;
-  final String? oldText;
+  final TextMessage textMessage;
+  final List<TextContent>? oldTextContents;
   final bool isImproved;
   final bool improvementFailed;
   final VoidCallback onRetry;
@@ -428,7 +531,8 @@ class _ImprovingViewState extends State<_ImprovingView> {
                   ? _RetryImproving(onRetry: widget.onRetry)
                   : widget.isImproved
                       ? _OriginalText(
-                          text: widget.oldText ?? '',
+                          textMessage: widget.textMessage,
+                          oldTextContents: widget.oldTextContents,
                           minSize: widget.minSize,
                           contextMenuShown: widget.contextMenuShown,
                         )
@@ -446,25 +550,28 @@ class _RetryImproving extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text.rich(
-      TextSpan(
-        children: <InlineSpan>[
-          WidgetSpan(
-            child: Assets.icons.triangleExclamation.svg(),
-            alignment: PlaceholderAlignment.middle,
-          ),
-          const TextSpan(text: ' Oops! I couldn’t improve this one. '),
-          TextSpan(
-            text: 'Retry',
-            recognizer: TapGestureRecognizer()..onTap = onRetry,
-            style: const TextStyle(
-              color: AppColors.iconAccent,
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Text.rich(
+        TextSpan(
+          children: <InlineSpan>[
+            WidgetSpan(
+              child: Assets.icons.triangleExclamation.svg(),
+              alignment: PlaceholderAlignment.middle,
             ),
-          ),
-        ],
-      ),
-      style: AppTextStyles.footnote.copyWith(
-        color: AppColors.textSecondary,
+            const TextSpan(text: ' Oops! I couldn’t improve this one. '),
+            TextSpan(
+              text: 'Retry',
+              recognizer: TapGestureRecognizer()..onTap = onRetry,
+              style: const TextStyle(
+                color: AppColors.iconAccent,
+              ),
+            ),
+          ],
+        ),
+        style: AppTextStyles.footnote.copyWith(
+          color: AppColors.textSecondary,
+        ),
       ),
     );
   }
@@ -548,12 +655,14 @@ class _TextHasBeenImproved extends StatelessWidget {
 
 class _OriginalText extends StatelessWidget {
   const _OriginalText({
-    required this.text,
+    required this.textMessage,
+    required this.oldTextContents,
     required this.minSize,
     required this.contextMenuShown,
   });
 
-  final String text;
+  final TextMessage textMessage;
+  final List<TextContent>? oldTextContents;
   final double minSize;
   final bool contextMenuShown;
 
@@ -615,12 +724,11 @@ class _OriginalText extends StatelessWidget {
             firstChild: SizedBox(width: minSizeConstrained),
             secondChild: Padding(
               padding: const EdgeInsets.only(top: 8),
-              child: SelectableText(
-                text,
-                style: AppTextStyles.paragraph.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                enableInteractiveSelection: contextMenuShown,
+              child: _SelectableMessageText(
+                textContentsToDisplay: oldTextContents ?? <TextContent>[],
+                contextMenuShown: contextMenuShown,
+                textMessage: textMessage,
+                onMessageChanged: (_) {},
               ),
             ),
             crossFadeState: isExpanded

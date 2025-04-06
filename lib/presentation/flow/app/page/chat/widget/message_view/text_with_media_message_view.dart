@@ -29,7 +29,7 @@ class _TextWithMediaMessageView extends StatelessWidget {
             ),
           ),
         ),
-        if (message.plainText?.trimRight().isNotEmpty ?? false)
+        if (message.currentPlainText?.trimRight().isNotEmpty ?? false)
           Padding(
             padding: const EdgeInsets.only(right: 3),
             child: TextMessageView(

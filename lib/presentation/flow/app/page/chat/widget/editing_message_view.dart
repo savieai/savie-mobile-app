@@ -64,8 +64,9 @@ class _EditingMessageViewState extends State<EditingMessageView> {
                           ),
                         ),
                         const SizedBox(height: 4),
+                        // TODO: think on editing
                         Text(
-                          _displayedMessage?.plainText ?? '',
+                          _displayedMessage?.originalPlainText ?? '',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.callout,

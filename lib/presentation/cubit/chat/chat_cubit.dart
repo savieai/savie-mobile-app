@@ -241,7 +241,7 @@ class ChatCubit extends Cubit<ChatState> {
       tempId: pendingUuid,
       id: pendingUuid,
       date: DateTime.now(),
-      textContents: textContents,
+      originalTextContents: textContents,
       images: (mediaPaths ?? <String>[]).map(
         (String mediaPath) {
           final String ext = mediaPath.split('.').last;
@@ -256,7 +256,7 @@ class ChatCubit extends Cubit<ChatState> {
           );
         },
       ).toList(),
-      improvedText: null,
+      improvedTextContents: null,
     );
 
     _pendingMessages[pendingUuid] = message;
@@ -271,7 +271,7 @@ class ChatCubit extends Cubit<ChatState> {
     bool refetch = true,
   }) async {
     final TextMessage updatedMessage = textMessage.copyWith(
-      textContents: textContents,
+      originalTextContents: textContents,
       isPending: refetch,
     );
     _sentMessages[updatedMessage.currentId] = updatedMessage;

@@ -15,11 +15,11 @@ class Message with _$Message implements Comparable<Message> {
     required String id,
     required String? tempId,
     required DateTime date,
-    required List<TextContent>? textContents,
+    required List<TextContent>? originalTextContents,
     @Default(<Attachment>[]) List<Attachment> images,
     @Default(<Link>[]) List<Link> links,
-    required String? improvedText,
     @Default(false) bool improvementFailed,
+    required List<TextContent>? improvedTextContents,
   }) = TextMessage;
 
   const factory Message.audio({
@@ -54,11 +54,11 @@ class Message with _$Message implements Comparable<Message> {
         if (message.images.isEmpty) {
           return AppEventMessageType.text;
         } else if (message.images.length == 1) {
-          return message.textContents == null
+          return message.originalTextContents == null
               ? AppEventMessageType.image
               : AppEventMessageType.imageWithCaption;
         } else {
-          return message.textContents == null
+          return message.originalTextContents == null
               ? AppEventMessageType.images
               : AppEventMessageType.imagesWithCaption;
         }
@@ -73,10 +73,24 @@ class Message with _$Message implements Comparable<Message> {
 }
 
 extension TextMessageX on TextMessage {
-  Delta? get deltaContent =>
-      textContents == null ? null : TextContent.toDelta(textContents!);
-
-  String? get plainText => deltaContent == null
+  Delta? get originalDeltaContent => originalTextContents == null
       ? null
-      : Document.fromDelta(deltaContent!).toPlainText();
+      : TextContent.toDelta(originalTextContents!);
+
+  String? get originalPlainText => originalDeltaContent == null
+      ? null
+      : Document.fromDelta(originalDeltaContent!).toPlainText();
+
+  Delta? get improvedDeltaContent => improvedTextContents == null
+      ? null
+      : TextContent.toDelta(improvedTextContents!);
+
+  String? get improvedPlainText => improvedDeltaContent == null
+      ? null
+      : Document.fromDelta(improvedDeltaContent!).toPlainText();
+
+  Delta? get currentDeltaContent =>
+      improvedDeltaContent ?? originalDeltaContent;
+
+  String? get currentPlainText => improvedPlainText ?? originalPlainText;
 }

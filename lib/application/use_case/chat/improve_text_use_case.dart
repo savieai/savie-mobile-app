@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:injectable/injectable.dart';
 
-import '../../../domain/model/message.dart';
-import '../../../domain/repository/repository.dart';
+import '../../../domain/domain.dart';
 
 @Injectable()
 class ImproveTextUseCase {
@@ -14,14 +11,14 @@ class ImproveTextUseCase {
   final AiRepository _aiRepository;
 
   Future<TextMessage> execute(TextMessage message) async {
-    final String? delta = message.deltaContent == null
-        ? null
-        : jsonEncode(message.deltaContent!.toJson());
-
-    final String improvedText = await _aiRepository.improveText(delta ?? '');
+    final List<TextContent> improvedTextContents =
+        await _aiRepository.improveText(
+      textContents: message.originalTextContents ?? <TextContent>[],
+      messageId: message.id,
+    );
 
     final TextMessage updatedMessage = message.copyWith(
-      improvedText: improvedText,
+      improvedTextContents: improvedTextContents,
     );
 
     return updatedMessage;

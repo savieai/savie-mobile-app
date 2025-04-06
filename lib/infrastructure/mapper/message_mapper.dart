@@ -60,17 +60,19 @@ sealed class MessageMapper {
       id: dto.id,
       tempId: dto.tempId,
       date: dto.createdAt.toLocal(),
-      textContents: dto.deltaContent == null
+      originalTextContents: dto.deltaContent == null
           ? null
-          : TextContent.fromDelta(_parseDelta(dto.deltaContent!)),
+          : TextContent.fromDelta(parseDelta(dto.deltaContent!)),
       images: images,
       isPending: false,
       links: links,
-      improvedText: null,
+      improvedTextContents: dto.enhancedDeltaContent == null
+          ? null
+          : TextContent.fromDelta(parseDelta(dto.enhancedDeltaContent!)),
     );
   }
 
-  static Delta _parseDelta(Map<String, dynamic> deltaContent) {
+  static Delta parseDelta(Map<String, dynamic> deltaContent) {
     final Delta delta = Delta.fromJson(deltaContent['ops'] as List<dynamic>);
     if (delta.isEmpty) {
       return Delta()..insert('\n');
