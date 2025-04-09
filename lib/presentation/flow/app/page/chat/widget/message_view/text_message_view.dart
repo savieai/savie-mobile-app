@@ -81,6 +81,10 @@ class _TextMessageViewState extends State<TextMessageView>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               currentText,
+              if (_textMessage.tasks.isNotEmpty)
+                _MessageTasks(
+                  tasks: _textMessage.tasks,
+                ),
               AnimatedSize(
                 duration: const Duration(milliseconds: 350),
                 curve: Curves.linearToEaseOut,
@@ -739,6 +743,49 @@ class _OriginalText extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MessageTasks extends StatelessWidget {
+  const _MessageTasks({
+    super.key,
+    required this.tasks,
+  });
+
+  final List<Task> tasks;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        const SizedBox(height: 4),
+        for (final Task task in tasks) ...<Widget>[
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Assets.icons.calendarCheck.svg(
+                height: 16,
+                width: 16,
+                colorFilter: const ColorFilter.mode(
+                  AppColors.textSuccess,
+                  BlendMode.srcIn,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                task.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.footnote.copyWith(
+                  color: AppColors.textSuccess,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

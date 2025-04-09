@@ -21,7 +21,7 @@ class CreateTextMessageUseCase {
   final CacheRepository _cacheRepository;
   final ResizeImageUseCase _resizeImageUseCase;
 
-  Future<void> execute(TextMessage message) async {
+  Future<String> execute(TextMessage message) async {
     final Directory tempDir = await getTemporaryDirectory();
 
     final List<(String, String)> fileNames = await Future.wait(
@@ -61,7 +61,7 @@ class CreateTextMessageUseCase {
       ),
     );
 
-    await _chatRepository.createTextMessage(
+    return _chatRepository.createTextMessage(
       tempId: message.tempId!,
       deltaContent: message.originalDeltaContent,
       images: fileNames.map(

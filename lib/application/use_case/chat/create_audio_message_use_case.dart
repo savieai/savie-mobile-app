@@ -15,10 +15,10 @@ class CreateAudioMessageUseCase {
   final ChatRepository _chatRepository;
   final CacheRepository _cacheRepository;
 
-  Future<void> execute(AudioMessage message) async {
+  Future<String> execute(AudioMessage message) async {
     final String? audioPath = message.audioInfo.localFullPath;
     if (audioPath == null) {
-      return;
+      return '';
     }
 
     final String audioName = message.audioInfo.name;
@@ -33,7 +33,7 @@ class CreateAudioMessageUseCase {
         .from('voice_messages')
         .upload(audioName, File(audioPath));
 
-    await _chatRepository.createAudioMessage(
+    return _chatRepository.createAudioMessage(
       tempId: message.tempId!,
       audioInfo: message.audioInfo,
     );

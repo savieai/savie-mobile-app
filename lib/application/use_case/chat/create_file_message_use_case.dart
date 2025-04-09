@@ -15,11 +15,11 @@ class CreateFileMessageUseCase {
   final ChatRepository _chatRepository;
   final CacheRepository _cacheRepository;
 
-  Future<void> execute(FileMessage message) async {
+  Future<String> execute(FileMessage message) async {
     final String? filePath = message.file.localFullPath;
 
     if (filePath == null) {
-      return;
+      return '';
     }
 
     final String fileName = message.file.remoteStorageName!;
@@ -34,7 +34,7 @@ class CreateFileMessageUseCase {
         .from('message_attachments')
         .upload(fileName, File(filePath));
 
-    await _chatRepository.createFileMessage(
+    return _chatRepository.createFileMessage(
       tempId: message.tempId!,
       file: message.file,
       placeholderUrl: message.file.placeholderUrl,

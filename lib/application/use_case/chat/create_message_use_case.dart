@@ -15,8 +15,8 @@ class CreateMessageUseCase {
   final CreateFileMessageUseCase _createFileMessageUseCase;
   final CreateTextMessageUseCase _createTextMessageUseCase;
 
-  Future<void> execute(Message message) async {
-    await message.map(
+  Future<String> execute(Message message) async {
+    return message.map(
       text: _createTextMessageUseCase.execute,
       audio: _createAudioMessageUseCase.execute,
       file: _createFileMessageUseCase.execute,

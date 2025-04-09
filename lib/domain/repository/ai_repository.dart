@@ -12,4 +12,9 @@ abstract interface class AiRepository {
     required List<TextContent> textContents,
     required String messageId,
   });
+
+  Future<List<Task>> extractTasks({
+    required String plainTextContent,
+    required String messageId,
+  });
 }

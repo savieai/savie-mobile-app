@@ -63,6 +63,14 @@ sealed class AppTextStyles {
     letterSpacing: -0.4,
   );
 
+  static const TextStyle subheadMedium = TextStyle(
+    fontFamily: FontFamily.inter,
+    fontWeight: FontWeight.w500,
+    fontSize: 18,
+    height: 26 / 18,
+    letterSpacing: -0.4,
+  );
+
   static const TextStyle description = TextStyle(
     fontFamily: 'SF Mono',
     fontWeight: FontWeight.w600,

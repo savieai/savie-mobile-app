@@ -13,19 +13,19 @@ abstract class ChatRepository {
     required int pageSize,
   });
 
-  Future<void> createTextMessage({
+  Future<String> createTextMessage({
     required String tempId,
     required Delta? deltaContent,
     required List<Attachment> images,
   });
 
-  Future<void> createFileMessage({
+  Future<String> createFileMessage({
     required String tempId,
     required Attachment file,
     required String? placeholderUrl,
   });
 
-  Future<void> createAudioMessage({
+  Future<String> createAudioMessage({
     required String tempId,
     required AudioInfo audioInfo,
   });

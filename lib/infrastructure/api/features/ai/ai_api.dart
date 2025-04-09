@@ -6,6 +6,7 @@ import 'package:retrofit/retrofit.dart';
 
 import '../../../infrastructure.dart';
 
+export 'dto/dto.dart';
 export 'request/request.dart';
 export 'response/response.dart';
 
@@ -30,6 +31,11 @@ abstract class AiApi {
 
   @POST('/ai/enhance')
   Future<HttpResponse<EnhanceResponse>> enhance({
+    @Body() required Map<String, dynamic> body,
+  });
+
+  @POST('/ai/extract-tasks')
+  Future<HttpResponse<ExtractTasksRepsponse>> extractTasks({
     @Body() required Map<String, dynamic> body,
   });
 }

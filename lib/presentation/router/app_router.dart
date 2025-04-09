@@ -39,8 +39,13 @@ class AppRouter extends RootStackRouter {
           AutoRoute(
             page: SearchRoute.page,
           ),
-          AutoRoute(
+          CustomRoute<dynamic>(
             page: ProfileRoute.page,
+            customRouteBuilder: RouteBuilders.materialWithModalsBuilder,
+          ),
+          CustomRoute<dynamic>(
+            page: CalendarRoute.page,
+            customRouteBuilder: RouteBuilders.modalBottomSheet,
           ),
           CustomRoute<dynamic>(
             customRouteBuilder: RouteBuilders.modalPopupSheet,
@@ -66,12 +71,12 @@ class AppRouter extends RootStackRouter {
     initial: true,
     page: EmptyRoute.page,
     children: <AutoRoute>[
-      CustomRoute(
+      CustomRoute<dynamic>(
         initial: true,
         page: ChatRoute.page,
         customRouteBuilder: RouteBuilders.materialWithModalsBuilder,
       ),
-      CustomRoute(
+      CustomRoute<dynamic>(
         page: CameraRollRoute.page,
         customRouteBuilder: RouteBuilders.modalBottomSheet,
       ),

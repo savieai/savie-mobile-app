@@ -3,6 +3,7 @@ export 'auth_repository.dart';
 export 'cache_repository.dart';
 export 'chat_repository.dart';
 export 'fav_icon_repository.dart';
+export 'google_services_repository.dart';
 export 'invites_repository.dart';
 export 'local_settings_repository.dart';
 export 'metrcis_repository.dart';

@@ -67,6 +67,13 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           const _ProfileSeparator(),
           _ProfileTile(
+            title: 'Calendar',
+            icon: Assets.icons.calendarRepeat,
+            color: AppColors.textPrimary,
+            onTap: () => context.router.push(const CalendarRoute()),
+          ),
+          const _ProfileSeparator(),
+          _ProfileTile(
             title: 'Delete Profile',
             icon: Assets.icons.delete24,
             color: AppColors.iconNegative,

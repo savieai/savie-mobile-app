@@ -3,6 +3,7 @@ import 'package:flutter_quill/quill_delta.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../domain.dart';
+import 'task_extraction_state.dart';
 
 part 'message.freezed.dart';
 
@@ -20,6 +21,8 @@ class Message with _$Message implements Comparable<Message> {
     @Default(<Link>[]) List<Link> links,
     @Default(false) bool improvementFailed,
     required List<TextContent>? improvedTextContents,
+    @Default(<Task>[]) List<Task> tasks,
+    TaskExtractionState? taskExtractionState,
   }) = TextMessage;
 
   const factory Message.audio({

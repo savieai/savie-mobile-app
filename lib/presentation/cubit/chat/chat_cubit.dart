@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../application/application.dart';
 import '../../../domain/domain.dart';
+import '../../../domain/model/task_extraction_state.dart';
 
 part 'chat_state.dart';
 part 'chat_cubit.freezed.dart';
@@ -27,7 +28,8 @@ class ChatCubit extends Cubit<ChatState> {
     this._processSharingIntent,
     this._processSharingIntentStream,
     this._transcribeAudioMessageUseCase,
-    this._improveTextUseCase, {
+    this._improveTextUseCase,
+    this._extractTasksUseCase, {
     @factoryParam String? query,
     @factoryParam required bool processSharingIntent,
   })  : _query = query,
@@ -52,6 +54,7 @@ class ChatCubit extends Cubit<ChatState> {
   final PasteImageUseCase _pasteImageUseCase;
   final TranscribeAudioMessageUseCase _transcribeAudioMessageUseCase;
   final ImproveTextUseCase _improveTextUseCase;
+  final ExtractTasksUseCase _extractTasksUseCase;
 
   final ProcessSharingIntentStream _processSharingIntentStream;
   final ProcessSharingIntent _processSharingIntent;
@@ -236,7 +239,7 @@ class ChatCubit extends Cubit<ChatState> {
     bool hasFadeAnimation = false,
   }) async {
     final String pendingUuid = const Uuid().v4();
-    final Message message = TextMessage(
+    final TextMessage message = TextMessage(
       isPending: true,
       tempId: pendingUuid,
       id: pendingUuid,
@@ -263,6 +266,66 @@ class ChatCubit extends Cubit<ChatState> {
     _emitMessages();
     await _createMessageUseCase.execute(message);
     await _fetchMessages(1, query: null);
+    _extractTasks(_sentMessages[message.currentId]! as TextMessage);
+  }
+
+  Future<void> _extractTasks(TextMessage message) async {
+    final List<Task> tasks = await _extractTasksUseCase.execute(message);
+
+    _sentMessages[message.currentId] = message.copyWith(
+      taskExtractionState: TaskExtractionState(
+        tasks: tasks,
+        isAddding: false,
+        isAdded: false,
+      ),
+    );
+
+    _emitMessages();
+  }
+
+  Future<void> confirmTasks(TextMessage message) async {
+    final TaskExtractionState taskExtractionState =
+        message.taskExtractionState!;
+
+    _sentMessages[message.currentId] = message.copyWith(
+      taskExtractionState: taskExtractionState.copyWith(
+        isAddding: true,
+      ),
+    );
+
+    _emitMessages();
+
+    await Future<void>.delayed(const Duration(seconds: 2));
+
+    if (_sentMessages.containsKey(message.currentId)) {
+      _sentMessages[message.currentId] = message.copyWith(
+        taskExtractionState: taskExtractionState.copyWith(
+          isAddding: false,
+          isAdded: true,
+        ),
+      );
+    }
+
+    _emitMessages();
+
+    await Future<void>.delayed(const Duration(seconds: 2));
+
+    if (_sentMessages.containsKey(message.currentId)) {
+      _sentMessages[message.currentId] = message.copyWith(
+        taskExtractionState: null,
+        tasks: taskExtractionState.tasks,
+      );
+    }
+
+    _emitMessages();
+  }
+
+  void declineTasks(TextMessage message) {
+    _sentMessages[message.currentId] = message.copyWith(
+      taskExtractionState: null,
+    );
+
+    _emitMessages();
   }
 
   Future<void> editMessage({

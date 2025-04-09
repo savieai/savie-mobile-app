@@ -48,7 +48,7 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<void> createAudioMessage({
+  Future<String> createAudioMessage({
     required String tempId,
     required AudioInfo audioInfo,
   }) async {
@@ -66,11 +66,14 @@ class ChatRepositoryImpl implements ChatRepository {
       placeholderUrl: null,
     );
 
-    await _chatApi.createMessage(jsonEncode(request));
+    final HttpResponse<void> response =
+        await _chatApi.createMessage(jsonEncode(request));
+
+    return (response.response.data as Map<String, dynamic>)['id'] as String;
   }
 
   @override
-  Future<void> createFileMessage({
+  Future<String> createFileMessage({
     required String tempId,
     required Attachment file,
     required String? placeholderUrl,
@@ -89,11 +92,15 @@ class ChatRepositoryImpl implements ChatRepository {
       voiceMessage: null,
       placeholderUrl: placeholderUrl,
     );
-    await _chatApi.createMessage(jsonEncode(request));
+
+    final HttpResponse<void> response =
+        await _chatApi.createMessage(jsonEncode(request));
+
+    return (response.response.data as Map<String, dynamic>)['id'] as String;
   }
 
   @override
-  Future<void> createTextMessage({
+  Future<String> createTextMessage({
     required String tempId,
     required Delta? deltaContent,
     required List<Attachment> images,
@@ -113,7 +120,10 @@ class ChatRepositoryImpl implements ChatRepository {
       placeholderUrl: null,
     );
 
-    await _chatApi.createMessage(jsonEncode(request));
+    final HttpResponse<void> response =
+        await _chatApi.createMessage(jsonEncode(request));
+
+    return (response.response.data as Map<String, dynamic>)['id'] as String;
   }
 
   @override

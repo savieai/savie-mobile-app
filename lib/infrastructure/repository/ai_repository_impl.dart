@@ -44,4 +44,20 @@ class AiRepositoryImpl implements AiRepository {
       MessageMapper.parseDelta(response.data.enhanced),
     );
   }
+
+  @override
+  Future<List<Task>> extractTasks({
+    required String plainTextContent,
+    required String messageId,
+  }) async {
+    final HttpResponse<ExtractTasksRepsponse> response =
+        await _api.extractTasks(
+      body: ExtractTasksRequest(
+        content: plainTextContent,
+        messageId: messageId,
+      ).toJson(),
+    );
+
+    return response.data.tasks.map(TaskMapper.toDomain).toList();
+  }
 }

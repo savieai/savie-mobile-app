@@ -22,6 +22,7 @@ import '../../../../../../router/app_router.gr.dart';
 import '../../chat_page_provider.dart';
 import '../../cubit/cubit.dart';
 import '../widget.dart';
+import 'pending_task_view.dart';
 
 part 'media_message_view.dart';
 part 'audio_message_view.dart';
@@ -65,62 +66,72 @@ class _MessageViewState extends State<MessageView> {
         children: <Widget>[
           MessageTimeWrapper(
             time: widget.message.date,
-            child: _MessageAligner(
-              child: ContextMenuRegion(
-                heroTag: '${widget.message.currentId}_context_menu',
-                data: _getContextMenuData(context),
-                builder: (
-                  BuildContext context,
-                  Animation<double> animtion,
-                  bool contextMenuShown,
-                ) {
-                  return BlocProvider<MessageCubit>.value(
-                    value: _messageCubit,
-                    child: widget.message.map(
-                      text: (TextMessage textMessage) {
-                        if (textMessage.images.isNotEmpty) {
-                          if (textMessage.currentPlainText != null) {
-                            return _TextWithMediaMessageView(
-                              message: textMessage,
-                              contextMenuShown: contextMenuShown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                _MessageAligner(
+                  child: ContextMenuRegion(
+                    heroTag: '${widget.message.currentId}_context_menu',
+                    data: _getContextMenuData(context),
+                    builder: (
+                      BuildContext context,
+                      Animation<double> animtion,
+                      bool contextMenuShown,
+                    ) {
+                      return BlocProvider<MessageCubit>.value(
+                        value: _messageCubit,
+                        child: widget.message.map(
+                          text: (TextMessage textMessage) {
+                            if (textMessage.images.isNotEmpty) {
+                              if (textMessage.currentPlainText != null) {
+                                return _TextWithMediaMessageView(
+                                  message: textMessage,
+                                  contextMenuShown: contextMenuShown,
+                                );
+                              } else {
+                                return MediaMessageView(
+                                  message: textMessage,
+                                  contextMenuShown: contextMenuShown,
+                                );
+                              }
+                            } else {
+                              return MessagePendingWrapper(
+                                isPending: widget.message.isPending,
+                                isNew: widget.message.isNew,
+                                child: TextMessageView(
+                                  textMessage: textMessage,
+                                  contextMenuShown: contextMenuShown,
+                                ),
+                              );
+                            }
+                          },
+                          audio: (AudioMessage audioMessage) {
+                            return MessagePendingWrapper(
+                              isPending: widget.message.isPending,
+                              isNew: widget.message.isNew,
+                              child: AudioMessageView(
+                                audioMessage: audioMessage,
+                              ),
                             );
-                          } else {
-                            return MediaMessageView(
-                              message: textMessage,
-                              contextMenuShown: contextMenuShown,
-                            );
-                          }
-                        } else {
-                          return MessagePendingWrapper(
+                          },
+                          file: (FileMessage fileMessage) =>
+                              MessagePendingWrapper(
                             isPending: widget.message.isPending,
                             isNew: widget.message.isNew,
-                            child: TextMessageView(
-                              textMessage: textMessage,
-                              contextMenuShown: contextMenuShown,
+                            child: FileMessageView(
+                              fileMessage: fileMessage,
                             ),
-                          );
-                        }
-                      },
-                      audio: (AudioMessage audioMessage) {
-                        return MessagePendingWrapper(
-                          isPending: widget.message.isPending,
-                          isNew: widget.message.isNew,
-                          child: AudioMessageView(
-                            audioMessage: audioMessage,
                           ),
-                        );
-                      },
-                      file: (FileMessage fileMessage) => MessagePendingWrapper(
-                        isPending: widget.message.isPending,
-                        isNew: widget.message.isNew,
-                        child: FileMessageView(
-                          fileMessage: fileMessage,
                         ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+                      );
+                    },
+                  ),
+                ),
+                if (widget.message is TextMessage)
+                  PendingTaskView(
+                    textMessage: widget.message as TextMessage,
+                  )
+              ],
             ),
           ),
         ],
