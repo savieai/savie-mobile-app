@@ -8,6 +8,7 @@ import '../infrastructure.dart';
 class GoogleServicesRepositoryImpl implements GoogleServicesRepository {
   GoogleServicesRepositoryImpl(this._googleServicesApi);
 
+  // ignore: unused_field
   final GoogleServicesApi _googleServicesApi;
 
   final BehaviorSubject<bool> _servicesConnectedSubject =

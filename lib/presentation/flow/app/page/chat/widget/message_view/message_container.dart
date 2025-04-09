@@ -19,10 +19,11 @@ class _MessageContainer extends StatelessWidget {
         horizontal: AppSpaces.space400,
       ),
       decoration: BoxDecoration(
-        color: AppColors.backgroundChatBubble.withOpacity(decorationOpacity),
+        color:
+            AppColors.backgroundChatBubble.withValues(alpha: decorationOpacity),
         border: Border.all(
           color: AppColors.strokeSecondaryAlpha
-              .withOpacity(decorationOpacity * 0.06),
+              .withValues(alpha: decorationOpacity * 0.06),
         ),
         borderRadius: BorderRadius.circular(AppCorners.message),
         boxShadow: <BoxShadow>[
@@ -30,7 +31,7 @@ class _MessageContainer extends StatelessWidget {
             blurRadius: 9,
             offset: const Offset(0, 2),
             color: AppColors.strokeSecondaryAlpha
-                .withOpacity(decorationOpacity * 0.06),
+                .withValues(alpha: decorationOpacity * 0.06),
           ),
         ],
       ),

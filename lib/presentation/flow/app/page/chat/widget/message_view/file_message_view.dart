@@ -242,7 +242,7 @@ class _FileExtensionLabel extends StatelessWidget {
         child: Container(
           clipBehavior: Clip.hardEdge,
           decoration: BoxDecoration(
-            color: AppColors.strokePrimaryAlpha.withOpacity(0.2),
+            color: AppColors.strokePrimaryAlpha.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(8),
           ),
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),

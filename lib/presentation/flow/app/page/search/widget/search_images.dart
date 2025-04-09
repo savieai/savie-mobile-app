@@ -127,7 +127,9 @@ class _SearchImagesState extends State<SearchImages> {
                                   boxShadow: <BoxShadow>[
                                     BoxShadow(
                                       color: AppColors.strokePrimaryAlpha
-                                          .withOpacity(0.25 * animation.value),
+                                          .withValues(
+                                        alpha: 0.25 * animation.value,
+                                      ),
                                       blurRadius: 18,
                                       offset: const Offset(0, 4),
                                     )

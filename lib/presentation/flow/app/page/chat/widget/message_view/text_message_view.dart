@@ -749,7 +749,6 @@ class _OriginalText extends StatelessWidget {
 
 class _MessageTasks extends StatelessWidget {
   const _MessageTasks({
-    super.key,
     required this.tasks,
   });
 

@@ -201,10 +201,10 @@ class _OtpTextField extends StatelessWidget {
               ),
               disabledPinTheme: defaultPinTheme.copyWith(
                 decoration: defaultPinTheme.decoration?.copyWith(
-                  color: AppColors.backgroundChatInput.withOpacity(0.5),
+                  color: AppColors.backgroundChatInput.withValues(alpha: 0.5),
                 ),
                 textStyle: defaultPinTheme.textStyle?.copyWith(
-                  color: AppColors.textSecondary.withOpacity(0.5),
+                  color: AppColors.textSecondary.withValues(alpha: 0.5),
                 ),
               ),
               onCompleted: !isVerifyingOtp
@@ -290,8 +290,8 @@ class _ResendButtonState extends State<_ResendButton> {
                           ? 'Resend code'
                           : 'Resend code (${_durationFormatted(value)})',
                       style: AppTextStyles.paragraph.copyWith(
-                        color: AppColors.iconAccent.withOpacity(
-                          canPress && !isSendingOtp ? 1 : 0.5,
+                        color: AppColors.iconAccent.withValues(
+                          alpha: canPress && !isSendingOtp ? 1 : 0.5,
                         ),
                       ),
                       textAlign: TextAlign.center,

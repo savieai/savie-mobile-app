@@ -53,7 +53,7 @@ class TextContent with _$TextContent {
             final String part = parts[i];
             if (i < parts.length - 1) {
               // Each part before the last in this chunk is a full line (with a \n).
-              contents.add(TextContent.plainText(text: buffer + part + '\n'));
+              contents.add(TextContent.plainText(text: '$buffer$part\n'));
               buffer = ''; // reset buffer
             } else {
               // The last part doesn't have a trailing \n

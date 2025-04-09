@@ -567,12 +567,12 @@ class _ContextMenuListView extends StatelessWidget {
           boxShadow: <BoxShadow>[
             BoxShadow(
               offset: const Offset(0, 6),
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 12,
             ),
             BoxShadow(
               offset: const Offset(0, -4),
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withValues(alpha: 0.02),
               blurRadius: 8,
             ),
           ],

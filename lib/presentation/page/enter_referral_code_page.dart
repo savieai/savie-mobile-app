@@ -93,7 +93,7 @@ class _Body extends StatelessWidget {
               'Requested to join the whitelist',
               textAlign: TextAlign.center,
               style: AppTextStyles.paragraph.copyWith(
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withValues(alpha: 0.6),
               ),
             ),
           )
@@ -102,7 +102,7 @@ class _Body extends StatelessWidget {
             'No referral code? Join the whitelist.',
             textAlign: TextAlign.center,
             style: AppTextStyles.paragraph.copyWith(
-              color: Colors.white.withOpacity(0.6),
+              color: Colors.white.withValues(alpha: 0.6),
             ),
           ),
           const Spacer(),
@@ -262,17 +262,17 @@ class _JoinWishListButtonState extends State<_JoinWishListButton> {
               border: GradientBoxBorder(
                 gradient: LinearGradient(
                   colors: <Color>[
-                    Colors.white.withOpacity(0.2),
-                    Colors.white.withOpacity(0.04),
+                    Colors.white.withValues(alpha: 0.2),
+                    Colors.white.withValues(alpha: 0.04),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
               ),
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),

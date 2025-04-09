@@ -100,7 +100,8 @@ class _ProgressHudChildState extends State<_ProgressHudChild>
                       sigmaY: 2.5 * _animation.value,
                     ),
                     child: Container(
-                      color: Colors.black.withOpacity(0.4 * _animation.value),
+                      color: Colors.black
+                          .withValues(alpha: 0.4 * _animation.value),
                     ),
                   ),
                   Opacity(

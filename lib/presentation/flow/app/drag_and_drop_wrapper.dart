@@ -322,12 +322,12 @@ class _PlaceholderState extends State<_Placeholder>
   @override
   Widget build(BuildContext context) {
     final Color grey = Color.alphaBlend(
-      AppColors.strokePrimaryAlpha.withOpacity(0.1),
+      AppColors.strokePrimaryAlpha.withValues(alpha: 0.1),
       Colors.white,
     );
 
     final Color darkerGrey = Color.alphaBlend(
-      AppColors.strokePrimaryAlpha.withOpacity(0.3),
+      AppColors.strokePrimaryAlpha.withValues(alpha: 0.1),
       Colors.white,
     );
 

@@ -323,7 +323,7 @@ class _TermsAndPolicy extends StatelessWidget {
             text: 'Terms of Use',
             style: TextStyle(
               decoration: TextDecoration.underline,
-              decorationColor: Colors.black.withOpacity(0.2),
+              decorationColor: Colors.black.withValues(alpha: 0.2),
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
@@ -338,7 +338,7 @@ class _TermsAndPolicy extends StatelessWidget {
             text: 'Privacy Policy',
             style: TextStyle(
               decoration: TextDecoration.underline,
-              decorationColor: Colors.black.withOpacity(0.2),
+              decorationColor: Colors.black.withValues(alpha: 0.2),
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {

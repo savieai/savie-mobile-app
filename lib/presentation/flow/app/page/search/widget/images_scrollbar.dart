@@ -177,7 +177,7 @@ class _ImagesScrollbarState extends State<ImagesScrollbar> {
                   sigmaY: 10,
                 ),
                 child: Container(
-                  color: AppColors.strokePrimaryAlpha.withOpacity(0.2),
+                  color: AppColors.strokePrimaryAlpha.withValues(alpha: 0.2),
                 ),
               ),
             ),

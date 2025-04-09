@@ -768,8 +768,8 @@ class _ActiveRecordingButtonState extends State<_ActiveRecordingButton> {
                       blobCount: 1,
                       centerCircle: false,
                       colors: <Color>[
-                        AppColors.backgroundChatVoice.withOpacity(0.1),
-                        AppColors.backgroundChatVoice.withOpacity(0.1),
+                        AppColors.backgroundChatVoice.withValues(alpha: 0.1),
+                        AppColors.backgroundChatVoice.withValues(alpha: 0.1),
                       ],
                       child: SizedBox.square(dimension: size),
                     ),

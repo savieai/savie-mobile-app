@@ -116,7 +116,7 @@ class _PhotoCarouselPageState extends State<PhotoCarouselPage>
         Positioned.fill(
           child: _opacityView(
             (double opacity) => Container(
-              color: Colors.black.withOpacity(opacity),
+              color: Colors.black.withValues(alpha: opacity),
             ),
           ),
         ),
@@ -333,7 +333,7 @@ class _BottomBarState extends State<_BottomBar> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.black.withOpacity(0.7),
+      color: Colors.black.withValues(alpha: 0.7),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
