@@ -11,6 +11,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:open_file/open_file.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -111,6 +112,7 @@ class _MessageViewState extends State<MessageView> {
                               isNew: widget.message.isNew,
                               child: AudioMessageView(
                                 audioMessage: audioMessage,
+                                contextMenuShown: contextMenuShown,
                               ),
                             );
                           },
@@ -152,9 +154,8 @@ class _MessageViewState extends State<MessageView> {
             hasChatPageCubit = false;
           }
 
-          // TODO: think on editing
           return <ContextMenuItemData>[
-            if ((textMessage.originalPlainText ?? '')
+            if ((textMessage.currentPlainText ?? '')
                 .isNotEmpty) ...<ContextMenuItemData>[
               if (!widget.message.isPending && hasChatPageCubit)
                 ContextMenuItemData(
@@ -208,18 +209,36 @@ class _MessageViewState extends State<MessageView> {
                     );
               },
             ),
-            ContextMenuItemData(
-              title: 'Improve Text',
-              icon: Assets.icons.listSparkle,
-              color: AppColors.textPrimary,
-              onTap: () {
-                Future<void>.delayed(const Duration(milliseconds: 350), () {
-                  if (context.mounted) {
-                    context.read<ChatCubit>().improveText(textMessage);
-                  }
-                });
-              },
-            )
+            if (textMessage.improvedTextContents == null)
+              ContextMenuItemData(
+                title: 'Improve Text',
+                icon: Assets.icons.listSparkle,
+                color: AppColors.textPrimary,
+                onTap: () {
+                  Future<void>.delayed(const Duration(milliseconds: 350), () {
+                    if (context.mounted) {
+                      context.read<ChatCubit>().improveText(textMessage);
+                    }
+                  });
+                },
+              ),
+            if (textMessage.improvedTextContents !=
+                null) ...<ContextMenuItemData>[
+              ContextMenuItemData(
+                title: 'Revert to original',
+                icon: Assets.icons.revert,
+                color: AppColors.textPrimary,
+                onTap: () {
+                  Future<void>.delayed(const Duration(milliseconds: 350), () {
+                    if (context.mounted) {
+                      context
+                          .read<ChatCubit>()
+                          .undoTextImprovement(textMessage);
+                    }
+                  });
+                },
+              )
+            ],
           ];
         },
         audio: (AudioMessage audioMessage) {

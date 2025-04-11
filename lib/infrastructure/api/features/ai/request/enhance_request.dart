@@ -7,9 +7,10 @@ part 'enhance_request.g.dart';
 class EnhanceRequest with _$EnhanceRequest {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory EnhanceRequest({
-    required String content,
-    required String? format,
+    required Map<String, dynamic> content,
+    required String format,
     required String messageId,
+    required bool force,
   }) = _EnhanceRequest;
 
   factory EnhanceRequest.fromJson(Map<String, Object?> json) =>

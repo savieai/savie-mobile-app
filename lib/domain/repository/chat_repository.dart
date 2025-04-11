@@ -48,9 +48,14 @@ abstract class ChatRepository {
   Future<void> editMessageTextContent({
     required String messageId,
     required Delta deltaContent,
+    required TextEditingTarget target,
   });
 
-  Future<void> editMessahe({
+  Future<void> undoTextImprovement({
+    required String messageId,
+  });
+
+  Future<void> editMessage({
     required Message message,
   });
 }

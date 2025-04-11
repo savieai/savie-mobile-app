@@ -16,3 +16,4 @@ export 'search_in_messages_use_case.dart';
 export 'search_messages_use_case.dart';
 export 'share_files_use_case.dart';
 export 'transcribe_audio_message_use_case.dart';
+export 'undo_text_improvement_use_case.dart';

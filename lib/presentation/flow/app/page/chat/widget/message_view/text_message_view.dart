@@ -59,17 +59,17 @@ class _TextMessageViewState extends State<TextMessageView>
       child: LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           final _SelectableMessageText currentText = _SelectableMessageText(
-            textContentsToDisplay: widget.textMessage.improvedTextContents ??
-                widget.textMessage.originalTextContents ??
-                <TextContent>[],
+            textContentsToDisplay:
+                _textMessage.currentTextContents ?? <TextContent>[],
+            target: _textMessage.textEditingTarget,
             contextMenuShown: widget.contextMenuShown,
-            textMessage: widget.textMessage,
+            textMessage: _textMessage,
+            isSecondary: false,
             onMessageChanged: (TextMessage updatedMessage) {
-              // TODO: think on editing
               context.read<ChatCubit>().editMessage(
                     textMessage: _textMessage,
                     textContents:
-                        updatedMessage.originalTextContents ?? <TextContent>[],
+                        updatedMessage.currentTextContents ?? <TextContent>[],
                     refetch: false,
                   );
               setState(() => _textMessage = updatedMessage);
@@ -90,14 +90,14 @@ class _TextMessageViewState extends State<TextMessageView>
                 curve: Curves.linearToEaseOut,
                 alignment: Alignment.topLeft,
                 child: _ImprovingView(
-                  minSize: currentText.getSize(context, constraints).width,
+                  minSize: currentText.getSize(context, constraints),
                   isImproving: isImproving,
                   oldTextContents: _textMessage.originalTextContents,
                   improvementFailed: improvementFailed,
-                  isImproved: improvedTextContents != null,
+                  isImproved: improvedTextContents != null && !isImproving,
                   textMessage: _textMessage,
                   onRetry: () {
-                    context.read<ChatCubit>().improveText(widget.textMessage);
+                    context.read<ChatCubit>().improveText(_textMessage);
                   },
                   contextMenuShown: widget.contextMenuShown,
                 ),
@@ -115,13 +115,17 @@ class _SelectableMessageText extends StatefulWidget {
     required this.textContentsToDisplay,
     required this.contextMenuShown,
     required this.textMessage,
+    required this.target,
     required this.onMessageChanged,
+    required this.isSecondary,
   });
 
   final List<TextContent> textContentsToDisplay;
   final bool contextMenuShown;
   final TextMessage textMessage;
+  final TextEditingTarget target;
   final ValueChanged<TextMessage> onMessageChanged;
+  final bool isSecondary;
 
   TextSpan getTextSpan() {
     final String plainText =
@@ -131,6 +135,7 @@ class _SelectableMessageText extends StatefulWidget {
     final List<InlineSpan> spans =
         _SelectableMessageTextState._processTextContents(
       textContentsToDisplay,
+      target,
       onMessageChanged,
       textMessage,
     );
@@ -157,12 +162,27 @@ class _SelectableMessageText extends StatefulWidget {
   ) {
     late final Size textSize;
 
+    final TextSpan textSpan = getTextSpan();
+
+    final int widgetSpanCount =
+        (textSpan.children ?? <InlineSpan>[]).whereType<WidgetSpan>().length;
+
+    final List<PlaceholderDimensions> dimensions =
+        List<PlaceholderDimensions>.generate(widgetSpanCount, (_) {
+      return const PlaceholderDimensions(
+        size: Size(26, 20),
+        alignment: PlaceholderAlignment.middle,
+      );
+    });
+
     try {
       textSize = (TextPainter(
         text: getTextSpan(),
         textScaler: MediaQuery.textScalerOf(context),
         textDirection: TextDirection.ltr,
-      )..layout(maxWidth: constraints.maxWidth - AppSpaces.space300 * 2))
+      )
+            ..setPlaceholderDimensions(dimensions)
+            ..layout(maxWidth: constraints.maxWidth - AppSpaces.space300 * 2))
           .size;
     } catch (_) {
       textSize = Size.zero;
@@ -196,6 +216,7 @@ class _SelectableMessageTextState extends State<_SelectableMessageText> {
 
     final List<InlineSpan> spans = _processTextContents(
       widget.textContentsToDisplay,
+      widget.target,
       widget.onMessageChanged,
       widget.textMessage,
     );
@@ -220,7 +241,9 @@ class _SelectableMessageTextState extends State<_SelectableMessageText> {
           enableInteractiveSelection: widget.contextMenuShown,
           cursorWidth: 0,
           style: AppTextStyles.paragraph.copyWith(
-            color: AppColors.textPrimary,
+            color: widget.isSecondary
+                ? AppColors.textSecondary
+                : AppColors.textPrimary,
           ),
         );
       },
@@ -229,6 +252,7 @@ class _SelectableMessageTextState extends State<_SelectableMessageText> {
 
   static List<InlineSpan> _processTextContents(
     List<TextContent> textContents,
+    TextEditingTarget target,
     ValueChanged<TextMessage> onMessageChanged,
     TextMessage textMessage,
   ) {
@@ -246,27 +270,35 @@ class _SelectableMessageTextState extends State<_SelectableMessageText> {
           WidgetSpan(
             child: GestureDetector(
               onTap: () {
-                // TODO: think on editing
                 final List<TextContent> newContents = textContents.toList();
                 newContents[i] = content.copyWith(
                   isChecked: !content.isChecked,
                 );
-                final TextMessage updatedMessage = textMessage.copyWith(
-                  originalTextContents: newContents,
-                );
+
+                final TextMessage updatedMessage = switch (target) {
+                  TextEditingTarget.original => textMessage.copyWith(
+                      originalTextContents: newContents,
+                    ),
+                  TextEditingTarget.enhanced => textMessage.copyWith(
+                      improvedTextContents: newContents,
+                    )
+                };
+
                 onMessageChanged(updatedMessage);
               },
-              child: Container(
-                height: 20,
-                width: 20,
-                alignment: Alignment.center,
-                child: content.isChecked
-                    ? Assets.icons.toDoSelected.svg()
-                    : Assets.icons.toDo.svg(),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Container(
+                  height: 20,
+                  width: 20,
+                  alignment: Alignment.center,
+                  child: content.isChecked
+                      ? Assets.icons.toDoSelected.svg()
+                      : Assets.icons.toDo.svg(),
+                ),
               ),
             ),
           ),
-          const WidgetSpan(child: SizedBox(width: 6)),
         ]);
 
         spans.addAll(
@@ -494,7 +526,7 @@ class _ImprovingView extends StatefulWidget {
   final bool isImproved;
   final bool improvementFailed;
   final VoidCallback onRetry;
-  final double minSize;
+  final Size minSize;
   final bool contextMenuShown;
 
   @override
@@ -517,6 +549,10 @@ class _ImprovingViewState extends State<_ImprovingView> {
         setState(() {
           _justImproved = false;
         });
+      });
+    } else if (oldWidget.isImproved && !widget.isImproved) {
+      setState(() {
+        _justImproved = false;
       });
     }
   }
@@ -667,82 +703,95 @@ class _OriginalText extends StatelessWidget {
 
   final TextMessage textMessage;
   final List<TextContent>? oldTextContents;
-  final double minSize;
+  final Size minSize;
   final bool contextMenuShown;
 
   @override
   Widget build(BuildContext context) {
-    final double minSizeConstrained = max(minSize, 60);
+    final double minSizeConstrained = max(minSize.width, 60);
+
     final bool isExpanded = context.select(
       (MessageCubit cubit) => cubit.state.isImprovedTextExpanded,
     );
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          GestureDetector(
-            onTap: contextMenuShown
-                ? null
-                : context.read<MessageCubit>().toggleImprovedTextExpansion,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                AnimatedRotation(
-                  turns: isExpanded ? 0 : 0.5,
-                  duration: const Duration(milliseconds: 350),
-                  curve: Curves.linearToEaseOut,
-                  child:
-                      Assets.icons.chevronTopSmall.svg(height: 16, width: 16),
-                ),
-                const SizedBox(width: 6),
-                ConstrainedBox(
-                  constraints: BoxConstraints(minWidth: minSizeConstrained),
-                  child: AnimatedCrossFade(
-                    duration: const Duration(milliseconds: 150),
-                    alignment: Alignment.centerLeft,
-                    firstChild: Text(
-                      'Hide original',
-                      style: AppTextStyles.footnote.copyWith(
-                        color: AppColors.iconAccent,
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final _SelectableMessageText oldText = _SelectableMessageText(
+          textContentsToDisplay: oldTextContents ?? <TextContent>[],
+          contextMenuShown: contextMenuShown,
+          textMessage: textMessage,
+          target: TextEditingTarget.original,
+          onMessageChanged: (_) {},
+          isSecondary: true,
+        );
+        final Size oldTextSize = oldText.getSize(context, constraints);
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              GestureDetector(
+                onTap: contextMenuShown
+                    ? null
+                    : context.read<MessageCubit>().toggleImprovedTextExpansion,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    AnimatedRotation(
+                      turns: isExpanded ? 0 : 0.5,
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.linearToEaseOut,
+                      child: Assets.icons.chevronTopSmall
+                          .svg(height: 16, width: 16),
+                    ),
+                    const SizedBox(width: 6),
+                    ConstrainedBox(
+                      constraints:
+                          BoxConstraints(minWidth: minSizeConstrained - 20),
+                      child: AnimatedCrossFade(
+                        duration: const Duration(milliseconds: 150),
+                        alignment: Alignment.centerLeft,
+                        firstChild: Text(
+                          'Hide original',
+                          style: AppTextStyles.footnote.copyWith(
+                            color: AppColors.iconAccent,
+                          ),
+                        ),
+                        secondChild: Text(
+                          'Show original',
+                          style: AppTextStyles.footnote.copyWith(
+                            color: AppColors.iconAccent,
+                          ),
+                        ),
+                        crossFadeState: isExpanded
+                            ? CrossFadeState.showFirst
+                            : CrossFadeState.showSecond,
                       ),
                     ),
-                    secondChild: Text(
-                      'Show original',
-                      style: AppTextStyles.footnote.copyWith(
-                        color: AppColors.iconAccent,
-                      ),
-                    ),
-                    crossFadeState: isExpanded
-                        ? CrossFadeState.showFirst
-                        : CrossFadeState.showSecond,
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          AnimatedCrossFade(
-            duration: const Duration(milliseconds: 350),
-            sizeCurve: Curves.linearToEaseOut,
-            alignment: Alignment.centerLeft,
-            firstChild: SizedBox(width: minSizeConstrained),
-            secondChild: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: _SelectableMessageText(
-                textContentsToDisplay: oldTextContents ?? <TextContent>[],
-                contextMenuShown: contextMenuShown,
-                textMessage: textMessage,
-                onMessageChanged: (_) {},
               ),
-            ),
-            crossFadeState: isExpanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 350),
+                sizeCurve: Curves.linearToEaseOut,
+                alignment: Alignment.topLeft,
+                firstChild: SizedBox(
+                  width: max(oldTextSize.width + 20, minSizeConstrained),
+                ),
+                secondChild: Container(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: oldText,
+                ),
+                crossFadeState: isExpanded
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

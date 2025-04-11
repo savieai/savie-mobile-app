@@ -19,6 +19,7 @@ class ImproveTextUseCase {
 
     final TextMessage updatedMessage = message.copyWith(
       improvedTextContents: improvedTextContents,
+      improvementFailed: false,
     );
 
     return updatedMessage;

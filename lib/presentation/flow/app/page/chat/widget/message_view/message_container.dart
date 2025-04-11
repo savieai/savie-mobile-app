@@ -5,19 +5,22 @@ class _MessageContainer extends StatelessWidget {
     required this.child,
     this.decorationOpacity = 1,
     this.animateSize = true,
+    this.padding,
   });
 
   final Widget child;
   final double decorationOpacity;
   final bool animateSize;
+  final EdgeInsets? padding;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(
-        vertical: AppSpaces.space300,
-        horizontal: AppSpaces.space400,
-      ),
+      padding: padding ??
+          EdgeInsets.symmetric(
+            vertical: AppSpaces.space300,
+            horizontal: AppSpaces.space400,
+          ),
       decoration: BoxDecoration(
         color:
             AppColors.backgroundChatBubble.withValues(alpha: decorationOpacity),

@@ -54,5 +54,11 @@ abstract class ChatApi {
   Future<HttpResponse<void>> updateMessage(
     @Path('messageId') String messageId,
     @Field('delta_content') Map<String, dynamic> deltaContent,
+    @Field('updateTarget') String updateTarget,
+  );
+
+  @POST('/messages/{messageId}/revert')
+  Future<HttpResponse<void>> undoTextImprovement(
+    @Path('messageId') String messageId,
   );
 }

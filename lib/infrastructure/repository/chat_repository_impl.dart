@@ -224,18 +224,29 @@ class ChatRepositoryImpl implements ChatRepository {
   Future<void> editMessageTextContent({
     required String messageId,
     required Delta deltaContent,
+    required TextEditingTarget target,
   }) {
     return _chatApi.updateMessage(
       messageId,
       <String, dynamic>{
         'ops': deltaContent.toJson(),
       },
+      switch (target) {
+        TextEditingTarget.enhanced => 'enhanced',
+        TextEditingTarget.original => 'original',
+      },
     );
   }
 
   @override
-  Future<void> editMessahe({required Message message}) {
+  Future<void> editMessage({required Message message}) {
     // TODO: implement editMessahe
     throw UnimplementedError();
   }
+
+  @override
+  Future<void> undoTextImprovement({
+    required String messageId,
+  }) =>
+      _chatApi.undoTextImprovement(messageId);
 }

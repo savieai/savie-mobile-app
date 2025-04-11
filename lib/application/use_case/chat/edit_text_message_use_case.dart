@@ -12,7 +12,8 @@ class EditTextMessageUseCase {
   Future<void> execute(TextMessage message) async {
     await _chatRepository.editMessageTextContent(
       messageId: message.id,
-      deltaContent: message.originalDeltaContent ?? (Delta()..insert('')),
+      deltaContent: message.currentDeltaContent ?? (Delta()..insert('')),
+      target: message.textEditingTarget,
     );
   }
 }

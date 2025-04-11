@@ -4,9 +4,11 @@ class AudioMessageView extends StatefulWidget {
   const AudioMessageView({
     super.key,
     required this.audioMessage,
+    required this.contextMenuShown,
   });
 
   final AudioMessage audioMessage;
+  final bool contextMenuShown;
 
   @override
   State<AudioMessageView> createState() => _AudioMessageViewState();
@@ -37,6 +39,7 @@ class _AudioMessageViewState extends State<AudioMessageView> {
 
     return _MessageContainer(
       animateSize: false,
+      padding: EdgeInsets.all(AppSpaces.space300),
       child: LayoutBuilder(builder: (
         BuildContext context,
         BoxConstraints constraints,
@@ -124,25 +127,30 @@ class _AudioMessageViewState extends State<AudioMessageView> {
                         isExpanded: isAudioTranscriptionExpanded,
                         isTranscriptionFailed: isTranscriptionFailed,
                         hasTranscription: hasTranscription,
-                        onTap: () async {
-                          if (isTranscribing) {
-                            return;
-                          }
+                        onTap: widget.contextMenuShown
+                            ? null
+                            : () async {
+                                if (isTranscribing) {
+                                  return;
+                                }
 
-                          if (!hasTranscription) {
-                            final bool result = await context
-                                .read<ChatCubit>()
-                                .transcribeAudioMessage(widget.audioMessage);
+                                if (!hasTranscription) {
+                                  final bool result = await context
+                                      .read<ChatCubit>()
+                                      .transcribeAudioMessage(
+                                          widget.audioMessage);
 
-                            if (result && !isAudioTranscriptionExpanded) {
-                              messageCubit.toggleAudioTranscriptionExpansion();
-                            }
-                          } else {
-                            setState(() {
-                              messageCubit.toggleAudioTranscriptionExpansion();
-                            });
-                          }
-                        },
+                                  if (result && !isAudioTranscriptionExpanded) {
+                                    messageCubit
+                                        .toggleAudioTranscriptionExpansion();
+                                  }
+                                } else {
+                                  setState(() {
+                                    messageCubit
+                                        .toggleAudioTranscriptionExpansion();
+                                  });
+                                }
+                              },
                       ),
                     ],
                   ),
@@ -406,7 +414,9 @@ class _AudioViewState extends State<AudioView> {
                         if (!widget.previewInfo || _isPlaying) ...<Widget>[
                           const SizedBox(width: 7),
                           Text(
-                            formatDuration(_currentDuration),
+                            formatDuration(
+                              _isPlaying ? _currentDuration : _totalDuration,
+                            ),
                             style: AppTextStyles.callout.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -480,7 +490,7 @@ class _TranscriptionButton extends StatelessWidget {
   final bool isTranscriptionFailed;
   final bool hasTranscription;
   final bool isExpanded;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {

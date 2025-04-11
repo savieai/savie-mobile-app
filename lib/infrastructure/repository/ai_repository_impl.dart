@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 import 'package:retrofit/dio.dart';
 
@@ -34,9 +35,12 @@ class AiRepositoryImpl implements AiRepository {
   }) async {
     final HttpResponse<EnhanceResponse> response = await _api.enhance(
       body: EnhanceRequest(
-        content: jsonEncode(TextContent.toDelta(textContents).toJson()),
+        content: <String, dynamic>{
+          'ops': TextContent.toDelta(textContents).toJson(),
+        },
         format: 'delta',
         messageId: messageId,
+        force: false,
       ).toJson(),
     );
 

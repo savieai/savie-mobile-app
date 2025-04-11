@@ -76,24 +76,78 @@ class Message with _$Message implements Comparable<Message> {
 }
 
 extension TextMessageX on TextMessage {
-  Delta? get originalDeltaContent => originalTextContents == null
-      ? null
-      : TextContent.toDelta(originalTextContents!);
+  Delta? get originalDeltaContent {
+    switch (textEditingTarget) {
+      case TextEditingTarget.original:
+        return originalTextContents != null
+            ? TextContent.toDelta(originalTextContents!)
+            : null;
+      case TextEditingTarget.enhanced:
+        return null;
+    }
+  }
 
-  String? get originalPlainText => originalDeltaContent == null
-      ? null
-      : Document.fromDelta(originalDeltaContent!).toPlainText();
+  String? get originalPlainText {
+    switch (textEditingTarget) {
+      case TextEditingTarget.original:
+        return originalDeltaContent != null
+            ? Document.fromDelta(originalDeltaContent!).toPlainText()
+            : null;
+      case TextEditingTarget.enhanced:
+        return null;
+    }
+  }
 
-  Delta? get improvedDeltaContent => improvedTextContents == null
-      ? null
-      : TextContent.toDelta(improvedTextContents!);
+  Delta? get improvedDeltaContent {
+    switch (textEditingTarget) {
+      case TextEditingTarget.enhanced:
+        return improvedTextContents != null
+            ? TextContent.toDelta(improvedTextContents!)
+            : null;
+      case TextEditingTarget.original:
+        return null;
+    }
+  }
 
-  String? get improvedPlainText => improvedDeltaContent == null
-      ? null
-      : Document.fromDelta(improvedDeltaContent!).toPlainText();
+  String? get improvedPlainText {
+    switch (textEditingTarget) {
+      case TextEditingTarget.enhanced:
+        return improvedDeltaContent != null
+            ? Document.fromDelta(improvedDeltaContent!).toPlainText()
+            : null;
+      case TextEditingTarget.original:
+        return null;
+    }
+  }
 
-  Delta? get currentDeltaContent =>
-      improvedDeltaContent ?? originalDeltaContent;
+  Delta? get currentDeltaContent {
+    switch (textEditingTarget) {
+      case TextEditingTarget.enhanced:
+        return improvedDeltaContent;
+      case TextEditingTarget.original:
+        return originalDeltaContent;
+    }
+  }
 
-  String? get currentPlainText => improvedPlainText ?? originalPlainText;
+  String? get currentPlainText {
+    switch (textEditingTarget) {
+      case TextEditingTarget.enhanced:
+        return improvedPlainText;
+      case TextEditingTarget.original:
+        return originalPlainText;
+    }
+  }
+
+  List<TextContent>? get currentTextContents {
+    switch (textEditingTarget) {
+      case TextEditingTarget.enhanced:
+        return improvedTextContents;
+      case TextEditingTarget.original:
+        return originalTextContents;
+    }
+  }
+
+  TextEditingTarget get textEditingTarget => improvedTextContents != null
+      ? TextEditingTarget.enhanced
+      : TextEditingTarget.original;
 }

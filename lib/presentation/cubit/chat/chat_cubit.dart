@@ -29,7 +29,8 @@ class ChatCubit extends Cubit<ChatState> {
     this._processSharingIntentStream,
     this._transcribeAudioMessageUseCase,
     this._improveTextUseCase,
-    this._extractTasksUseCase, {
+    // this._extractTasksUseCase,
+    this._undoTextImprovementUseCase, {
     @factoryParam String? query,
     @factoryParam required bool processSharingIntent,
   })  : _query = query,
@@ -54,7 +55,8 @@ class ChatCubit extends Cubit<ChatState> {
   final PasteImageUseCase _pasteImageUseCase;
   final TranscribeAudioMessageUseCase _transcribeAudioMessageUseCase;
   final ImproveTextUseCase _improveTextUseCase;
-  final ExtractTasksUseCase _extractTasksUseCase;
+  // final ExtractTasksUseCase _extractTasksUseCase;
+  final UndoTextImprovementUseCase _undoTextImprovementUseCase;
 
   final ProcessSharingIntentStream _processSharingIntentStream;
   final ProcessSharingIntent _processSharingIntent;
@@ -266,22 +268,24 @@ class ChatCubit extends Cubit<ChatState> {
     _emitMessages();
     await _createMessageUseCase.execute(message);
     await _fetchMessages(1, query: null);
-    _extractTasks(_sentMessages[message.currentId]! as TextMessage);
+
+    // TODO: bring back task extraction
+    // _extractTasks(_sentMessages[message.currentId]! as TextMessage);
   }
 
-  Future<void> _extractTasks(TextMessage message) async {
-    final List<Task> tasks = await _extractTasksUseCase.execute(message);
+  // Future<void> _extractTasks(TextMessage message) async {
+  //   final List<Task> tasks = await _extractTasksUseCase.execute(message);
 
-    _sentMessages[message.currentId] = message.copyWith(
-      taskExtractionState: TaskExtractionState(
-        tasks: tasks,
-        isAddding: false,
-        isAdded: false,
-      ),
-    );
+  //   _sentMessages[message.currentId] = message.copyWith(
+  //     taskExtractionState: TaskExtractionState(
+  //       tasks: tasks,
+  //       isAddding: false,
+  //       isAdded: false,
+  //     ),
+  //   );
 
-    _emitMessages();
-  }
+  //   _emitMessages();
+  // }
 
   Future<void> confirmTasks(TextMessage message) async {
     final TaskExtractionState taskExtractionState =
@@ -333,10 +337,17 @@ class ChatCubit extends Cubit<ChatState> {
     required List<TextContent> textContents,
     bool refetch = true,
   }) async {
-    final TextMessage updatedMessage = textMessage.copyWith(
-      originalTextContents: textContents,
-      isPending: refetch,
-    );
+    final TextMessage updatedMessage = switch (textMessage.textEditingTarget) {
+      TextEditingTarget.original => textMessage.copyWith(
+          originalTextContents: textContents,
+          isPending: refetch,
+        ),
+      TextEditingTarget.enhanced => textMessage.copyWith(
+          improvedTextContents: textContents,
+          isPending: refetch,
+        ),
+    };
+
     _sentMessages[updatedMessage.currentId] = updatedMessage;
 
     _emitMessages();
@@ -524,6 +535,25 @@ class ChatCubit extends Cubit<ChatState> {
       );
       _emitMessages();
     }
+  }
+
+  Future<void> undoTextImprovement(TextMessage textMessage) async {
+    if (_sentMessages.containsKey(textMessage.currentId)) {
+      _sentMessages[textMessage.currentId] = textMessage.copyWith(
+        isPending: true,
+      );
+    }
+
+    _emitMessages();
+
+    final TextMessage updatedMessage =
+        await _undoTextImprovementUseCase.execute(textMessage);
+
+    if (_sentMessages.containsKey(updatedMessage.currentId)) {
+      _sentMessages[updatedMessage.currentId] = updatedMessage;
+    }
+
+    _emitMessages();
   }
 
   // Helper method to clean up date headers if no messages remain for a specific date
