@@ -1,90 +1,180 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:flutter/material.dart' show Colors, SnackBar, SnackBarAction, ScaffoldMessenger, Text, showDialog, AlertDialog, TextButton;
 import 'package:flutter/widgets.dart';
-import 'package:flutter/material.dart' show Colors;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gesture_x_detector/gesture_x_detector.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:io';
 
 import '../../../../../presentation.dart';
 import '../../../../../../application/application.dart';
 import '../../../../../../domain/domain.dart';
+import '../../../../../../infrastructure/service/permission_service.dart';
 
 class RecordingButton extends StatelessWidget {
   const RecordingButton({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // On simulator, use a simplified recording button
+    // In debug mode on iOS simulator, use simplified button
     if (kDebugMode && Platform.isIOS) {
+      // Use the simulator-friendly version during development
       return _SimulatorFriendlyRecordingButton();
     }
 
-    // Regular implementation for normal devices
+    // Production version for real devices
     return XGestureDetector(
       longPressTimeConsider: 200,
       onLongPress: (_) async {
-        final PermissionStatus raw = await Permission.microphone.status;
-        print('RECORDING_DEBUG: Long-press permission status: $raw');
-        if (raw.isGranted) {
-          print('RECORDING_DEBUG: Permission IS granted, starting recording');
-          HapticFeedback.mediumImpact();
-          getIt
-              .get<TrackUseActivityUseCase>()
-              .execute(AppEvents.chat.voiceButtonClicked);
-          context.read<RecordingCubit>().startRecording();
-        } else {
-          print('RECORDING_DEBUG: Permission NOT granted, ignoring long-press');
-          // Ignore long-press when permission not yet granted; a prior tap will handle it.
-        }
+        // Handle long press gesture
+        _handleRecordingAction(context, isLongPress: true);
       },
       onLongPressEnd: () {
         if (context.read<RecordingCubit>().state.isRecording) {
-          print('RECORDING_DEBUG: Ending recording');
+          print('RECORDING_DEBUG: Ending recording on long press end');
           context.read<RecordingCubit>().finishRecording();
         }
       },
       onTap: (_) async {
-        print('RECORDING_DEBUG: Tap detected, current status: ${await Permission.microphone.status}');
-        // Single tap requests permission if needed, otherwise toggles recording quickly.
-        final status = await Future.delayed(const Duration(milliseconds: 50), () async {
-          print('RECORDING_DEBUG: Requesting microphone permission');
-          return await Permission.microphone.request();
-        });
-        
-        print('RECORDING_DEBUG: Permission request result: $status');
-
-        if (!status.isGranted) {
-          // User denied; no further action.
-          print('RECORDING_DEBUG: Permission denied, aborting');
-          return;
-        }
-
-        // Permission is granted now. Give UIKit a moment to close the alert before any long-press.
-        print('RECORDING_DEBUG: Permission granted, proceeding');
-        HapticFeedback.lightImpact();
-        await Future<void>.delayed(const Duration(milliseconds: 300));
-        print('RECORDING_DEBUG: Delay complete, can proceed with recording');
-
-        if (!context.read<RecordingCubit>().state.isRecording) {
-          // Optional: start immediate recording on tap if UX wants.
-          // comment out the next line if you strictly want long-press only.
-          print('RECORDING_DEBUG: Starting recording on tap');
-          context.read<RecordingCubit>().startRecording();
-        } else {
-          print('RECORDING_DEBUG: Ending recording on tap');
-          context.read<RecordingCubit>().finishRecording();
-        }
+        // Handle tap gesture
+        _handleRecordingAction(context, isLongPress: false);
       },
       child: Padding(
         padding: const EdgeInsets.all(8),
-        child: Assets.icons.mic24.svg(
-          colorFilter: const ColorFilter.mode(
-            AppColors.iconSecodary,
-            BlendMode.srcIn,
-          ),
+        child: BlocBuilder<RecordingCubit, RecordingState>(
+          builder: (context, state) {
+            // Show feedback when recording
+            return state.isRecording 
+              ? Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Assets.icons.mic24.svg(
+                    colorFilter: const ColorFilter.mode(
+                      Colors.red,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                )
+              : Assets.icons.mic24.svg(
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.iconSecodary,
+                    BlendMode.srcIn,
+                  ),
+                );
+          },
         ),
+      ),
+    );
+  }
+  
+  Future<void> _handleRecordingAction(BuildContext context, {required bool isLongPress}) async {
+    print('RECORDING_DEBUG: ${isLongPress ? "Long press" : "Tap"} detected');
+    
+    // Access recorder cubit and check recording state
+    final recordingCubit = context.read<RecordingCubit>();
+    final isRecording = recordingCubit.state.isRecording;
+    
+    // If already recording, stop it
+    if (isRecording) {
+      print('RECORDING_DEBUG: Already recording, stopping now');
+      recordingCubit.finishRecording();
+      return;
+    }
+    
+    // First, set up audio session (only needed for iOS)
+    if (Platform.isIOS) {
+      print('RECORDING_DEBUG: iOS detected, ensuring audio session is ready');
+      final permissionService = getIt<PermissionService>();
+      try {
+        final bool setupSuccess = await permissionService.setupAudioSession();
+        print('RECORDING_DEBUG: Audio session setup result: $setupSuccess');
+        if (!setupSuccess) {
+          _showPermissionError(context, "Could not set up audio session");
+          return;
+        }
+      } catch (e) {
+        print('RECORDING_DEBUG: Audio session setup error: $e');
+        // Continue and let the permission check handle specific issues
+      }
+    }
+    
+    // Check current permission status
+    final PermissionStatus status = await Permission.microphone.status;
+    print('RECORDING_DEBUG: Current permission status: $status');
+    
+    if (status.isPermanentlyDenied) {
+      // User has permanently denied, show dialog to open settings
+      _showOpenSettingsDialog(context);
+      return;
+    }
+    
+    if (!status.isGranted) {
+      // Need to request permission
+      print('RECORDING_DEBUG: Permission not granted, requesting now');
+      final PermissionStatus result = await Permission.microphone.request();
+      print('RECORDING_DEBUG: Permission request result: $result');
+      
+      if (!result.isGranted) {
+        // Permission denied, show error
+        _showPermissionError(context, "Microphone permission required to record voice notes");
+        return;
+      }
+      
+      // Permission just granted, add a small delay to let iOS UI settle
+      if (Platform.isIOS) {
+        print('RECORDING_DEBUG: Permission newly granted on iOS, small delay before recording');
+        await Future.delayed(Duration(milliseconds: 300));
+      }
+    }
+    
+    // Permission is granted, start recording
+    print('RECORDING_DEBUG: Permission granted, starting recording');
+    HapticFeedback.mediumImpact();
+    getIt.get<TrackUseActivityUseCase>().execute(AppEvents.chat.voiceButtonClicked);
+    recordingCubit.startRecording();
+  }
+  
+  void _showPermissionError(BuildContext context, String message) {
+    print('RECORDING_DEBUG: Showing permission error: $message');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: Duration(seconds: 3),
+        action: SnackBarAction(
+          label: 'Settings',
+          onPressed: () {
+            openAppSettings();
+          },
+        ),
+      ),
+    );
+  }
+  
+  void _showOpenSettingsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Microphone Access Required'),
+        content: Text('Please enable microphone access in your device settings to record voice notes.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            },
+            child: Text('Open Settings'),
+          ),
+        ],
       ),
     );
   }

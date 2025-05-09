@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "256363804943",
+    "project_id": "savie-dev-428016",
+    "storage_bucket": "savie-dev-428016.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:256363804943:android:7288926f893c25b509267a",
+        "android_client_info": {
+          "package_name": "agency.galt.savie.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "256363804943-pb25ftlk958hhtgb5u0ic08n75is51cn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyABOrrP6w8aiJYX7isIH6OJdjI-ngNKNkU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "256363804943-gg4lrq4itp5adkcc3vahpd13t67eet4g.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "256363804943-pj14l9af8j4p07n5mqluhor3khmggm3t.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "agency.galt.savie.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

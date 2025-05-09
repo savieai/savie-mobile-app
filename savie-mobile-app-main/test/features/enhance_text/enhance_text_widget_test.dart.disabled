@@ -1,0 +1,123 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:savie/domain/domain.dart';
+import 'package:savie/infrastructure/repository/ai_repository_impl.dart';
+import 'package:savie/infrastructure/api/features/ai/ai_api.dart';
+
+class MockAiApi extends Mock implements AiApi {}
+
+void main() {
+  late MockAiApi mockAiApi;
+  late AiRepository aiRepository;
+
+  setUp(() {
+    mockAiApi = MockAiApi();
+    aiRepository = AiRepositoryImpl(api: mockAiApi);
+  });
+
+  group('ImproveText with Todo Items', () {
+    test('should correctly handle Delta todo items in enhance response', () async {
+      // Arrange
+      final Delta inputDelta = Delta()
+        ..insert({'todo': false})
+        ..insert('Sample todo item')
+        ..insert('\n');
+      
+      final List<TextContent> inputContents = TextContent.fromDelta(inputDelta);
+      
+      // Mock the API response for a todo item
+      when(() => mockAiApi.enhance(
+        body: any(named: 'body'),
+        options: any(named: 'options'),
+      )).thenAnswer((_) async => 
+        HttpResponse<EnhanceResponse>(
+          EnhanceResponse(
+            enhanced: {
+              'ops': [
+                {'insert': {'todo': false}},
+                {'insert': 'Enhanced todo item'},
+                {'insert': '\n'}
+              ]
+            }
+          ),
+          Response(data: {
+            'enhanced': {
+              'ops': [
+                {'insert': {'todo': false}},
+                {'insert': 'Enhanced todo item'},
+                {'insert': '\n'}
+              ]
+            }
+          }, 
+          statusCode: 200),
+        ),
+      );
+
+      // Act
+      final List<TextContent> result = await aiRepository.improveText(
+        textContents: inputContents,
+        messageId: 'test-id',
+      );
+
+      // Assert
+      expect(result, isNotEmpty);
+      
+      // Recreate delta to check structure
+      final Delta resultDelta = TextContent.toDelta(result);
+      final List<Map<String, dynamic>> ops = resultDelta.toJson() as List<Map<String, dynamic>>;
+      
+      // Verify the first operation is a todo insert
+      expect(ops.first['insert'], isA<Map>());
+      expect(ops.first['insert']['todo'], isFalse);
+      
+      // Verify the text content
+      expect(ops[1]['insert'], 'Enhanced todo item');
+    });
+
+    test('should handle plain text response and convert to Delta', () async {
+      // Arrange
+      final Delta inputDelta = Delta()
+        ..insert({'todo': false})
+        ..insert('Sample todo item')
+        ..insert('\n');
+      
+      final List<TextContent> inputContents = TextContent.fromDelta(inputDelta);
+      
+      // Mock the API returning a plain text response instead of Delta
+      when(() => mockAiApi.enhance(
+        body: any(named: 'body'),
+        options: any(named: 'options'),
+      )).thenAnswer((_) async => 
+        HttpResponse<EnhanceResponse>(
+          EnhanceResponse(
+            enhanced: 'Plain text response'
+          ),
+          Response(data: {
+            'enhanced': 'Plain text response'
+          }, 
+          statusCode: 200),
+        ),
+      );
+
+      // Act
+      final List<TextContent> result = await aiRepository.improveText(
+        textContents: inputContents,
+        messageId: 'test-id',
+      );
+
+      // Assert
+      expect(result, isNotEmpty);
+      
+      // Recreate delta to check structure
+      final Delta resultDelta = TextContent.toDelta(result);
+      final List<dynamic> ops = resultDelta.toJson();
+      
+      // Verify the content was converted to plain text Delta
+      expect(ops.first['insert'], 'Plain text response');
+    });
+  });
+} 

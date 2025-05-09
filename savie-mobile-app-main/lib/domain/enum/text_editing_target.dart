@@ -1,0 +1,4 @@
+enum TextEditingTarget {
+  original,
+  enhanced;
+}

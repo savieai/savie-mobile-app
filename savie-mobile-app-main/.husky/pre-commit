@@ -1,0 +1,20 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🧪 Running pre-commit checks..."
+
+# Run Flutter analyzer
+echo "🔍 Running Flutter analyzer..."
+flutter analyze --no-fatal-infos || exit 1
+
+# Format imports
+echo "📝 Sorting imports..."
+dart run import_sorter:main || exit 1
+
+# Check iOS build
+if [ -x "$(command -v xcrun)" ]; then
+  echo "🍎 Running iOS build check..."
+  ./scripts/ios_build_check.sh
+fi
+
+echo "✅ All pre-commit checks passed!" 

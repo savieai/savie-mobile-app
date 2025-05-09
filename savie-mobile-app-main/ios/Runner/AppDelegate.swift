@@ -98,6 +98,18 @@ import UserNotifications
               result(granted)
             }
           }
+        } else if call.method == "getDeviceModel" {
+          // Return device model information to help detect simulator/device
+          #if targetEnvironment(simulator)
+            result("iOS Simulator")
+          #else
+            result(UIDevice.current.model)
+          #endif
+        } else if call.method == "isTestFlightBuild" {
+          // Check if we're running in TestFlight
+          let isTestFlight = self.isRunningInTestFlight()
+          print("[AppDelegate] isTestFlightBuild check: \(isTestFlight)")
+          result(isTestFlight)
         } else {
           result(FlutterMethodNotImplemented)
         }
@@ -106,6 +118,38 @@ import UserNotifications
     
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+  
+  // Check if app is running in TestFlight
+  private func isRunningInTestFlight() -> Bool {
+    #if DEBUG
+      return false // Debug builds are never TestFlight
+    #else
+      // Check if app is running through TestFlight
+      if Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt" {
+        print("[AppDelegate] TestFlight detected via receipt path")
+        return true
+      }
+      
+      // Additional check for TestFlight environment
+      if Bundle.main.path(forResource: "embedded", ofType: "mobileprovision") == nil &&
+         !isAppStoreValidated() {
+        print("[AppDelegate] TestFlight detected via provisioning")
+        return true
+      }
+      
+      return false
+    #endif
+  }
+  
+  // Check if the app is validated by App Store
+  private func isAppStoreValidated() -> Bool {
+    if let receiptURL = Bundle.main.appStoreReceiptURL,
+       FileManager.default.fileExists(atPath: receiptURL.path) {
+      // If we have a receipt and it's not a sandbox receipt, likely from App Store
+      return receiptURL.lastPathComponent != "sandboxReceipt"
+    }
+    return false
   }
   
   // This method ensures iOS will reset and properly request microphone permission

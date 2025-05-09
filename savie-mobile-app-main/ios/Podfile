@@ -1,0 +1,186 @@
+# !$*UTF8*$!
+# Uncomment this line to define a global platform for your project
+platform :ios, '13.0'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+# Add dependency versions
+$iOSMixpanelVersion = '5.0.0'
+$SDWebImageVersion = '5.21.0'
+$DKPhotoGalleryVersion = '0.0.19'
+$DKImagePickerControllerVersion = '4.3.4'
+
+target 'Runner' do
+  use_frameworks! :linkage => :static
+  use_modular_headers!
+
+  # Dependencies with pinned versions
+  pod 'Mixpanel-swift', $iOSMixpanelVersion
+  pod 'SDWebImage', $SDWebImageVersion
+  pod 'DKPhotoGallery', $DKPhotoGalleryVersion
+  pod 'DKImagePickerController', $DKImagePickerControllerVersion
+  
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  # ---- Flutter header search-path fix ----
+  flutter_header = '${PODS_ROOT}/../Flutter'
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      paths = config.build_settings['HEADER_SEARCH_PATHS'] || '$(inherited)'
+      unless paths.include?(flutter_header)
+        config.build_settings['HEADER_SEARCH_PATHS'] = "#{paths} #{flutter_header} #{flutter_header}/Flutter.framework #{flutter_header}/Flutter.framework/Headers"
+      end
+    end
+  end
+  # ----------------------------------------
+  
+  # Suppress all warnings in Xcode build
+  installer.pods_project.build_configurations.each do |cfg|
+    cfg.build_settings['WARNING_CFLAGS'] = '-Wno-deprecated-declarations'
+  end
+  
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    
+    # Allow non-modular includes in framework modules for all targets
+    target.build_configurations.each do |config|
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+    end
+    
+    # Set iOS deployment target for all pods
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      # Use $(inherited) flag for ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES
+      config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = '$(inherited)'
+      
+      # Override legacy architecture workarounds – Apple-silicon simulator needs arm64 slice.
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = ''
+      config.build_settings['ONLY_ACTIVE_ARCH'] = 'NO'
+      config.build_settings.delete('VALID_ARCHS') if config.build_settings.key?('VALID_ARCHS')
+      
+      # Add header search paths for all targets
+      header_search_paths = config.build_settings['HEADER_SEARCH_PATHS'] || '$(inherited)'
+      config.build_settings['HEADER_SEARCH_PATHS'] = "#{header_search_paths} ${PODS_ROOT}/Mixpanel-swift/Sources"
+      
+      # Ensure Swift modules generate Objective-C headers
+      if target.respond_to?(:product_type) and target.product_type == "com.apple.product-type.framework"
+        config.build_settings['SWIFT_INSTALL_OBJC_HEADER'] = 'YES'
+        config.build_settings['DEFINES_MODULE'] = 'YES'
+      end
+      
+      # Ensure proper framework linking - prevent duplicate symbols
+      config.build_settings['LD_VERIFY_BITCODE'] = 'NO'
+      config.build_settings['OTHER_LDFLAGS'] = '$(inherited) -Xlinker -no_warn_duplicate_libraries'
+      
+      # Fix umbrella issues for package_info_plus specifically
+      if target.name.include?('package_info_plus')
+        # Force angle brackets for all imports
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = '$(inherited) USE_ANGLE_BRACKET_IMPORTS=1'
+      end
+    end
+    
+    # Fix for Mixpanel Swift header generation
+    if target.name == 'Mixpanel-swift'
+      target.build_configurations.each do |config|
+        config.build_settings['SWIFT_INSTALL_OBJC_HEADER'] = 'YES'
+        config.build_settings['SWIFT_OBJC_INTERFACE_HEADER_NAME'] = 'Mixpanel-Swift.h'
+        config.build_settings['DEFINES_MODULE'] = 'YES'
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        config.build_settings['APPLICATION_EXTENSION_API_ONLY'] = 'NO'
+        config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
+      end
+    end
+    
+    # Fix for AuthKit framework duplication issues
+    if target.name.include?('appmetrica') || target.name.include?('AppMetrica')
+      target.build_configurations.each do |config|
+        config.build_settings['OTHER_LDFLAGS'] = '$(inherited) -framework "AuthenticationServices"'
+      end
+    end
+    
+    # Fix Mixpanel module issues
+    if target.name == 'mixpanel_flutter'
+      target.build_configurations.each do |config|
+        config.build_settings['DEFINES_MODULE'] = 'YES'
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      end
+    end
+    
+    # Skip bundle resources for specific pods
+    pods_to_exclude = ['YogaKit', 'yoga', 'libevent', 'boost', 'BoringSSL-GRPC', 'glog', 'abseil', 'gRPC-Core',
+                      'RCT-Folly', 'React-Core', 'Flipper', 'OpenSSL-Universal', 'leveldb-library',
+                      'React', 'Flipper-Fmt', 'Flipper-Folly', 'React-Codegen', 'Flipper-DoubleConversion',
+                      'Flipper-Glog', 'Flipper-PeerTalk', 'Flipper-RSocket']
+    
+    # Disable resource bundles for problematic pods
+    if pods_to_exclude.include?(target.name)
+      target.build_configurations.each do |config|
+        config.build_settings['CONFIGURATION_BUILD_DIR'] = '$PODS_CONFIGURATION_BUILD_DIR'
+        config.build_settings['SKIP_INSTALL'] = 'YES'
+      end
+    end
+  end
+  
+  # ------------------------------------------------------------------
+  # *** Mixpanel-flutter hot-fix ***
+  # ------------------------------------------------------------------
+  # Find and patch the problematic MixpanelHelper.h during pod install
+  header = File.join(
+    `pwd`.chomp,               # current directory
+    'Pods',
+    'mixpanel_flutter',        # pod folder
+    'Classes',
+    'MixpanelHelper.h'
+  )
+  
+  # Replace the #import lines with a single @import
+  # Only done if the file exists and still contains the bad import.
+  if File.exist?(header) &&
+     File.read(header).include?('<Mixpanel-swift/Mixpanel-Swift.h>')
+    puts "Patching #{header} => use @import Mixpanel;"
+    text = File.read(header)
+    text.gsub!(
+      /#if __has_include\(.*?endif/m,
+      "@import Mixpanel;\n"
+    )
+    File.write(header, text)
+  end
+  
+  puts "Applied patches to fix compatibility issues with DKPhotoGallery and SDWebImage"
+  
+  installer.pods_project.targets.each do |t|
+    t.build_configurations.each do |config|
+      # Exclude stale header files from AppMetricaCoreExtension that flood the report
+      config.build_settings['EXCLUDED_SOURCE_FILE_NAMES'] = '*/AppMetricaCoreExtension.framework/**/*.h'
+    end
+  end
+end

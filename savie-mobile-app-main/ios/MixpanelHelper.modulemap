@@ -1,0 +1,6 @@
+#ifndef MIXPANELHELPER_MODULE_DEFINED
+#define MIXPANELHELPER_MODULE_DEFINED
+
+@import Mixpanel;
+
+#endif

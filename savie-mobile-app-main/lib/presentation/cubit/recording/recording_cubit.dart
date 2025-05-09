@@ -46,6 +46,22 @@ class RecordingCubit extends Cubit<RecordingState> {
       return;
     }
     
+    // On iOS, ensure audio session is set up first
+    if (Platform.isIOS) {
+      print('RECORDING_CUBIT: iOS detected, setting up audio session first');
+      try {
+        final bool audioSessionSetup = await _permissionService.setupAudioSession();
+        print('RECORDING_CUBIT: Audio session setup result: $audioSessionSetup');
+        if (!audioSessionSetup) {
+          print('RECORDING_CUBIT: Audio session setup failed, aborting recording');
+          return;
+        }
+      } catch (e) {
+        print('RECORDING_CUBIT: Audio session setup error: $e');
+        // Continue anyway and let permission check handle issues
+      }
+    }
+    
     // Check microphone permission using the unified service
     print('RECORDING_CUBIT: Checking permission via service');
     final SaviePermissionStatus permissionStatus =
@@ -60,6 +76,7 @@ class RecordingCubit extends Cubit<RecordingState> {
     }
     
     print('RECORDING_CUBIT: Permission granted, proceeding with recording setup');
+    
     // Lazily create recorder (avoids mic prompt on app launch)
     _recorder ??= AudioRecorder();
     print('RECORDING_CUBIT: Recorder initialized');
@@ -84,23 +101,15 @@ class RecordingCubit extends Cubit<RecordingState> {
   Future<void> _setupRecorderAsync() async {
     try {
       print('RECORDING_CUBIT: Setting up recorder...');
-      // Ensure iOS audio session is configured before interacting with the recorder.
-      if (Platform.isIOS) {
-        print('RECORDING_CUBIT: iOS platform detected, configuring audio session');
-        try {
-          print('RECORDING_CUBIT: Invoking native setupAudioSession');
-          await _audioSessionChannel.invokeMethod('setupAudioSession');
-          print('RECORDING_CUBIT: Native setupAudioSession completed successfully');
-        } catch (e) {
-          print('RECORDING_CUBIT: ERROR in setupAudioSession: $e');
-          // Non-fatal: fall back to record's own configuration.
-          print('Failed to setup iOS audio session via native channel: $e');
-        }
-      }
-
+      
+      // Make sure we have a directory to save to 
       final Directory tempDir = await getApplicationCacheDirectory();
+      final String filePath = '${tempDir.path}/${const Uuid().v4()}.m4a';
+      print('RECORDING_CUBIT: Recording to file: $filePath');
+      
       int counter = 0;
 
+      // Setup amplitude subscription
       _amplitudeSubscription = _recorder!
           .onAmplitudeChanged(const Duration(milliseconds: 10))
           .listen((Amplitude amplitude) {
@@ -113,8 +122,11 @@ class RecordingCubit extends Cubit<RecordingState> {
           emit((state as _Recording).copyWith(peek: peek));
           counter++;
         }
+      }, onError: (error) {
+        print('RECORDING_CUBIT: Amplitude subscription error: $error');
       });
 
+      // Timer for UI updates
       _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
         if (state is _Recording) {
           _seconds++;
@@ -123,28 +135,59 @@ class RecordingCubit extends Cubit<RecordingState> {
         _timer = timer;
       });
 
-      // Start recorder with path
-      print('RECORDING_CUBIT: Starting recorder with path');
-      await _recorder!.start(
-        const RecordConfig(),
-        path: '${tempDir.path}/${const Uuid().v4()}.m4a',
-      );
-      print('RECORDING_CUBIT: Recorder started successfully');
+      // Try to start the recorder with specified config
+      try {
+        print('RECORDING_CUBIT: Starting recorder with path: $filePath');
+        await _recorder!.start(
+          const RecordConfig(
+            encoder: AudioEncoder.aacLc,
+            bitRate: 128000,
+            sampleRate: 44100,
+          ),
+          path: filePath,
+        );
+        print('RECORDING_CUBIT: Recorder started successfully');
+      } catch (recorderError) {
+        print('RECORDING_CUBIT: ERROR starting recorder: $recorderError');
+        
+        // Try a fallback approach with simpler config
+        try {
+          print('RECORDING_CUBIT: Trying fallback recorder config');
+          await _recorder!.start(
+            const RecordConfig(), // Default config
+            path: filePath,
+          );
+          print('RECORDING_CUBIT: Fallback recorder started successfully');
+        } catch (fallbackError) {
+          print('RECORDING_CUBIT: Fallback recorder also failed: $fallbackError');
+          cancelRecording();
+          rethrow;
+        }
+      }
     } catch (e) {
       // Handle errors gracefully
-      print('RECORDING_CUBIT: ERROR starting recorder: $e');
-      print('Error setting up recorder: $e');
+      print('RECORDING_CUBIT: ERROR in recorder setup: $e');
       cancelRecording();
     }
   }
 
   Future<AudioInfo?> finishRecording() async {
+    print('RECORDING_CUBIT: finishRecording called');
     _cancelEverything();
 
-    final String? path = await _recorder?.stop();
+    String? path;
+    try {
+      path = await _recorder?.stop();
+      print('RECORDING_CUBIT: Recorder stopped, path: $path');
+    } catch (e) {
+      print('RECORDING_CUBIT: Error stopping recorder: $e');
+      path = null;
+    }
+    
     AudioInfo? audioInfo;
 
     if (path != null) {
+      print('RECORDING_CUBIT: Creating AudioInfo from recording');
       final String ext = path.split('.').last;
       final String remoteStorageName = '${const Uuid().v4()}.$ext';
 
@@ -156,6 +199,8 @@ class RecordingCubit extends Cubit<RecordingState> {
         duration: Duration(seconds: _seconds),
         signedUrl: null,
       );
+    } else {
+      print('RECORDING_CUBIT: No path returned from recorder, cannot create AudioInfo');
     }
 
     _peeks.clear();
@@ -169,9 +214,15 @@ class RecordingCubit extends Cubit<RecordingState> {
   }
 
   Future<void> cancelRecording() async {
+    print('RECORDING_CUBIT: cancelRecording called');
     _cancelEverything();
 
-    await _recorder?.cancel();
+    try {
+      await _recorder?.cancel();
+      print('RECORDING_CUBIT: Recorder cancelled successfully');
+    } catch (e) {
+      print('RECORDING_CUBIT: Error cancelling recorder: $e');
+    }
 
     _peeks.clear();
     _seconds = 0;
@@ -188,10 +239,16 @@ class RecordingCubit extends Cubit<RecordingState> {
   }
 
   void _cancelEverything() {
-    _amplitudeSubscription?.cancel();
-    _amplitudeSubscription = null;
-    _timer?.cancel();
-    _timer = null;
+    print('RECORDING_CUBIT: Cancelling everything');
+    try {
+      _amplitudeSubscription?.cancel();
+      _amplitudeSubscription = null;
+      
+      _timer?.cancel();
+      _timer = null;
+    } catch (e) {
+      print('RECORDING_CUBIT: Error while cancelling: $e');
+    }
   }
 
   // TODO: move to an extension

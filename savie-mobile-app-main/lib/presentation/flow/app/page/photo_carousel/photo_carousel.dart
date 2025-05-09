@@ -1,0 +1,1 @@
+// Placeholder for photo_carousel exports 
